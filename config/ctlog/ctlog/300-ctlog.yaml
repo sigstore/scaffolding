@@ -1,0 +1,55 @@
+# Copyright 2021 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: ctlog
+  namespace: ctlog-system
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  namespace: ctlog-system
+  name: ctlog
+  labels:
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    spec:
+      serviceAccountName: ctlog
+      containers:
+        - name: ctfe
+          image: ko://github.com/google/certificate-transparency-go/trillian/ctfe/ct_server
+          args: [
+            "--http_endpoint=0.0.0.0:6962",
+            "--log_config=/ctfe-config/ct_server.cfg",
+            "--alsologtostderr"
+          ]
+          imagePullPolicy: Always
+          volumeMounts:
+          - name: keys
+            mountPath: "/ctfe-keys"
+            readOnly: true
+          - name: config
+            mountPath: "/ctfe-config"
+            readOnly: true
+          ports:
+          - containerPort: 6962
+      volumes:
+        - name: keys
+          secret:
+            secretName: ctlog-secret
+            items:
+            - key: private
+              path: privkey.pem
+            - key: public
+              path: pubkey.pem
+            - key: rootca
+              path: roots.pem
+        - name: config
+          configMap:
+            name: ctlog-config
+            items:
+            - key: config
+              path: ct_server.cfg

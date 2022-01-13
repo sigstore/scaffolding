@@ -1,0 +1,58 @@
+# Copyright 2021 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: trillian
+  namespace: trillian-system
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  namespace: trillian-system
+  name: log-server
+  labels:
+    networking.knative.dev/visibility: cluster-local
+spec:
+  template:
+    spec:
+      serviceAccountName: trillian
+      containers:
+      - name: log-server
+        image: ko://github.com/google/trillian/cmd/trillian_log_server
+        args: [
+        "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/$(DATABASE_NAME)",
+        "--storage_system=mysql",
+        "--quota_system=mysql",
+#        "--etcd_servers=trillian-etcd-cluster-client.etcd-system.svc:2379",
+#        "--etcd_http_service=trillian-logserver-http",
+        "--rpc_endpoint=0.0.0.0:8090",
+#        "--http_endpoint=0.0.0.0:8091",
+        "--alsologtostderr"
+        ]
+        env:
+          - name: DATABASE_NAME
+            valueFrom:
+              secretKeyRef:
+                name: trillian-client
+                key: name
+          - name: MYSQL_USER
+            valueFrom:
+              secretKeyRef:
+                name: trillian-client
+                key: username
+          - name: MYSQL_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: trillian-client
+                key: password
+          - name: DATABASE_HOSTNAME
+            valueFrom:
+              secretKeyRef:
+                name: trillian-client
+                key: host
+        imagePullPolicy: Always
+        ports:
+        - name: h2c
+          containerPort: 8090

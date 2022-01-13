@@ -1,0 +1,26 @@
+# Copyright 2021 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: createcerts
+  namespace: fulcio-system
+spec:
+  template:
+    spec:
+      serviceAccountName: createcerts
+      restartPolicy: Never
+      automountServiceAccountToken: true
+      containers:
+      - name: createcerts
+        image: ko://github.com/vaikas/sigstore-scaffolding/cmd/fulcio/createcerts
+        args: [
+          "--secret=fulcio-secret"
+        ]
+        env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
+

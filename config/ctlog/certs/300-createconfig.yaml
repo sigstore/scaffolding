@@ -1,0 +1,22 @@
+# Copyright 2021 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: createcerts
+  namespace: ctlog-system
+spec:
+  template:
+    spec:
+      serviceAccountName: createcerts
+      restartPolicy: Never
+      automountServiceAccountToken: true
+      containers:
+      - name: createcerts
+        image: ko://github.com/vaikas/sigstore-scaffolding/cmd/ctlog/createcerts
+        args: [
+          "--namespace=ctlog-system",
+          "--configmap=ctlog-config",
+          "--secret=ctlog-secret"
+        ]

@@ -1,0 +1,46 @@
+# Copyright 2021 Chainguard, Inc.
+# SPDX-License-Identifier: Apache-2.0
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: check-oidc
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      automountServiceAccountToken: false
+      containers:
+      - name: check-oidc
+        image: gcr.io/projectsigstore/cosign/ci/cosign@sha256:57be112e1d5686ccf6a5a78910fcfff648d3a93c4bca10ccc0c2304dfe1492d7
+        args: [
+          "sign",
+          "--fulcio-url", "http://fulcio.fulcio-system.svc",
+          "--rekor-url", "http://rekor.rekor-system.svc",
+          "ko://github.com/vaikas/sigstore-scaffolding/cmd/rekor/checktree",
+        ]
+        env:
+        - name: COSIGN_EXPERIMENTAL
+          value: "true"
+        - name: SIGSTORE_CT_LOG_PUBLIC_KEY_FILE
+          value: "/var/run/sigstore-root/rootfile.pem"
+        volumeMounts:
+        - name: oidc-info
+          mountPath: /var/run/sigstore/cosign
+        - name: keys
+          mountPath: "/var/run/sigstore-root"
+          readOnly: true
+      volumes:
+        - name: oidc-info
+          projected:
+            sources:
+              - serviceAccountToken:
+                  path: oidc-token
+                  expirationSeconds: 600 # Use as short-lived as possible.
+                  audience: sigstore
+        - name: keys
+          secret:
+            secretName: ctlog-public-key
+            items:
+            - key: public
+              path: rootfile.pem

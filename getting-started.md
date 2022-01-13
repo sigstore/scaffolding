@@ -27,7 +27,12 @@ including:
 
 **Note** If you are deploying from M1 you will need to update
 [.ko.yaml](./.ko.yaml) by commenting out the `CGO_ENABLED=1` and uncommenting
-`CGO_ENABLED=0`.
+`CGO_ENABLED=0`. 
+
+If you are deploying with kind you will need to set the **KO_DOCKER_REPO**
+```shell
+export KO_DOCKER_REPO=kind.local
+```
 
  If there are no errors, then to ensure things are up and running, you should
  wait for jobs to finish. Assuming there are no other jobs running in the

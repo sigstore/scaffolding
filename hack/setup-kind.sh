@@ -7,10 +7,10 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-if [[ -z "${GITHUB_WORKSPACE}" ]]; then
-  echo "This script is expected to run in the context of GitHub Actions."
-  exit 1
-fi
+#if [[ -z "${GITHUB_WORKSPACE}" ]]; then
+#  echo "This script is expected to run in the context of GitHub Actions."
+#  exit 1
+#fi
 
 # Defaults
 K8S_VERSION="v1.21.x"

@@ -26,7 +26,6 @@ spec:
             "--log_config=/ctfe-config/ct_server.cfg",
             "--alsologtostderr"
           ]
-          imagePullPolicy: Always
           volumeMounts:
           - name: keys
             mountPath: "/ctfe-keys"

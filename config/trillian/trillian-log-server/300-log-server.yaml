@@ -52,7 +52,6 @@ spec:
               secretKeyRef:
                 name: trillian-client
                 key: host
-        imagePullPolicy: Always
         ports:
         - name: h2c
           containerPort: 8090

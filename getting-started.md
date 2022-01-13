@@ -15,7 +15,9 @@ including:
  tested and configured for the GitHub actions and in particular well suited
  for running Actions.
  You will also need [ko](https://github.com/google/ko) at least until the time
- we start to create containers / releases.
+ we start to create containers / releases.  
+
+The [Knative Quickstart](https://knative.dev/docs/getting-started/) provides for kind and knative serving etc already all configured for you if you want an even faster start.
 
  # Deploying
 

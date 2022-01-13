@@ -19,13 +19,17 @@ Nathan Smith &lt;sigstore@nfsmith.ca></p>
 <p style="text-align: right">
 2022-01-11</p>
 
+# Quickstart
 
+If you do not care about the nitty gritty details and just want to stand up a
+stack, check out the [Getting Started Guide](./getting-started.md)
 
 # Background
 
 Currently in various e2e tests we (the community) do not exercise all the components of the Sigstore when running tests. This results in us skipping some validation tests (for example, but not limited to, –insecure-skip-verify flag), or using public instances for some of the tests. Part of the reason is that there are currently some manual steps or some assumptions baked in some places that make this trickier than is strictly necessary. At Chainguard we use all the sigstore components heavily and utilize GitHub actions for our e2e/integration tests, and have put together some components that might make it easier for other folks as well as upstream to do more thorough testing as well as hopefully catch breaking changes by ensuring that we have the ability to test the full stack by various clients (for example, Tekton Chains is one example, I’m sure there are others).
 
 A wonderful very detailed document for standing all the pieces from scratch is given in Luke Hinds’ “[Sigstore the hard way](https://github.com/lukehinds/sigstore-the-hard-way)”
+
 
 
 # Overview
@@ -229,17 +233,4 @@ spec:
 
 This document focused on the Tree management, Certificate, Key and such creation automagically, coordinating the interactions and focusing on the fact that no manual intervention is required at any point during the deployment and relying on k8s primitives and semantics. What has been left out only because there are already existing solutions is configuring each of the services to actually connect at the dataplane level. For example, in the Fulcio case, the argument to Fulcio ‘**--ct-log-url**’ needs to point to where the CTLog above was installed or hilarity will of course follow.
 
-I’m curious if there would be appetite for upstreaming the ‘
-
-
-# Output
-
-So, even though that’s a lot of nitty gritty detail, the end result is that by running:
-
-
-```
-ko apply -f ./config/
-```
-
-
-Assuming of course that the yaml files are under config, the end result is that all the pieces will become available in a matter of minutes and if things go wrong for any reason, there are clear logs indicating what the problem is. Furthermore, this should also make it so that you can deploy these yamls to your local KinD cluster and have a fully functional setup for sigstore & friends locally.
+I’m curious if there would be appetite for upstreaming these.

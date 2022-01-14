@@ -9,6 +9,7 @@ require (
 	github.com/google/certificate-transparency-go v1.1.2
 	github.com/google/trillian v1.4.0
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/golang-lru v0.5.4
 	github.com/hashicorp/hcl v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sigstore/fulcio v0.1.2-0.20220110181937-d890471d8047
@@ -99,7 +100,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
 	github.com/howeyc/gopass v0.0.0-20190910152052-7cb4b85ec19c // indirect
 	github.com/in-toto/in-toto-golang v0.3.4-0.20211211042327-af1f9fb822bf // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect

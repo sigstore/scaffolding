@@ -1,6 +1,6 @@
 defaultBaseImage: gcr.io/distroless/base-debian10
 builds:
-- main: ./cmd/fulcio/server/
+- main: github.com/sigstore/fulcio
   env:
   - CGO_ENABLED=1
 # If you are deploying from M1, you can use this (uncomment below, and

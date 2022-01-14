@@ -19,5 +19,6 @@ import (
 	_ "github.com/google/certificate-transparency-go/trillian/ctfe/ct_server"
 	_ "github.com/google/trillian/cmd/trillian_log_server"
 	_ "github.com/google/trillian/cmd/trillian_log_signer"
+	_ "github.com/sigstore/fulcio"
 	_ "github.com/sigstore/rekor/cmd/rekor-server"
 )

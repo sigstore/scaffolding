@@ -193,11 +193,6 @@ var createIndices = map[string]indexCreate{
 	"SequencedLeafMerkleIdx": {"SequencedLeafData", createIndexSequencedLeafMerkle},
 }
 
-type envConfig struct {
-	DatabaseName string `envconfig:"DATABASE" default:"trillian" required:"true"`
-	ExitDir      string `envconfig:"EXIT_DIR" required:"false"`
-}
-
 var (
 	dbName   = flag.String("db_name", "trillian", "Database name to tack on to the connection string to select the right db.")
 	mysqlURI = flag.String("mysql_uri", "", "SQL connection string in mysql format, for example: $(USER):$(PWD)@tcp($(HOST):3306)/$(DATABASE_NAME)")

@@ -17,8 +17,6 @@ including:
  You will also need [ko](https://github.com/google/ko) at least until the time
  we start to create containers / releases.  
 
-The [Knative Quickstart](https://knative.dev/docs/getting-started/) provides for kind and knative serving etc already all configured for you if you want an even faster start.
-
 yq is required.yq is a lightweight and portable command-line YAML processor. yq uses jq like syntax but works with yaml files as well as json. [yq install details here](https://github.com/mikefarah/yq#install)
 
  # Deploying

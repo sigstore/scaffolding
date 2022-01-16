@@ -68,12 +68,15 @@ jobs:
     - name: Build and Publish images, Produce release artifact.
       working-directory: ./src/github.com/${{ github.repository }}
       run: |
+        echo "Doing ko resolve for config"
         # Build a big bundle of joy, this also produces SBOMs
-        ko resolve -BRf ./config --platform=all --image-refs imagerefs > release.yaml
+        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./config --platform=all --image-refs imagerefs > release.yaml
 
+        echo "Doing ko resolve for testdata"
         # Build a big bundle of test joy, this also produces SBOMs
-        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./config --platform=all --image-refs testimagerefs > testrelease.yaml
+        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
 
+        echo "Signing images"
         # Sign all the images
         for i in `cat imagerefs testimagerefs`; do
           cosign sign $i

@@ -43,31 +43,28 @@ jobs:
       GOPATH: ${{ github.workspace }}
       GO111MODULE: on
       GOFLAGS: -ldflags=-s -ldflags=-w -tags=nostackdriver
-      KO_DOCKER_REPO: ghcr.io/mattmoor
+      KO_DOCKER_REPO: ghcr.io/vaikas
       KOFLAGS: --platform=linux/amd64,linux/arm64 -P
       COSIGN_EXPERIMENTAL: "true"
 
     steps:
-    - name: Set up Go 1.16.x
+    - name: Set up Go 1.17.x
       uses: actions/setup-go@v1
       with:
-        go-version: 1.16.x
+        go-version: 1.17.x
 
     - name: Add GOPATH/bin to PATH
       shell: bash
       run: |
         echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
         echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
     - name: Setup ko
       run: |
         echo '::group:: install ko'
-        curl -L https://github.com/google/ko/releases/download/v0.8.3/ko_0.8.3_Linux_x86_64.tar.gz | tar xzf - ko
-        chmod +x ./ko
-        sudo mv ko /usr/local/bin
+        go install github.com/google/ko@main
         echo '::endgroup::'
-        echo '::group:: install yq'
-        go get github.com/mikefarah/yq/v4
-        echo '::endgroup::'
+
     - name: Install cosign
       uses: sigstore/cosign-installer@main
 
@@ -93,45 +90,33 @@ jobs:
     - name: Build and Publish images, Produce release artifact.
       working-directory: ./src/github.com/${{ github.repository }}
       run: |
-        EXPANDER=$(ko publish ${KOFLAGS} --tags $(basename "${{ github.ref }}" ),latest -B ./cmd/kontext-expander)
-        PLATFORM_SETUP=$(ko publish ${KOFLAGS} --tags $(basename "${{ github.ref }}" ),latest -B ./cmd/platform-setup)
-        EXTRACT_DIGEST=$(ko publish ${KOFLAGS} --tags $(basename "${{ github.ref }}" ),latest -B ./cmd/extract-digest)
-        KO=$(ko publish ${KOFLAGS} --tags $(basename "${{ github.ref }}" ),latest -B github.com/google/ko/cmd/ko)
-        ko resolve ${KOFLAGS} --tags $(basename "${{ github.ref }}" ) -BRf config/core > core.yaml
-        ko resolve ${KOFLAGS} --tags $(basename "${{ github.ref }}" ) -BRf config/in-memory > in-memory.yaml
-        # concatenate them with ko
-        ko resolve -f core.yaml -f in-memory.yaml > release.yaml
-        # For extract_digests (shared with ./hack/build.sh)
-        source ./hack/build-flags.sh
-        cosign sign ${EXPANDER} ${KO} ${PLATFORM_SETUP} ${EXTRACT_DIGEST} \
-           $(extract_digests release.yaml)
+        # Build a big bundle of joy, this also produces SBOMs
+        ko resolve -BRf ./config --platform=all --image-refs imagerefs > release.yaml
+
+        # Build a big bundle of test joy, this also produces SBOMs
+        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./config --platform=all --image-refs testimagerefs > testrelease.yaml
+
+        # Sign all the images
+        for i in `cat imagerefs testimagerefs`; do
+          cosign sign $i
+        done
+
     - name: Upload Core Asset
       uses: actions/upload-release-asset@v1
       env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-        asset_path: ./src/github.com/${{ github.repository }}/core.yaml
-        asset_name: core.yaml
-        asset_content_type: text/plain
-
-    - name: Upload IMC Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
-      with:
-        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-        asset_path: ./src/github.com/${{ github.repository }}/in-memory.yaml
-        asset_name: in-memory.yaml
-        asset_content_type: text/plain
-
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
       with:
         upload_url: ${{ steps.get_release_url.outputs.upload_url }}
         asset_path: ./src/github.com/${{ github.repository }}/release.yaml
         asset_name: release.yaml
         asset_content_type: text/plain
 
+    - name: Upload Test Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
+      with:
+        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+        asset_path: ./src/github.com/${{ github.repository }}/testrelease.yaml
+        asset_name: testrelease.yaml
+        asset_content_type: text/plain

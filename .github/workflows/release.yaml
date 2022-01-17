@@ -70,11 +70,11 @@ jobs:
       run: |
         echo "Doing ko resolve for config"
         # Build a big bundle of joy, this also produces SBOMs
-        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./config --platform=all --image-refs imagerefs > release.yaml
+        ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./config --platform=all --image-refs imagerefs > release.yaml
 
         echo "Doing ko resolve for testdata"
         # Build a big bundle of test joy, this also produces SBOMs
-        ko resolve --tags $(basename "${{ github.ref }}" -BRf ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
+        ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
 
         echo "Signing images"
         # Sign all the images

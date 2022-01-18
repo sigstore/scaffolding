@@ -24,6 +24,8 @@ spec:
           value: "true"
         - name: SIGSTORE_CT_LOG_PUBLIC_KEY_FILE
           value: "/var/run/sigstore-root/rootfile.pem"
+        - name: COSIGN_REPOSITORY
+          value: "registry.local:5000/knative"
         volumeMounts:
         - name: oidc-info
           mountPath: /var/run/sigstore/cosign

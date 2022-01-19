@@ -8,41 +8,33 @@ including:
  * CTLog
  * Trillian - backing Rekor and CTLog
 
- # Requirements
+# Running on GitHub actions
 
- Before you get started, you should have a fully functioning cluster with
- [Knative](https://knative.dev). The state of the current configuration is
- tested and configured for the GitHub actions and in particular well suited
- for running Actions.
- You will also need [ko](https://github.com/google/ko) at least until the time
- we start to create containers / releases.  
+If you want to just incorporate into your tests, you can look at this
+[PR](https://github.com/nsmith5/rekor-sidekick/pull/27)] to
+see how to incorporate. It includes standing up a KinD cluster as well as how
+to install the bits and run a smoke test that exercises all the pieces. Rest of
+this document talks about howto run locally on KinD.
 
-yq is required.yq is a lightweight and portable command-line YAML processor. yq uses jq like syntax but works with yaml files as well as json. [yq install details here](https://github.com/mikefarah/yq#install)
+# Running locally on KinD
 
- # Deploying
+You should be able to install KinD and Knative bits with the following:
 
- Ideally you should just need to type:
-
- ```shell
- ko apply -BRf ./config
- ```
-
-**Note** If you are deploying from M1 you will need to update
-[.ko.yaml](./.ko.yaml) by commenting out the `CGO_ENABLED=1` and uncommenting
-`CGO_ENABLED=0`. 
-
-If you are deploying with kind you will need to set the **KO_DOCKER_REPO**
 ```shell
-export KO_DOCKER_REPO=kind.local
+./hack/setup-kind.sh
 ```
 
- If there are no errors, then to ensure things are up and running, you should
- wait for jobs to finish. Assuming there are no other jobs running in the
- cluster, you could do this with:
+# Install sigstore-scaffolding pieces
 
- ```shell
-kubectl wait --timeout 10m -A --for=condition=Complete jobs --all
- ```
+```shell
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/release.yaml | kubectl --context kind-knative apply -f -
+```
+
+# Then wait for the jobs that setup dependencies to finish
+
+```shell
+kubectl wait --timeout=10m -A --for=condition=Complete jobs --all
+```
 
 Obviously if you have other jobs running, you might have to tune this, for deets
 see [below](#outputs) what gets deployed and where.

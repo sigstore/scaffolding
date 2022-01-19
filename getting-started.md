@@ -27,7 +27,7 @@ You should be able to install KinD and Knative bits with the following:
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/release.yaml | kubectl --context kind-knative apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish

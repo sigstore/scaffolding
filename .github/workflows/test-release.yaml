@@ -31,7 +31,7 @@ jobs:
 
     env:
       KNATIVE_VERSION: "1.1.0"
-      RELEASE_VERSION: "v0.1.8-alpha"
+      RELEASE_VERSION: "v0.1.9-alpha"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 

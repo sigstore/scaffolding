@@ -82,6 +82,24 @@ and Rekor can be accessed in the cluster with:
 
  * `rekor.rekor-system.svc`
 
+## Testing Your new Sigstore Kind Cluster
+1) Get ctlog-public-key and add to default namespace 
+```shell
+kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+```
+
+3) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously) 
+```shell
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/testrelease.yaml | kubectl apply -f -
+```
+
+4) To view if jobs have completed
+```shell 
+kubectl get jobs
+``` 
+![image](https://user-images.githubusercontent.com/22457772/150190697-2c546827-0698-4bea-be02-237ed98971de.png)
+
+
 ## Example e2e test and cosign invocation using all of the above
 
 There's an [E2E](./github/workflows/fulcio-rekor-kind.yaml) test that spins all

@@ -97,8 +97,6 @@ curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-
 ```shell 
 kubectl get jobs
 ``` 
-![image](https://user-images.githubusercontent.com/22457772/150190697-2c546827-0698-4bea-be02-237ed98971de.png)
-
 
 ## Example e2e test and cosign invocation using all of the above
 

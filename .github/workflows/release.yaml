@@ -72,6 +72,13 @@ jobs:
         # Build a big bundle of joy, this also produces SBOMs
         ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./config --platform=all --image-refs imagerefs > release.yaml
 
+        # arm64 uses mysql/mysql-server but it doesn't seem to work correctly
+        # as is in github actions, because it wants to change the filesystem.
+        # TODO(vaikas): Find a way to use the same image, for now, hack and
+        # use different image for amd and arm until I sort it out.
+        # https://github.com/vaikas/sigstore-scaffolding/issues/28
+        sed -e 's@mysql:8.0@mysql/mysql-server:8.0@' /tmp/release.yaml > /tmp/release-arm.yaml
+
         echo "Doing ko resolve for testdata"
         # Build a big bundle of test joy, this also produces SBOMs
         ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
@@ -90,6 +97,16 @@ jobs:
         upload_url: ${{ steps.get_release_url.outputs.upload_url }}
         asset_path: ./src/github.com/${{ github.repository }}/release.yaml
         asset_name: release.yaml
+        asset_content_type: text/plain
+
+    - name: Upload Core ARM Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
+      with:
+        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+        asset_path: ./src/github.com/${{ github.repository }}/release-arm.yaml
+        asset_name: release-arm.yaml
         asset_content_type: text/plain
 
     - name: Upload Test Asset

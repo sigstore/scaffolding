@@ -22,7 +22,7 @@ metadata:
     app: mysql-trillian
 spec:
   containers:
-    - image: mysql:8.0
+    - image: mysql/mysql-server:8.0
       name: mysql
       env:
         - name: MYSQL_ROOT_PASSWORD

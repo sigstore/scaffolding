@@ -198,6 +198,7 @@ and adding entries to your /etc/hosts
 ```
 127.0.0.1 rekor.rekor-system.svc
 127.0.0.1 fulcio.fulcio-system.svc
+127.0.0.1 ctlog.ctlog-system.svc
 ```
 
 If you do this port forwarding, then you also have to modify the --fulcio-url
@@ -205,4 +206,25 @@ and --rekor-url above to have the local port number, so for example:
 
 ```
 --fulcio-url=http://fulcio.fulcio-system.svc:8080
+--rekor-url=http://rekor.rekor-system.svc:8080
+```
+
+You can also verify that the entries were added to the CTLog (this is assuming)
+you successfully ran the jobs to completion above. For example, this is what
+I get:
+
+```shell
+curl http://ctlog.ctlog-system.svc:8080/sigstorescaffolding/ct/v1/get-sth
+{"tree_size":1,"timestamp":1643137195022,"sha256_root_hash":"i3NpxGSUw0/Ol0NmIba9ssMbYsogHHpwD3fHIGS84AI=","tree_head_signature":"BAECAAHqdlMlgLN6lBptnCd4fWaF/m99j877NRu0RerfO8eA/t7b15UKfSRzVmXG60tk1WVCPr0I2yqckIBFMB5tb/d7WCddlWVLbhtwTFG8hJwv1NbAFuSGmkKFHaZCt8rc9Ht9hEYiZTjKjIfXDP+FudSrQt0YsmZCAcVBM0LszowLGhjrx1oUrYNKbfnihI8CEyQMN7qCz83Cebm2acDgaGfv3NgfsC7LMPVFJNN9ryG1F2kK9Mb4UF6us3k8WeAAaOzxO7+NfHNQuaCt7FbFBjrDDtTAuTSfp9rgcGgJ4AiHvrx6X8PhXt7RdTQVDMPlWKPZg/gBYKla+19GSsCLf60msrF57295c2fPoL87mDZGuxLVaSBQKOlKWb+CJAe5+WUqG22Veq8xxlHrZkaXTRToNTA6P8/Z3Vy/QHTDaDd4k3Fm33sERu7F/R46U4UMQd1eMGTIoknKupDbjbW2JigbmAJMdT8dw5EskFLY/+Usn6ykZI6MBp2hHMiW84Son7CiniIzwqYBW0JFPSm/Pf/6LAYYNg/q5DX+AmHWTB8GM58+3IodlAO3qorF7TXUZqpZCiMjlJWP5AC5NRwVfnLOu8nS+fS27dWxK0MqIcAOVTUZ+T6vFAbKCiDIDp6MwggJ2tSUx4lk3wp4i0PF9nEH8S2VeiX7c9cwsP6GXGLV"}%
+```
+
+And if you check the rekor state for example with loginfo, you can do so like:
+
+```shell
+rekor-cli --store_tree_state=false --rekor_server http://rekor.rekor-system.svc:8080 loginfo
+No previous log state stored, unable to prove consistency
+Verification Successful!
+Tree Size: 1
+Root Hash: 68034bc4c888a307cd2f3289aecc4ebf80c5b720a4655bc2b3a073671ca2d54a
+Timestamp: 2022-01-25T19:28:56Z
 ```

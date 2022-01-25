@@ -77,7 +77,7 @@ jobs:
         # TODO(vaikas): Find a way to use the same image, for now, hack and
         # use different image for amd and arm until I sort it out.
         # https://github.com/vaikas/sigstore-scaffolding/issues/28
-        sed -e 's@mysql:8.0@mysql/mysql-server:8.0@' /tmp/release.yaml > /tmp/release-arm.yaml
+        sed -e 's@mysql:8.0@mysql/mysql-server:8.0@' release.yaml > release-arm.yaml
 
         echo "Doing ko resolve for testdata"
         # Build a big bundle of test joy, this also produces SBOMs

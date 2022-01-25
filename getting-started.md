@@ -24,6 +24,12 @@ You should be able to install KinD and Knative bits with the following:
 ./hack/setup-kind.sh
 ```
 
+For a Mac,  please use this script (also please note that the airplay reciever uses the 5000 port and may need to be disabled details [here](https://developer.apple.com/forums/thread/682332)):
+
+```shell
+./hack/setup-mac-kind.sh
+```
+
 # Install sigstore-scaffolding pieces
 
 ```shell

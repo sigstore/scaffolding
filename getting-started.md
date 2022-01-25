@@ -18,23 +18,53 @@ this document talks about howto run locally on KinD.
 
 # Running locally on KinD
 
-You should be able to install KinD and Knative bits with the following:
+You should be able to install KinD and Knative bits with one of the following
+depending on your machine:
 
 ```shell
 ./hack/setup-kind.sh
 ```
 
-For a Mac,  please use this script (also please note that the airplay reciever uses the 5000 port and may need to be disabled details [here](https://developer.apple.com/forums/thread/682332)):
+For a Mac,  please use the script below (also please note that the airplay
+receiver uses the 5000 port and may need to be disabled details
+[here](https://developer.apple.com/forums/thread/682332)). Alternatively, you
+can manually modify the script and change the
+[REGISTRY_PORT](https://github.com/vaikas/sigstore-scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
 
 ```shell
 ./hack/setup-mac-kind.sh
 ```
 
+*NOTE* You may have to uninstall the docker registry container between running
+the above scripts because it spins up a registry container in a daemon mode.
+To clean a previously running registry, you can do:
+
+```shell
+docker ps -a | grep registry
+b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 minutes ago   Up 15 minutes               0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   registry.local
+```
+
+So that's the running version of the registry, so first kill and then remove it:
+```shell
+docker kill b1e3f3238f7a
+docker rm b1e3f3238f7a
+```
+
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/release.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/release.yaml | kubectl apply -f -
 ```
+
+Or for Arm64 based (M1 for example):
+
+```shell
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/release-arm.yaml | kubectl apply -f -
+```
+
+The reason for different releases is the mysql binary used in the Intel based
+release does not have Arm64 version.
+
 
 # Then wait for the jobs that setup dependencies to finish
 
@@ -89,20 +119,20 @@ and Rekor can be accessed in the cluster with:
  * `rekor.rekor-system.svc`
 
 ## Testing Your new Sigstore Kind Cluster
-1) Get ctlog-public-key and add to default namespace 
+1) Get ctlog-public-key and add to default namespace
 ```shell
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-3) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously) 
+3) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.9-alpha/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/testrelease.yaml | kubectl apply -f -
 ```
 
 4) To view if jobs have completed
-```shell 
-kubectl get jobs
-``` 
+```shell
+kubectl get jobs/checktree jobs/check-oidc
+```
 
 ## Example e2e test and cosign invocation using all of the above
 

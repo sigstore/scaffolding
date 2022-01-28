@@ -17,6 +17,7 @@ spec:
           "sign",
           "--fulcio-url", "http://fulcio.fulcio-system.svc",
           "--rekor-url", "http://rekor.rekor-system.svc",
+          "--force",
           "ko://github.com/vaikas/sigstore-scaffolding/cmd/rekor/checktree",
         ]
         env:

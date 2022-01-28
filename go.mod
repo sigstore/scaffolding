@@ -3,6 +3,7 @@ module github.com/vaikas/sigstore-scaffolding
 go 1.16
 
 require (
+	github.com/go-openapi/runtime v0.21.0
 	github.com/go-openapi/strfmt v0.21.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/glog v1.0.0

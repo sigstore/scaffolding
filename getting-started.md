@@ -37,7 +37,15 @@ can manually modify the script and change the
 
 *NOTE* You may have to uninstall the docker registry container between running
 the above scripts because it spins up a registry container in a daemon mode.
-To clean a previously running registry, you can do:
+To clean a previously running registry, you can do one of these:
+
+YOLO:
+
+```shell
+docker rm -f `docker ps -a | grep 'registry:2' | awk -F " " '{print $1}'`
+```
+
+Or to check things first:
 
 ```shell
 docker ps -a | grep registry
@@ -46,20 +54,19 @@ b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 m
 
 So that's the running version of the registry, so first kill and then remove it:
 ```shell
-docker kill b1e3f3238f7a
-docker rm b1e3f3238f7a
+docker rm -rf b1e3f3238f7a
 ```
 
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/release.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release.yaml | kubectl apply -f -
 ```
 
 Or for Arm64 based (M1 for example):
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/release-arm.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release-arm.yaml | kubectl apply -f -
 ```
 
 The reason for different releases is the mysql binary used in the Intel based
@@ -126,7 +133,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 
 3) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.12-alpha/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/testrelease.yaml | kubectl apply -f -
 ```
 
 4) To view if jobs have completed
@@ -190,7 +197,7 @@ port-forward to your cluster like so (assuming you installed Knative with
 kourier):
 
 ```shell
-kubectl -n kourier-system port-forward service/kourier-internal 8080:80
+kubectl -n kourier-system port-forward service/kourier-internal 8080:80 &
 ```
 
 and adding entries to your /etc/hosts

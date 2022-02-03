@@ -54,7 +54,7 @@ b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 m
 
 So that's the running version of the registry, so first kill and then remove it:
 ```shell
-docker rm -rf b1e3f3238f7a
+docker rm -f b1e3f3238f7a
 ```
 
 # Install sigstore-scaffolding pieces

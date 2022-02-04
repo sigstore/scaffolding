@@ -7,6 +7,22 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+THIS_OS="$(uname -s)"
+THIS_HW="$(uname -m)"
+echo "RUNNING ON ${THIS_OS}"
+if [ ${THIS_OS} == "Darwin" ]; then
+  echo "Running on Darwin"
+  RUNNING_ON_MAC="true"
+else
+  RUNNING_ON_MAC="false"
+fi
+
+if [ ${THIS_HW} == "arm64" ]; then
+  RELEASE="https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release-arm.yaml"
+else
+  RELEASE="https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release.yaml"
+fi
+
 #if [[ -z "${GITHUB_WORKSPACE}" ]]; then
 #  echo "This script is expected to run in the context of GitHub Actions."
 #  exit 1
@@ -73,16 +89,19 @@ esac
 #############################################################
 echo '::group:: Install KinD'
 
-# Disable swap otherwise memory enforcement does not work
-# See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600009955324200
-sudo swapoff -a
-sudo rm -f /swapfile
-
-# Use in-memory storage to avoid etcd server timeouts.
-# https://kubernetes.slack.com/archives/CEKK1KTN2/p1615134111016300
-# https://github.com/kubernetes-sigs/kind/issues/845
-sudo mkdir -p /tmp/etcd
-sudo mount -t tmpfs tmpfs /tmp/etcd
+EXTRA_MOUNT=""
+# This does not work on mac, so skip.
+if [ ${RUNNING_ON_MAC} == "false" ]; then
+  # Disable swap otherwise memory enforcement does not work
+  # See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600009955324200
+  sudo swapoff -a
+  sudo rm -f /swapfile
+  # Use in-memory storage to avoid etcd server timeouts.
+  # https://kubernetes.slack.com/archives/CEKK1KTN2/p1615134111016300
+  # https://github.com/kubernetes-sigs/kind/issues/845
+  sudo mkdir -p /tmp/etcd
+  sudo mount -t tmpfs tmpfs /tmp/etcd
+fi
 
 curl -Lo ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64"
 chmod +x ./kind
@@ -104,9 +123,15 @@ kind: Cluster
 nodes:
 - role: control-plane
   image: "${KIND_IMAGE}"
+EOF
+if [ ${RUNNING_ON_MAC} == "false" ]; then
+  cat >> kind.yaml <<EOF_2
   extraMounts:
   - containerPath: /var/lib/etcd
     hostPath: /tmp/etcd
+EOF_2
+fi
+cat >> kind.yaml <<EOF_3
 - role: worker
   image: "${KIND_IMAGE}"
 
@@ -127,12 +152,13 @@ kubeadmConfigPatches:
     apiServer:
       extraArgs:
         "service-account-issuer": "https://kubernetes.default.svc"
-        "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
-        "service-account-jwks-uri": "https://kubernetes.default.svc/openid/v1/jwks"
         "service-account-key-file": "/etc/kubernetes/pki/sa.pub"
+        "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
+        "service-account-api-audiences": "api,spire-server"
+        "service-account-jwks-uri": "https://kubernetes.default.svc/openid/v1/jwks"
     networking:
       dnsDomain: "${CLUSTER_SUFFIX}"
-EOF
+EOF_3
 
 cat kind.yaml
 echo '::endgroup::'

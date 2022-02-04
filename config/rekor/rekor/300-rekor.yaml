@@ -12,8 +12,6 @@ kind: Service
 metadata:
   namespace: rekor-system
   name: rekor
-  labels:
-    networking.knative.dev/visibility: cluster-local
 spec:
   template:
     spec:
@@ -34,8 +32,8 @@ spec:
           "--trillian_log_server.tlog_id=$(TREE_ID)",
           "--log_type=prod",
           "--rekor_server.signer=memory",
-          "--enable_attestation_storage=false",
-#          "--attestation_storage_bucket=gs://vaikas-rekor",
+          "--enable_attestation_storage=true",
+          "--attestation_storage_bucket=file:///tmp/",
 #          "--rekor_server.timestamp_chain=$(TIMESTAMP_CHAIN)"
         ]
         env:

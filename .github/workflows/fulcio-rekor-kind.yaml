@@ -70,18 +70,6 @@ jobs:
       with:
         version: tip
 
-    # TODO(vaikas): Figure out how to do use this for these tests
-    # In particular what we want to test is Rekor attestation storage.
-    # This is a bit more involved since we'd need to muck with the Rekor
-    # startup so that it brings up the correct client and wires it to another
-    # test endpoint.
-    #- name: Install Dependencies
-    #  working-directory: ./
-    #  run: |
-    #    echo '::group:: install minio/cm'
-    #    go install github.com/minio/mc@latest
-    #    echo '::endgroup::'
-
     - name: Check out our repo
       uses: actions/checkout@v2
       with:

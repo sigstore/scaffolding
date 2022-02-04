@@ -18,17 +18,15 @@ this document talks about howto run locally on KinD.
 
 # Running locally on KinD
 
-You should be able to install KinD and Knative bits with one of the following
-depending on your machine:
+You should be able to install KinD and Knative bits by running:
 
 ```shell
 ./hack/setup-kind.sh
 ```
 
-For a Mac,  please use the script below (also please note that the airplay
-receiver uses the 5000 port and may need to be disabled details
-[here](https://developer.apple.com/forums/thread/682332)). Alternatively, you
-can manually modify the script and change the
+**NOTE** For Macs the airplay receiver uses the 5000 port and may need to be
+disabled, details [here](https://developer.apple.com/forums/thread/682332)).
+Alternatively, you can manually modify the script and change the
 [REGISTRY_PORT](https://github.com/vaikas/sigstore-scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
 
 ```shell
@@ -80,7 +78,8 @@ kubectl wait --timeout=10m -A --for=condition=Complete jobs --all
 ```
 
 Obviously if you have other jobs running, you might have to tune this, for deets
-see [below](#outputs) what gets deployed and where.
+see [below](#outputs) what gets deployed and where. See below for how to
+test / use the local instance.
 
  # Outputs
 

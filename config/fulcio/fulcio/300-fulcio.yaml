@@ -12,8 +12,6 @@ kind: Service
 metadata:
   namespace: fulcio-system
   name: fulcio
-  labels:
-    networking.knative.dev/visibility: cluster-local
 spec:
   template:
     spec:

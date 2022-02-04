@@ -17,17 +17,6 @@ else
   RUNNING_ON_MAC="false"
 fi
 
-if [ ${THIS_HW} == "arm64" ]; then
-  RELEASE="https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release-arm.yaml"
-else
-  RELEASE="https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.13-alpha/release.yaml"
-fi
-
-#if [[ -z "${GITHUB_WORKSPACE}" ]]; then
-#  echo "This script is expected to run in the context of GitHub Actions."
-#  exit 1
-#fi
-
 # Defaults
 K8S_VERSION="v1.21.x"
 KNATIVE_VERSION="1.1.0"

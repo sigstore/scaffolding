@@ -130,12 +130,12 @@ sure that the rekor entry is created for it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-3) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
+2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
 ```shell
 curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.14/testrelease.yaml | kubectl apply -f -
 ```
 
-4) To view if jobs have completed
+3) To view if jobs have completed
 ```shell
 kubectl wait --timeout=5m --for=condition=Complete jobs checktree check-oidc
 ```

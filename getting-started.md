@@ -18,10 +18,18 @@ this document talks about howto run locally on KinD.
 
 # Running locally on KinD
 
-You should be able to install KinD and Knative bits by running:
+You should be able to install KinD and Knative bits by running (from head, after
+cloning the repo):
 
 ```shell
 ./hack/setup-kind.sh
+```
+
+Or by downloading a release version of the script
+```shell
+curl -Lo /tmp/setup-kind.sh https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.15/setup-kind.sh
+chmod u+x /tmp/setup-kind.sh
+/tmp/setup-kind.sh
 ```
 
 **NOTE** For Macs the airplay receiver uses the 5000 port and may need to be
@@ -54,13 +62,13 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.14/release.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.15/release.yaml | kubectl apply -f -
 ```
 
 Or for Arm64 based (M1 for example):
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.14/release-arm.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.15/release-arm.yaml | kubectl apply -f -
 ```
 
 The reason for different releases is the mysql binary used in the Intel based
@@ -70,7 +78,7 @@ release does not have Arm64 version.
 # Then wait for the jobs that setup dependencies to finish
 
 ```shell
-kubectl wait --timeout=10m -A --for=condition=Complete jobs --all
+kubectl wait --timeout=15m -A --for=condition=Complete jobs --all
 ```
 
 Obviously if you have other jobs running, you might have to tune this, for deets
@@ -132,7 +140,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 
 2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.14/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.15/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

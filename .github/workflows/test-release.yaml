@@ -10,7 +10,7 @@ on:
 defaults:
   run:
     shell: bash
-    working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    working-directory: ./
 
 concurrency:
   group: fulcio-rekor-kind-using-release-${{ github.head_ref }}
@@ -31,44 +31,37 @@ jobs:
 
     env:
       KNATIVE_VERSION: "1.1.0"
-      RELEASE_VERSION: "v0.1.14"
+      RELEASE_VERSION: "v0.1.15"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 
     steps:
     - name: Configure DockerHub mirror
-      working-directory: ./
       run: |
         tmp=$(mktemp)
         jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
         sudo mv "$tmp" /etc/docker/daemon.json
         sudo service docker restart
 
-    - name: Check out our repo
-      uses: actions/checkout@v2
-      with:
-        path: ./src/github.com/vaikas/sigstore-scaffolding
-
     - name: Setup Cluster
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
       run: |
-        ./hack/setup-kind.sh \
+        curl -Lo ./setup-kind.sh https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-kind.sh
+        chmod u+x ./setup-kind.sh
+        ./setup-kind.sh \
           --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
           --cluster-suffix cluster.local \
           --k8s-version ${{ matrix.k8s-version }} \
           --knative-version ${KNATIVE_VERSION}
 
     - name: Install all the everythings
-      working-directory: ./src/github.com//vaikas/sigstore-scaffolding
       timeout-minutes: 10
       run: |
         curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/release.yaml | kubectl apply -f -
 
         # Wait for all the ksvc to be up.
-        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
+        kubectl wait --timeout 15m -A --for=condition=Ready ksvc --all
 
     - name: Run Tests
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
       run: |
         # Grab the secret from the ctlog-system namespace and make a copy
         # in our namespace so we can get access to the CT Log public key
@@ -92,7 +85,7 @@ jobs:
     - name: Collect pod diagnostics
       if: ${{ failure() }}
       run: |
-        for ns in fulcio-system rekor-system trillian-system ctlog-system; do
+        for ns in default fulcio-system rekor-system trillian-system ctlog-system; do
           kubectl get pods -n${ns}
 
           for x in $(kubectl get pods -n${ns} -oname); do

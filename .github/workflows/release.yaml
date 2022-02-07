@@ -118,3 +118,13 @@ jobs:
         asset_path: ./src/github.com/${{ github.repository }}/testrelease.yaml
         asset_name: testrelease.yaml
         asset_content_type: text/plain
+
+    - name: Upload Create Kind cluster script
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
+      with:
+        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
+        asset_path: ./src/github.com/${{ github.repository }}/hack/setup-kind.sh
+        asset_name: setup-kind.sh
+        asset_content_type: text/plain

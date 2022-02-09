@@ -11,7 +11,7 @@ including:
 # Running on GitHub actions
 
 If you want to just incorporate into your tests, you can look at this
-[PR](https://github.com/nsmith5/rekor-sidekick/pull/27)] to
+[PR](https://github.com/nsmith5/rekor-sidekick/pull/27) to
 see how to incorporate. It includes standing up a KinD cluster as well as how
 to install the bits and run a smoke test that exercises all the pieces. Rest of
 this document talks about howto run locally on KinD.

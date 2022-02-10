@@ -80,8 +80,8 @@ spec:
   template:
     spec:
       containers:
-      - name: rekor-server
-        image: ko://github.com/sigstore/rekor/cmd/rekor-server
+      - name: rekor
+        image: gcr.io/projectsigstore/rekor-server@sha256:516651575db19412c94d4260349a84a9c30b37b5d2635232fba669262c5cbfa6
         args: [
           "serve",
           "--trillian_log_server.address=log-server.trillian-system.svc",
@@ -192,7 +192,7 @@ spec:
   template:
     spec:
       containers:
-      - image: ko://github.com/sigstore/fulcio/cmd/fulcio
+      - image: gcr.io/projectsigstore/fulcio@sha256:66870bd6b111f3c5478703a8fb31c062003f0127b2c2c5e49ccd82abc4ec7841
         name: fulcio
         args:
           - "serve"

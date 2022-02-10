@@ -86,7 +86,7 @@ jobs:
 
     - name: Install all the everythings
       working-directory: ./src/github.com//vaikas/sigstore-scaffolding
-      timeout-minutes: 10
+      timeout-minutes: 20
       run: |
         ko apply -BRf ./config/
 

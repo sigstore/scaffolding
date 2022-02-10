@@ -66,7 +66,7 @@ spec:
               secretKeyRef:
                 name: trillian-client
                 key: host
-        image: ko://github.com/google/trillian/cmd/trillian_log_signer
+        image: gcr.io/projectsigstore/trillian_log_signer@sha256:fe90d523f6617974f70878918e4b31d49b2b46a86024bb2d6b01d2bbfed8edbf 
         ports:
         - name: h2c
           containerPort: 8090

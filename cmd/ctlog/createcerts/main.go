@@ -39,12 +39,13 @@ const (
 )
 
 var (
-	ns               = flag.String("namespace", "ctlog-system", "Namespace where to get the configmap containing treeid")
-	cmname           = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
-	secretName       = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
-	pubKeySecretName = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
-	ctlogPrefix      = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
-	fulcioURL        = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
+	ns                 = flag.String("namespace", "ctlog-system", "Namespace where to get the configmap containing treeid")
+	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
+	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
+	pubKeySecretName   = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
+	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
+	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
+	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
 )
 
 func main() {
@@ -119,7 +120,7 @@ func main() {
 			Backends: &configpb.LogBackendSet{
 				Backend: []*configpb.LogBackend{{
 					Name:        "trillian",
-					BackendSpec: "log-server.trillian-system.svc:80",
+					BackendSpec: *trillianServerAddr,
 				}},
 			},
 		}

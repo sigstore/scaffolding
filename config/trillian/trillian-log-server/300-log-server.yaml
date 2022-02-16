@@ -23,6 +23,8 @@ spec:
         image: gcr.io/projectsigstore/trillian_log_server@sha256:f850a0defd089ea844822030c67ae05bc93c91168a7dd4aceb0b6648c39f696b
         args: [
         "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/$(DATABASE_NAME)",
+        "--mysql_max_idle_conns=0",
+        "--tree_gc=false",
         "--storage_system=mysql",
         "--quota_system=mysql",
 #        "--etcd_servers=trillian-etcd-cluster-client.etcd-system.svc:2379",

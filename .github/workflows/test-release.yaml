@@ -31,7 +31,7 @@ jobs:
 
     env:
       KNATIVE_VERSION: "1.1.0"
-      RELEASE_VERSION: "v0.1.18"
+      RELEASE_VERSION: "v0.1.19"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 
@@ -59,7 +59,7 @@ jobs:
         curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/release.yaml | kubectl apply -f -
 
         # Wait for all the ksvc to be up.
-        kubectl wait --timeout 15m -A --for=condition=Ready ksvc --all
+        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
 
     - name: Run Tests
       run: |

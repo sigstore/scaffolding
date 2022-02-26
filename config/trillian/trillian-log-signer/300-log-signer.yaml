@@ -49,24 +49,24 @@ spec:
           - name: DATABASE_NAME
             valueFrom:
               secretKeyRef:
-                name: trillian-client
-                key: name
+                name: trillian-database
+                key: database-name
           - name: MYSQL_USER
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: username
           - name: MYSQL_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: password
           - name: DATABASE_HOSTNAME
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: host
-        image: gcr.io/projectsigstore/trillian_log_signer@sha256:fe90d523f6617974f70878918e4b31d49b2b46a86024bb2d6b01d2bbfed8edbf 
+        image: gcr.io/projectsigstore/trillian_log_signer@sha256:fe90d523f6617974f70878918e4b31d49b2b46a86024bb2d6b01d2bbfed8edbf
         ports:
         - name: h2c
           containerPort: 8090

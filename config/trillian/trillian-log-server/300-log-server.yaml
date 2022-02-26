@@ -37,22 +37,22 @@ spec:
           - name: DATABASE_NAME
             valueFrom:
               secretKeyRef:
-                name: trillian-client
-                key: name
+                name: trillian-database
+                key: database-name
           - name: MYSQL_USER
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: username
           - name: MYSQL_PASSWORD
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: password
           - name: DATABASE_HOSTNAME
             valueFrom:
               secretKeyRef:
-                name: trillian-client
+                name: trillian-database
                 key: host
         ports:
         - name: h2c

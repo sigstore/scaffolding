@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/golang/glog"
 	"github.com/google/trillian"
 	"github.com/google/trillian/client"
 	"github.com/google/trillian/client/rpcflags"
@@ -79,7 +78,7 @@ func main() {
 }
 
 func createTree(ctx context.Context) (*trillian.Tree, error) {
-	req, err := newRequest()
+	req, err := newRequest(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -101,7 +100,7 @@ func createTree(ctx context.Context) (*trillian.Tree, error) {
 	return client.CreateAndInitTree(ctx, req, adminClient, logClient)
 }
 
-func newRequest() (*trillian.CreateTreeRequest, error) {
+func newRequest(ctx context.Context) (*trillian.CreateTreeRequest, error) {
 	ts, ok := trillian.TreeState_value[*treeState]
 	if !ok {
 		return nil, fmt.Errorf("unknown TreeState: %v", *treeState)
@@ -119,7 +118,7 @@ func newRequest() (*trillian.CreateTreeRequest, error) {
 		Description:     *description,
 		MaxRootDuration: durationpb.New(*maxRootDuration),
 	}}
-	glog.Infof("Creating tree %+v", ctr.Tree)
+	logging.FromContext(ctx).Infof("Creating Tree: %+v", ctr.Tree)
 
 	return ctr, nil
 }

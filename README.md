@@ -63,12 +63,10 @@ Here’s a high level overview of the components in play that we would like to b
 
 ## [Trillian](https://github.com/google/trillian)
 
-For Trillian, there needs to be a database and a schema before Trillian services are able to function. Our assumption is that there is a provisioned mysql database, for our Github actions, we spin up a [container](https://hub.docker.com/_/mysql) that has the mysql running, and then we need to create a [schema](https://github.com/google/trillian/blob/master/storage/mysql/schema/storage.sql) for it.
-
-For this we create a Kubernetes Job, which runs against a given mysql database and verifies that all the tables and indices exist. It does not currently handle upgrades to schema, but this is a feature that could be added, but looking at the Change History of the schema, the schema seems to be stable and adding this feature seemed not worth doing at this point.
-
-So, we have a k8s Job called **‘CreateDB’** which is responsible for creating the schema for a given database. As a reminder, because this is a job, automation can gate any further action before this Job successfully completes. We can also (but not currently) make Trillian services depend on the output of ‘**CreateDB’** before proceeding (by using the mounting technique described above), but we have not had need for that yet because they recover if the schema does not exist.
-
+For Trillian, there needs to be a database before Trillian services are able to
+function. Our assumption is that there is a provisioned mysql database, for our
+Github actions, we spin up a [container](gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359) that
+has the mysql running, and Trillian [schema](https://github.com/google/trillian/blob/master/storage/mysql/schema/storage.sql) on it.
 
 ## [Rekor](https://github.com/sigstore/rekor)
 

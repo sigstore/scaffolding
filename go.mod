@@ -1,4 +1,4 @@
-module github.com/vaikas/sigstore-scaffolding
+module github.com/sigstore/scaffolding
 
 go 1.16
 

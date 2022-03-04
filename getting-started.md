@@ -26,7 +26,7 @@ deployed above:
 COSIGN_EXPERIMENTAL=true SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=/var/run/sigstore-root/rootfile.pem
 cosign sign --fulcio-url=http://fulcio.fulcio-system.svc \
 --rekor-url=http://rekor.rekor-system.svc \
-ko://github.com/vaikas/sigstore-scaffolding/cmd/rekor/checktree
+ko://github.com/sigstore/scaffolding/cmd/rekor/checktree
 ```
 
 Where the `rootfile.pem` gets mounted by the job, and it's the public key of the
@@ -85,7 +85,7 @@ chmod u+x /tmp/setup-kind.sh
 **NOTE** For Macs the airplay receiver uses the 5000 port and may need to be
 disabled, details [here](https://developer.apple.com/forums/thread/682332)).
 Alternatively, you can manually modify the script and change the
-[REGISTRY_PORT](https://github.com/vaikas/sigstore-scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
+[REGISTRY_PORT](https://github.com/sigstore/scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
 
 *NOTE* If you run the script multiple times, you will have to uninstall the
 docker registry container between running the setup-kind.sh it spins up a
@@ -181,7 +181,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 
 2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of mintues), since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.18/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

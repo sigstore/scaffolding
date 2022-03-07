@@ -8,6 +8,8 @@ require (
 	github.com/google/certificate-transparency-go v1.1.2
 	github.com/google/trillian v1.4.0
 	github.com/google/uuid v1.3.0
+	github.com/hashicorp/golang-lru v0.5.4
+	github.com/hashicorp/hcl v1.0.0
 	github.com/pkg/errors v0.9.1
 	github.com/sigstore/fulcio v0.1.2-0.20220110181937-d890471d8047
 	github.com/sigstore/rekor v0.4.0
@@ -85,8 +87,6 @@ require (
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
-	github.com/hashicorp/golang-lru v0.5.4 // indirect
-	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.0 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20210703085342-c1f07ee84431 // indirect
 	github.com/jhump/protoreflect v1.9.0 // indirect

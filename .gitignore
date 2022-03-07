@@ -1,2 +1,6 @@
 
 dist/
+imagerefs
+testimagerefs
+release.yaml
+testrelease.yaml

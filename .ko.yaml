@@ -1,0 +1,74 @@
+defaultBaseImage: gcr.io/distroless/base:nonroot
+
+builds:
+- id: ctlog
+  dir: .
+  main: ./cmd/ctlog
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  - -tags
+  - "{{ .Env.GIT_HASH }}"
+  - -tags
+  - "{{ .Env.GIT_VERSION }}"
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+
+- id: fulcio
+  dir: .
+  main: ./cmd/fulcio
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  - -tags
+  - "{{ .Env.GIT_HASH }}"
+  - -tags
+  - "{{ .Env.GIT_VERSION }}"
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+
+- id: rekor
+  dir: .
+  main: ./cmd/rekor
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  - -tags
+  - "{{ .Env.GIT_HASH }}"
+  - -tags
+  - "{{ .Env.GIT_VERSION }}"
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+
+- id: trillian
+  dir: .
+  main: ./cmd/trillian
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  - -tags
+  - "{{ .Env.GIT_HASH }}"
+  - -tags
+  - "{{ .Env.GIT_VERSION }}"
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"

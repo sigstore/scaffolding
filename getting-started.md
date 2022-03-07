@@ -8,13 +8,63 @@ including:
  * CTLog
  * Trillian - backing Rekor and CTLog
 
-# Running on GitHub actions
+# Using scaffolding on your own GitHub actions
 
-If you want to just incorporate into your tests, you can look at this
-[PR](https://github.com/nsmith5/rekor-sidekick/pull/27) to
-see how to incorporate. It includes standing up a KinD cluster as well as how
-to install the bits and run a smoke test that exercises all the pieces. Rest of
-this document talks about howto run locally on KinD.
+If you want to just incorporate into your tests, you can see how Tekton chains
+does it [here](https://github.com/tektoncd/chains/blob/main/.github/workflows/kind-e2e.yaml#L76-L104) or
+looking at [E2E](./github/workflows/fulcio-rekor-kind.yaml) test that spins all
+these up.
+
+As part of the E2E test we use [cosign](https://github.com/sigstore/cosign) to
+sign an image (and verify an entry made it Rekor), that should hopefully show
+you to use it in your tests as well. The invocation is
+[here](./testdata/config/sign-job/sign-job.yaml) and while it's wrapped in a k8s
+Job and it uses a container, it basically executes this against the stack
+deployed above:
+
+```shell
+COSIGN_EXPERIMENTAL=true SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=/var/run/sigstore-root/rootfile.pem
+cosign sign --fulcio-url=http://fulcio.fulcio-system.svc \
+--rekor-url=http://rekor.rekor-system.svc \
+ko://github.com/sigstore/scaffolding/cmd/rekor/checktree
+```
+
+Where the `rootfile.pem` gets mounted by the job, and it's the public key of the
+CTLog, so we can verify the SCT coming back from Fulcio.
+
+
+But roughly the workflow in your Github Action should be along these lines. It
+setups a KinD cluster as well as sigstore and makes sure the setup works in
+three distinct steps.
+
+```
+    - name: Setup Cluster
+      run: |
+        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/setup-kind.sh
+        chmod u+x ./setup-kind.sh
+        ./setup-kind.sh \
+          --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
+          --cluster-suffix cluster.local \
+          --k8s-version ${{ matrix.k8s-version }} \
+          --knative-version ${KNATIVE_VERSION}
+    - name: Install sigstore pieces
+      timeout-minutes: 10
+      run: |
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/release.yaml | kubectl apply -f -
+        # Wait for all the ksvc to be up.
+        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
+    - name: Run sigstore tests to make sure all is well
+      run: |
+        # Grab the secret from the ctlog-system namespace and make a copy
+        # in our namespace so we can get access to the CT Log public key
+        # so we can verify the SCT coming from there.
+        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
+        kubectl wait --for=condition=Complete --timeout=90s job/check-oidc
+        kubectl wait --for=condition=Complete --timeout=90s job/checktree
+```
+
+Rest of this document talks about howto run locally on KinD.
 
 # Running locally on KinD
 
@@ -27,7 +77,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.18/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.1.19/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -35,10 +85,11 @@ chmod u+x /tmp/setup-kind.sh
 **NOTE** For Macs the airplay receiver uses the 5000 port and may need to be
 disabled, details [here](https://developer.apple.com/forums/thread/682332)).
 Alternatively, you can manually modify the script and change the
-[REGISTRY_PORT](https://github.com/vaikas/sigstore-scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
+[REGISTRY_PORT](https://github.com/sigstore/scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
 
-*NOTE* You may have to uninstall the docker registry container between running
-the above scripts because it spins up a registry container in a daemon mode.
+*NOTE* If you run the script multiple times, you will have to uninstall the
+docker registry container between running the setup-kind.sh it spins up a
+registry container in a daemon mode.
 To clean a previously running registry, you can do one of these:
 
 YOLO:
@@ -62,7 +113,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.18/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -93,7 +144,7 @@ services `log-server`, `log-signer`, and a mysql pod.
 To access these services from the cluster, you'd use:
 
  * `log-server.trillian-system.svc`
- * `log-server.trillian-system.svc`
+ * `log-signer.trillian-system.svc`
  * `mysql-trillian.trillian-system.svc`
 
  ## ctlog-system namespace
@@ -128,9 +179,9 @@ sure that the rekor entry is created for it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit, since the two jobs are launched simultaneously)
+2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of mintues), since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/v0.1.18/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed
@@ -203,27 +254,3 @@ For example, to verify an image hosted in the local registry:
 ```shell
 COSIGN_EXPERIMENTAL=1 ./main verify --allow-insecure-registry  registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
 ```
-
-## Incorporating to e2e tests for projects using Sigstore.
-
-There's an [E2E](./github/workflows/fulcio-rekor-kind.yaml) test that spins all
-these up and before the documentation here catches up is probably the best place
-to look to see how things are spun up if you run into trouble or want to use it
-in your tests.
-
-As part of the E2E test we use [cosign](https://github.com/sigstore/cosign) to
-sign an image (and verify an entry made it Rekor), that should hopefully allow
-you to use it in your tests as well. The invocation is
-[here](./testdata/config/sign-job/sign-job.yaml) and while it's wrapped in a k8s
-Job and it uses a container, it basically executes this against the stack
-deployed above:
-
-```shell
-COSIGN_EXPERIMENTAL=true SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=/var/run/sigstore-root/rootfile.pem
-cosign sign --fulcio-url=http://fulcio.fulcio-system.svc \
---rekor-url=http://rekor.rekor-system.svc \
-ko://github.com/vaikas/sigstore-scaffolding/cmd/rekor/checktree
-```
-
-Where the `rootfile.pem` gets mounted by the job, and it's the public key of the
-CTLog, so we can verify the SCT coming back from Fulcio.

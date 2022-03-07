@@ -292,7 +292,6 @@ do
 done
 
 # Enable magic dns so we can interact with minio from our scripts.
-# TODO(vaikas): Wire up minio for Rekor attestation storage.
 resource_blaster serving serving-default-domain.yaml | kubectl apply -f -
 
 # Wait for the job to complete, so we can reliably use ksvc hostnames.

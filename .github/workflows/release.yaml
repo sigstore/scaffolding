@@ -1,113 +1,60 @@
 on:
   push:
-    # Sequence of patterns matched against refs/tags
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
-name: Create Release
+name: Release
 
 jobs:
-  ko-resolve:
-    name: Release ko artifact
+  release:
     runs-on: ubuntu-latest
 
-    # https://docs.github.com/en/actions/reference/authentication-in-a-workflow
     permissions:
-      id-token: write  # undocumented OIDC support.
+      id-token: write
       packages: write
-      contents: read
+      contents: write
 
     env:
       GOPATH: ${{ github.workspace }}
       GO111MODULE: on
-      GOFLAGS: -ldflags=-s -ldflags=-w -tags=nostackdriver
-      KO_DOCKER_REPO: ghcr.io/vaikas
-      KOFLAGS: --platform=linux/amd64,linux/arm64 -P
       COSIGN_EXPERIMENTAL: "true"
 
     steps:
-    - name: Set up Go 1.17.x
-      uses: actions/setup-go@v1
+    - uses: actions/setup-go@f6164bd8c8acb4a71fb2791a8b6c4024ff038dab # v2.2.0
       with:
         go-version: 1.17.x
-
-    - name: Add GOPATH/bin to PATH
-      shell: bash
-      run: |
-        echo "GOPATH=$(go env GOPATH)" >> $GITHUB_ENV
-        echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-
-    - name: Setup ko
-      run: |
-        echo '::group:: install ko'
-        go install github.com/google/ko@main
-        echo '::endgroup::'
+    # will use the latest release available for ko
+    - name: Install ko
+      uses: imjasonh/setup-ko@2c3450ca27f6e6f2b02e72a40f2163c281a1f675 # v0.4
 
     - name: Install cosign
-      uses: sigstore/cosign-installer@main
+      uses: sigstore/cosign-installer@179e0f15e70e22ca2e7254fc12d68a9fbab35614 # v2.0.1
+
+    - name: Install GoReleaser
+      uses: goreleaser/goreleaser-action@b953231f81b8dfd023c58e0854a721e35037f28b # v2.9.1
+      with:
+        install-only: true
 
     - name: Log into ghcr.io
       uses: docker/login-action@v1
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
-        password: ${{ secrets.GH_REPO_PAT }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check out code onto GOPATH
-      uses: actions/checkout@v2
+      uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # v2.4.0
       with:
         fetch-depth: 1
         path: ./src/github.com/${{ github.repository }}
 
-    - name: Get Release URL
-      id: get_release_url
-      uses: bruceadams/get-release@v1.2.0
-      env:
-        GITHUB_TOKEN: ${{ github.token }}
+    - name: Get TAG
+      id: get_tag
+      run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
 
-    - name: Build and Publish images, Produce release artifact.
+    - name: Run goreleaser
       working-directory: ./src/github.com/${{ github.repository }}
-      run: |
-        echo "Doing ko resolve for config"
-        # Build a big bundle of joy, this also produces SBOMs
-        ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./config --platform=all --image-refs imagerefs > release.yaml
-
-        echo "Doing ko resolve for testdata"
-        # Build a big bundle of test joy, this also produces SBOMs
-        ko resolve --tags $(basename "${{ github.ref }}" ),latest -BRf ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
-
-        echo "Signing images"
-        # Sign all the images
-        for i in `cat imagerefs testimagerefs`; do
-          cosign sign $i
-        done
-
-    - name: Upload Core Asset
-      uses: actions/upload-release-asset@v1
+      run: goreleaser release --rm-dist
       env:
-        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
-      with:
-        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-        asset_path: ./src/github.com/${{ github.repository }}/release.yaml
-        asset_name: release.yaml
-        asset_content_type: text/plain
-
-    - name: Upload Test Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
-      with:
-        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-        asset_path: ./src/github.com/${{ github.repository }}/testrelease.yaml
-        asset_name: testrelease.yaml
-        asset_content_type: text/plain
-
-    - name: Upload Create Kind cluster script
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GH_REPO_PAT }}
-      with:
-        upload_url: ${{ steps.get_release_url.outputs.upload_url }}
-        asset_path: ./src/github.com/${{ github.repository }}/hack/setup-kind.sh
-        asset_name: setup-kind.sh
-        asset_content_type: text/plain
+        GIT_TAG: ${{ steps.get_tag.outputs.TAG }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

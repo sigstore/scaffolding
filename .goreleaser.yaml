@@ -1,32 +1,28 @@
-# This is an example .goreleaser.yml file with some sensible defaults.
-# Make sure to check the documentation at https://goreleaser.com
+project_name: scaffolding
+
+env:
+  - GO111MODULE=on
+  - COSIGN_EXPERIMENTAL=true
+
 before:
   hooks:
-    # You may remove this if you don't use go modules.
     - go mod tidy
-    # you may remove this if you don't need go generate
-    - go generate ./...
+    - /bin/bash -c 'if [ -n "$(git --no-pager diff --exit-code go.mod go.sum)" ]; then exit 1; fi'
+    - /bin/bash -c 'make release-images'
+    - /bin/bash -c 'make sign-images'
+
 builds:
-  - env:
-      - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      - darwin
-archives:
-  - replacements:
-      darwin: Darwin
-      linux: Linux
-      windows: Windows
-      386: i386
-      amd64: x86_64
-checksum:
-  name_template: 'checksums.txt'
-snapshot:
-  name_template: "{{ incpatch .Version }}-next"
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - '^docs:'
-      - '^test:'
+  - skip: true
+
+release:
+  prerelease: allow # remove this when we start publishing non-prerelease or set to auto
+  draft: true # allow for manual edits
+  github:
+    owner: sigstore
+    name: scaffolding
+  footer: |
+    ### Thanks to all contributors!
+  extra_files:
+    - glob: "./release.yaml"
+    - glob: "./testrelease.yaml"
+    - glob: "./hack/setup-kind.sh"

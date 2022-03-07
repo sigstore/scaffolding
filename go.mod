@@ -17,7 +17,7 @@ require (
 	google.golang.org/protobuf v1.27.1
 	k8s.io/api v0.23.4
 	k8s.io/apimachinery v0.23.4
-	k8s.io/client-go v0.23.1
+	k8s.io/client-go v0.23.4
 	k8s.io/code-generator v0.22.5
 	knative.dev/hack v0.0.0-20220111151514-59b0cf17578e
 	knative.dev/pkg v0.0.0-20220112181951-2b23ad111bc2

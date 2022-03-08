@@ -181,7 +181,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 
 2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of minutees), since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.0/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

@@ -290,5 +290,6 @@ This document focused on the Tree management, Certificate, Key and such creation
 automagically, coordinating the interactions and focusing on the fact that no
 manual intervention is required at any point during the deployment and relying
 on k8s primitives and semantics. If you need any customization of where things
-live, or control any knobs, you might want to look at the helm charts that wrap
-this repo in a more customizable way.
+live, or control any knobs, you might want to look at the
+[helm charts](https://github.com/sigstore/helm-charts/tree/main/charts/scaffold)
+that wrap this repo in a more customizable way.

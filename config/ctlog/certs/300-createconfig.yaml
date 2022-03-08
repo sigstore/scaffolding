@@ -4,17 +4,17 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: createcerts
+  name: createctconfig
   namespace: ctlog-system
 spec:
   template:
     spec:
-      serviceAccountName: createcerts
+      serviceAccountName: createctconfig
       restartPolicy: Never
       automountServiceAccountToken: true
       containers:
-      - name: createcerts
-        image: ko://github.com/sigstore/scaffolding/cmd/ctlog/createcerts
+      - name: createctconfig
+        image: ko://github.com/sigstore/scaffolding/cmd/ctlog/createctconfig
         args: [
           "--namespace=ctlog-system",
           "--configmap=ctlog-config",

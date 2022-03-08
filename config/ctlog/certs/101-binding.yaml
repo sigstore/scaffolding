@@ -26,5 +26,5 @@ roleRef:
   name: secret-operator
 subjects:
 - kind: ServiceAccount
-  name: createcerts
+  name: createctconfig
   namespace: ctlog-system

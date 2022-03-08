@@ -77,7 +77,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.1.19/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.0/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -113,7 +113,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.0/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -179,9 +179,9 @@ sure that the rekor entry is created for it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of mintues), since the two jobs are launched simultaneously)
+2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of minutes), since the two jobs are launched simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.1.19/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.0/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

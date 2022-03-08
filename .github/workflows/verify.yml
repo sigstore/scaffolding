@@ -24,3 +24,20 @@ jobs:
         run: |
           set -e
           addlicense -check -l apache -c 'The Sigstore Authors' -ignore '.github/**' -ignore "third_party/**" -ignore "config/**/**/*.yaml" -ignore "testdata/**/**/*.yaml" -v *
+
+  shellcheck:
+    name: runner / shellcheck
+    runs-on: ubuntu-latest
+
+    permissions:
+      pull-requests: write
+
+    steps:
+      - uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # v3.0.0
+
+      - name: shellcheck
+        uses: reviewdog/action-shellcheck@96c6653098ad696d9441d726c0593866671872f2 # v1.14.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          path: "."
+          pattern: "*.sh"

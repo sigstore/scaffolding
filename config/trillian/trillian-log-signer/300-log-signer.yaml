@@ -1,6 +1,4 @@
-# Copyright 2021 Chainguard, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -27,23 +25,23 @@ spec:
       containers:
       - name: log-signer
         args: [
-        "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/$(DATABASE_NAME)",
-        "--storage_system=mysql",
-        # Either force the master, or use the etcd looks like are the only
-        # two options. For now, just use this until we sort etcd stuff out.
-        "--force_master",
-#        "--etcd_servers=trillian-etcd-cluster-client.etcd-system.svc:2379",
-        "--quota_system=mysql",
-#        "--etcd_http_service=trillian-logsigner-http",
-#        "--http_endpoint=0.0.0.0:8091",
-        "--sequencer_guard_window=1s",
-        "--sequencer_interval=20ms",
-        "--num_sequencers=10",
-        "--batch_size=500",
-        # No idea what this is...
-        # "$(SIGNER_DEQUEUE_BUCKET_FRACTION)",
-        "--master_hold_jitter=7200s",
-        "--alsologtostderr"
+          "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/$(DATABASE_NAME)",
+          "--storage_system=mysql",
+          # Either force the master, or use the etcd looks like are the only
+          # two options. For now, just use this until we sort etcd stuff out.
+          "--force_master",
+  #        "--etcd_servers=trillian-etcd-cluster-client.etcd-system.svc:2379",
+          "--quota_system=mysql",
+  #        "--etcd_http_service=trillian-logsigner-http",
+  #        "--http_endpoint=0.0.0.0:8091",
+          "--sequencer_guard_window=1s",
+          "--sequencer_interval=20ms",
+          "--num_sequencers=10",
+          "--batch_size=500",
+          # No idea what this is...
+          # "$(SIGNER_DEQUEUE_BUCKET_FRACTION)",
+          "--master_hold_jitter=7200s",
+          "--alsologtostderr"
         ]
         env:
           - name: DATABASE_NAME

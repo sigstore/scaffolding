@@ -1,6 +1,4 @@
-# Copyright 2021 Chainguard, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
+---
 apiVersion: batch/v1
 kind: Job
 metadata:

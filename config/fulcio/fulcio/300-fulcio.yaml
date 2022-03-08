@@ -1,6 +1,4 @@
-# Copyright 2021 Chainguard, Inc.
-# SPDX-License-Identifier: Apache-2.0
-
+---
 apiVersion: v1
 kind: ServiceAccount
 metadata:
@@ -69,4 +67,3 @@ spec:
                 - key: ca.crt
                   path: ca.crt
                   mode: 0666
-

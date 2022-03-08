@@ -3,17 +3,13 @@ defaultBaseImage: gcr.io/distroless/base:nonroot
 builds:
 - id: ctlog
   dir: .
-  main: ./cmd/ctlog
+  main: ./cmd/ctlog/createctconfig
   env:
   - CGO_ENABLED=0
   flags:
   - -trimpath
   - -tags
   - nostackdriver
-  - -tags
-  - "{{ .Env.GIT_HASH }}"
-  - -tags
-  - "{{ .Env.GIT_VERSION }}"
   ldflags:
   - -s
   - -w
@@ -21,17 +17,13 @@ builds:
 
 - id: fulcio
   dir: .
-  main: ./cmd/fulcio
+  main: ./cmd/fulcio/createcerts
   env:
   - CGO_ENABLED=0
   flags:
   - -trimpath
   - -tags
   - nostackdriver
-  - -tags
-  - "{{ .Env.GIT_HASH }}"
-  - -tags
-  - "{{ .Env.GIT_VERSION }}"
   ldflags:
   - -s
   - -w
@@ -39,17 +31,13 @@ builds:
 
 - id: rekor
   dir: .
-  main: ./cmd/rekor
+  main: ./cmd/rekor/checktree
   env:
   - CGO_ENABLED=0
   flags:
   - -trimpath
   - -tags
   - nostackdriver
-  - -tags
-  - "{{ .Env.GIT_HASH }}"
-  - -tags
-  - "{{ .Env.GIT_VERSION }}"
   ldflags:
   - -s
   - -w
@@ -57,17 +45,13 @@ builds:
 
 - id: trillian
   dir: .
-  main: ./cmd/trillian
+  main: ./cmd/trillian/createtree
   env:
   - CGO_ENABLED=0
   flags:
   - -trimpath
   - -tags
   - nostackdriver
-  - -tags
-  - "{{ .Env.GIT_HASH }}"
-  - -tags
-  - "{{ .Env.GIT_VERSION }}"
   ldflags:
   - -s
   - -w

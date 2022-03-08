@@ -93,11 +93,11 @@ that has the mysql running, and Trillian
 Rekor requires a Merkle tree that has been created in Trillian to function. This
 can be achieved by using the admin grpc client
 [CreateTree](https://github.com/google/trillian/blob/master/trillian_admin_api.proto#L49)
-call. This again is a Job ‘**CreateTree**’ and this job will also create a
+call. This again is a Job ‘**createtree**’ and this job will also create a
 ConfigMap containing the newly minted TreeID. This allows us to (recall mounting
 Configmaps to pods from above) to block Rekor server from starting before the
 TreeID has been provisioned. So, assuming that Rekor runs in Namespace
-rekor-system and the ConfigMap that is created by ‘**CreateTree**’ Job, we can
+rekor-system and the ConfigMap that is created by ‘**createtree**’ Job, we can
 have the following (some stuff omitted for readability) in our Rekor Deployment
 to ensure that Rekor will not start prior to TreeID having been properly
 provisioned.
@@ -134,7 +134,7 @@ because it actually has a dependency on Trillian as well as Fulcio (more about
 Fulcio details later).
 
 For Trillian, we just need to create another TreeID, but we’re reusing the
-same ‘**CreateTree**’ Job from above.
+same ‘**createtree**’ Job from above.
 
 In addition to Trillian, the dependency on Fulcio is that we need to establish
 trust for the Root Certificate that Fulcio is using so that when Fulcio sends
@@ -144,9 +144,9 @@ API call to fetch the Certificate.
 
 Lastly we need to create a Certificate for CTLog itself.
 
-So in addition to ‘**CreateTree**’ Job, we also have a ‘**CreateCerts**’ Job
+So in addition to ‘**createtree**’ Job, we also have a ‘**createctconfig**’ Job
 that will fail to make progress until TreeID has been populated in the ConfigMap
-by the ‘**CreateTree**’ call above. Once the TreeID has been created, it will
+by the ‘**createtree**’ call above. Once the TreeID has been created, it will
 try to fetch a Fulcio Root Certificate (again, failing until it becomes
 available). Once the Fulcio Root Certificate is retrieved, the Job will then
 create a Public/Private keys to be used by the CTLog service and will write the
@@ -160,7 +160,7 @@ following two Secrets (names can be changed ofc):
 
 In addition to the Secrets above, the Job will also add a new entry into the
 ConfigMap (now that I write this, it could just as well go in the secrets above
-I think…) created by the ‘**CreateTree**’ above. This entry is called ‘config’
+I think…) created by the ‘**createtree**’ above. This entry is called ‘config’
 and it’s a serialized ProtoBuf required by the CTLog to start up.
 
 Again by using the fact that the Pod will not start until all the required
@@ -211,7 +211,7 @@ spec:
 Here instead of mounting into environmental variables, we must mount to the
 filesystem given how the CTLog expects these things to be materialized.
 
-Ok, so with the ‘**CreateTree**’ and ‘**CreateCerts**’ jobs having successfully
+Ok, so with the ‘**createtree**’ and ‘**createctconfig**’ jobs having successfully
 completed, CTLog will happily start up and be ready to serve requests. Again if
 it fails, tests will fail and the logs will contain information about the
 particular failure.
@@ -224,14 +224,15 @@ the SCT returned by the Fulcio to ensure it actually was properly signed.
 
 Make it stop!!! Is there more??? Last one, I promise… For Fulcio we just need to
 create a Root Certificate that it will use to sign incoming Signing Certificate
-requests. For this we again have a Job ‘**CreateCerts**’ (different from above:
-TODO(vaikas): Rename)) that will create a self signed certificate,
-private/public keys as well as password used to encrypt the private key.
+requests. For this we again have a Job ‘**createcerts**’ that will create a self
+signed certificate, private/public keys as well as password used to encrypt the
+private key.
 Basically we need to ensure we have all the
 [necessary pieces](https://github.com/sigstore/fulcio/blob/main/cmd/app/serve.go#L63-L65)
 to start up Fulcio.
 
-This ‘**CreateCerts**’ job just creates the pieces mentioned above and creates a Secret containing the following keys:
+This ‘**createcerts**’ job just creates the pieces mentioned above and creates
+a Secret containing the following keys:
 
 * cert - Root Certificate
 * private - Private key

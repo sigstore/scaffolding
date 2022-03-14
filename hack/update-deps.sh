@@ -19,13 +19,14 @@ set -o pipefail
 
 # Knative sets this to the root of the git repo otherwise and is unhappy
 REPO_ROOT_DIR=$(dirname "$0")/..
-pushd ${REPO_ROOT_DIR}
-echo === Vendoring scripts
+pushd "${REPO_ROOT_DIR}"
+echo "=== Vendoring scripts"
 go mod vendor
 
-source $(dirname "$0")/../vendor/knative.dev/hack/library.sh
+# shellcheck disable=SC1091
+source "$(dirname "$0")/../vendor/knative.dev/hack/library.sh"
 
 go_update_deps "$@"
 
-echo === Removing vendor/
-rm -rf $REPO_ROOT_DIR/vendor/
+echo "=== Removing vendor/"
+rm -rf "$REPO_ROOT_DIR/vendor/"

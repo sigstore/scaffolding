@@ -18,9 +18,8 @@ set -o nounset
 set -o pipefail
 
 THIS_OS="$(uname -s)"
-THIS_HW="$(uname -m)"
 echo "RUNNING ON ${THIS_OS}"
-if [ ${THIS_OS} == "Darwin" ]; then
+if [ "${THIS_OS}" == "Darwin" ]; then
   echo "Running on Darwin"
   RUNNING_ON_MAC="true"
 else
@@ -33,7 +32,6 @@ KNATIVE_VERSION="1.1.0"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"
-NODE_COUNT="1"
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"
@@ -88,7 +86,6 @@ esac
 #############################################################
 echo '::group:: Install KinD'
 
-EXTRA_MOUNT=""
 # This does not work on mac, so skip.
 if [ ${RUNNING_ON_MAC} == "false" ]; then
   # Disable swap otherwise memory enforcement does not work
@@ -263,7 +260,7 @@ kubectl patch configmap/config-network \
 
 # Wait for Knative to be ready (or webhook will reject SaaS)
 for x in $(kubectl get deploy --namespace knative-serving -oname); do
-  kubectl rollout status --timeout 5m --namespace knative-serving $x
+  kubectl rollout status --timeout 5m --namespace knative-serving "$x"
 done
 
 # Enable the features we need that are currently feature-flagged in Knative.

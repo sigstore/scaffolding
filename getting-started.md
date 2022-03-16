@@ -254,5 +254,5 @@ for cosign you have to use `--allow-insecure-flag` in your cosign invocations.
 For example, to verify an image hosted in the local registry:
 
 ```shell
-COSIGN_EXPERIMENTAL=1 ./main verify --allow-insecure-registry  registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
+SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url=http://rekor.rekor-system.svc:8080 --allow-insecure-registry registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
 ```

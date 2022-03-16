@@ -24,15 +24,15 @@ spec:
           value: "true"
         - name: COSIGN_EXPERIMENTAL
           value: "true"
-        - name: SIGSTORE_CT_LOG_PUBLIC_KEY_FILE
-          value: "/var/run/sigstore-root/rootfile.pem"
+        - name: SIGSTORE_ROOT_FILE
+          value: "/var/run/sigstore-fulcio/fulcio-public.pem"
         - name: COSIGN_REPOSITORY
           value: "registry.local:5000/knative"
         volumeMounts:
         - name: oidc-info
           mountPath: /var/run/sigstore/cosign
         - name: keys
-          mountPath: "/var/run/sigstore-root"
+          mountPath: "/var/run/sigstore-fulcio"
           readOnly: true
       volumes:
         - name: oidc-info
@@ -44,7 +44,7 @@ spec:
                   audience: sigstore
         - name: keys
           secret:
-            secretName: ctlog-public-key
+            secretName: fulcio-secret
             items:
-            - key: public
-              path: rootfile.pem
+            - key: cert
+              path: fulcio-public.pem

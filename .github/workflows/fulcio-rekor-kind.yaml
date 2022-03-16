@@ -124,6 +124,10 @@ jobs:
     - name: Verify the image with cosign
       working-directory: ./src/github.com/vaikas/sigstore-scaffolding
       run: |
+        # Grab the secret from the fulcio-system namespace and make a copy
+        # in our namespace so we can get access to the Fulcio public key
+        # so we can verify against it.
+        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
         ko apply -f ./testdata/config/verify-job
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job

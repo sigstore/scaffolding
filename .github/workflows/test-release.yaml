@@ -28,7 +28,7 @@ jobs:
 
     env:
       KNATIVE_VERSION: "1.1.0"
-      RELEASE_VERSION: "v0.2.0"
+      RELEASE_VERSION: "v0.2.2"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 
@@ -42,7 +42,7 @@ jobs:
 
     - name: Setup Cluster
       run: |
-        curl -Lo ./setup-kind.sh https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-kind.sh
+        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-kind.sh
         chmod u+x ./setup-kind.sh
         ./setup-kind.sh \
           --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
@@ -53,7 +53,7 @@ jobs:
     - name: Install all the everythings
       timeout-minutes: 10
       run: |
-        curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/release.yaml | kubectl apply -f -
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/release.yaml | kubectl apply -f -
 
         # Wait for all the ksvc to be up.
         kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
@@ -65,10 +65,11 @@ jobs:
         # so we can verify the SCT coming from there.
         kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
-        curl -L https://github.com/vaikas/sigstore-scaffolding/releases/download/${{ env.RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
 
-        kubectl wait --for=condition=Complete --timeout=90s job/check-oidc
+        kubectl wait --for=condition=Complete --timeout=90s job/sign-job
         kubectl wait --for=condition=Complete --timeout=90s job/checktree
+        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
     - name: Collect node diagnostics
       if: ${{ failure() }}

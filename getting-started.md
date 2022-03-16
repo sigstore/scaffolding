@@ -60,7 +60,7 @@ three distinct steps.
         # so we can verify the SCT coming from there.
         kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
         curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
-        kubectl wait --for=condition=Complete --timeout=90s job/check-oidc
+        kubectl wait --for=condition=Complete --timeout=90s job/sign-job
         kubectl wait --for=condition=Complete --timeout=90s job/checktree
 ```
 
@@ -179,14 +179,16 @@ sure that the rekor entry is created for it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-2) Create the two test jobs (checktree and check-oidc)  using this yaml (this may take a bit (~couple of minutes), since the two jobs are launched simultaneously)
+2) Create the three test jobs (checktree, sign-job, and verify-job)  using this
+yaml (this may take a bit (~couple of minutes), since the jobs are launched
+simultaneously)
 ```shell
 curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.0/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed
 ```shell
-kubectl wait --timeout=5m --for=condition=Complete jobs checktree check-oidc
+kubectl wait --timeout=5m --for=condition=Complete jobs checktree sign-job verify-job
 ```
 
 ## Exercising the local cluster
@@ -252,5 +254,5 @@ for cosign you have to use `--allow-insecure-flag` in your cosign invocations.
 For example, to verify an image hosted in the local registry:
 
 ```shell
-COSIGN_EXPERIMENTAL=1 ./main verify --allow-insecure-registry  registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
+SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url=http://rekor.rekor-system.svc:8080 --allow-insecure-registry registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
 ```

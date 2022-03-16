@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: sign-job
+  name: verify-job
 spec:
   template:
     spec:
@@ -13,24 +13,26 @@ spec:
         # Built from ci on 2022-03-15
         image: gcr.io/projectsigstore/cosign/ci/cosign@sha256:8f7f1a0e7cef67c352f00acd14791d977faa8d1cd47a69f9c880a5185c44ffbb
         args: [
-          "sign",
-          "--fulcio-url", "http://fulcio.fulcio-system.svc",
+          "verify",
           "--rekor-url", "http://rekor.rekor-system.svc",
-          "--force",
+          "--allow-insecure-registry",
           "ko://github.com/sigstore/scaffolding/cmd/rekor/checktree",
         ]
         env:
+        # Trust the Rekor public key that is fetched from it.
+        - name: SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY
+          value: "true"
         - name: COSIGN_EXPERIMENTAL
           value: "true"
-        - name: SIGSTORE_CT_LOG_PUBLIC_KEY_FILE
-          value: "/var/run/sigstore-root/rootfile.pem"
+        - name: SIGSTORE_ROOT_FILE
+          value: "/var/run/sigstore-fulcio/fulcio-public.pem"
         - name: COSIGN_REPOSITORY
           value: "registry.local:5000/knative"
         volumeMounts:
         - name: oidc-info
           mountPath: /var/run/sigstore/cosign
         - name: keys
-          mountPath: "/var/run/sigstore-root"
+          mountPath: "/var/run/sigstore-fulcio"
           readOnly: true
       volumes:
         - name: oidc-info
@@ -42,7 +44,7 @@ spec:
                   audience: sigstore
         - name: keys
           secret:
-            secretName: ctlog-public-key
+            secretName: fulcio-secret
             items:
-            - key: public
-              path: rootfile.pem
+            - key: cert
+              path: fulcio-public.pem

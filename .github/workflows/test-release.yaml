@@ -76,6 +76,14 @@ jobs:
         kubectl wait --for=condition=Complete --timeout=180s job/checktree
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
+    - name: Set the endpoints on the cluster
+      run: |
+        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+
+    - name: Run curl against rekor
+      run: |
+        curl ${{ env.REKOR_URL }}/api/v1/log
+
     - name: Collect node diagnostics
       if: ${{ failure() }}
       run: |

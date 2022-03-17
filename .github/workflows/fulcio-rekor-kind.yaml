@@ -9,6 +9,8 @@ defaults:
     shell: bash
     working-directory: ./src/github.com/vaikas/sigstore-scaffolding
 
+permissions: read-all
+
 concurrency:
   group: fulcio-rekor-kind-${{ github.head_ref }}
   cancel-in-progress: true
@@ -17,6 +19,11 @@ jobs:
   fulcio-rekor-ctlog-tests:
     name: e2e tests
     runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:
@@ -131,6 +138,52 @@ jobs:
         ko apply -f ./testdata/config/verify-job
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+
+    - name: Set the endpoints on the cluster and grab secrets
+      run: |
+        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+
+        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
+
+        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
+
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@main
+        with:
+          cosign-release: 'main'
+
+      - name: Create sample image
+        run: |
+          pushd $(mktemp -d)
+          go mod init example.com/demo
+          cat <<EOF > main.go
+          package main
+          import "fmt"
+          func main() {
+            fmt.Println("hello world")
+          }
+          EOF
+          demoimage=`ko publish -B example.com/demo`
+          echo "demoimage=$demoimage" >> $GITHUB_ENV
+          echo Created image $demoimage
+          popd
+
+
+      - name: Sign with cosign
+        run: |
+        COSIGN_EXPERIMENTAL=1 ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }}
+
+      - name: Verify with cosign
+        run: |
+        SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect node diagnostics
       if: ${{ failure() }}

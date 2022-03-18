@@ -9,8 +9,6 @@ defaults:
     shell: bash
     working-directory: ./src/github.com/vaikas/sigstore-scaffolding
 
-permissions: read-all
-
 concurrency:
   group: fulcio-rekor-kind-${{ github.head_ref }}
   cancel-in-progress: true
@@ -40,6 +38,7 @@ jobs:
       GOFLAGS: -ldflags=-s -ldflags=-w
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
+      COSIGN_EXPERIMENTAL: true
 
     steps:
     - name: Configure DockerHub mirror
@@ -79,6 +78,11 @@ jobs:
       with:
         path: ./src/github.com/vaikas/sigstore-scaffolding
 
+    - name: Install cosign
+      uses: sigstore/cosign-installer@main
+      with:
+        cosign-release: 'v1.6.0'
+
     - name: Setup Cluster
       working-directory: ./src/github.com/vaikas/sigstore-scaffolding
       run: |
@@ -87,6 +91,26 @@ jobs:
           --cluster-suffix cluster.local \
           --k8s-version ${{ matrix.k8s-version }} \
           --knative-version ${KNATIVE_VERSION}
+
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
+    - name: Sign with public cosign
+      run: |
+        cosign sign --force --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Install all the everythings
       working-directory: ./src/github.com//vaikas/sigstore-scaffolding
@@ -154,36 +178,13 @@ jobs:
         kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
+    - name: Sign with cosign
+      run: |
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }}
 
-      - name: Install cosign
-        uses: sigstore/cosign-installer@main
-        with:
-          cosign-release: 'main'
-
-      - name: Create sample image
-        run: |
-          pushd $(mktemp -d)
-          go mod init example.com/demo
-          cat <<EOF > main.go
-          package main
-          import "fmt"
-          func main() {
-            fmt.Println("hello world")
-          }
-          EOF
-          demoimage=`ko publish -B example.com/demo`
-          echo "demoimage=$demoimage" >> $GITHUB_ENV
-          echo Created image $demoimage
-          popd
-
-
-      - name: Sign with cosign
-        run: |
-        COSIGN_EXPERIMENTAL=1 ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }}
-
-      - name: Verify with cosign
-        run: |
-        SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+    - name: Verify with cosign
+      run: |
+        SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect node diagnostics
       if: ${{ failure() }}

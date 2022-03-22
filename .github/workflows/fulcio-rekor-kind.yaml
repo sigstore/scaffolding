@@ -7,7 +7,7 @@ on:
 defaults:
   run:
     shell: bash
-    working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    working-directory: ./src/github.com/sigstore/scaffolding
 
 concurrency:
   group: fulcio-rekor-kind-${{ github.head_ref }}
@@ -76,7 +76,7 @@ jobs:
     - name: Check out our repo
       uses: actions/checkout@v3
       with:
-        path: ./src/github.com/vaikas/sigstore-scaffolding
+        path: ./src/github.com/sigstore/scaffolding
 
     - name: Install cosign
       uses: sigstore/cosign-installer@main
@@ -84,7 +84,7 @@ jobs:
         cosign-release: 'v1.6.0'
 
     - name: Setup Cluster
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         ./hack/setup-kind.sh \
           --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
@@ -108,12 +108,8 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Sign with public cosign
-      run: |
-        cosign sign --force --allow-insecure-registry ${{ env.demoimage }}
-
     - name: Install all the everythings
-      working-directory: ./src/github.com//vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 20
       run: |
         ko apply -BRf ./config/
@@ -133,8 +129,8 @@ jobs:
           kubectl wait --timeout 10m -n ${ns} --for=condition=Ready pod --all
         done
 
-    - name: Run signing job
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    - name: Run signing job in k8s using kubernetes tokens in the cluster
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         # Grab the secret from the ctlog-system namespace and make a copy
         # in our namespace so we can get access to the CT Log public key
@@ -146,14 +142,14 @@ jobs:
         kubectl wait --for=condition=Complete --timeout=90s job/sign-job
 
     - name: Check that an entry was created in Rekor
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         ko apply -f ./testdata/config/checktree
 
         kubectl wait --for=condition=Complete --timeout=90s job/checktree
 
-    - name: Verify the image with cosign
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    - name: Verify the image with cosign using kubernetes tokens in the cluster
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         # Grab the secret from the fulcio-system namespace and make a copy
         # in our namespace so we can get access to the Fulcio public key
@@ -163,14 +159,28 @@ jobs:
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
+    # TODO(vaikas): There should be a fake issuer on the cluster
+    - name: Install a Knative service for fetch tokens off the cluster
+      run: |
+        ko apply -f ./testdata/config/gettoken
+        sleep 2
+        kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
+
     - name: Set the endpoints on the cluster and grab secrets
       run: |
         REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
+
         FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
         CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+
+        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
         kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
         echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
@@ -178,13 +188,13 @@ jobs:
         kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
-    - name: Sign with cosign
+    - name: Sign with cosign from the job using Github token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }}
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
-    - name: Verify with cosign
+    - name: Verify with cosign from the job using Github token
       run: |
-        SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect node diagnostics
       if: ${{ failure() }}

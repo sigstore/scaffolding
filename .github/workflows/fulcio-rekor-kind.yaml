@@ -4,6 +4,8 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: read-all
+
 defaults:
   run:
     shell: bash
@@ -17,10 +19,6 @@ jobs:
   fulcio-rekor-ctlog-tests:
     name: e2e tests
     runs-on: ubuntu-latest
-
-    permissions:
-      id-token: write
-      contents: read
 
     strategy:
       fail-fast: false # Keep running if one leg fails.
@@ -80,10 +78,16 @@ jobs:
       with:
         path: ./src/github.com/sigstore/scaffolding
 
-    - name: Install cosign
-      uses: sigstore/cosign-installer@main
+    - name: Check out cosign repo so we get the head of the main cosign
+      uses: actions/checkout@v3
       with:
-        cosign-release: main
+        repository: sigstore/cosign
+        path: ./src/github.com/sigstore/cosign
+
+    - name: Install cosign
+      working-directory: ./src/github.com/sigstore/cosign
+      run: |
+        go install ./cmd/cosign
 
     - name: Setup Cluster
       working-directory: ./src/github.com/sigstore/scaffolding

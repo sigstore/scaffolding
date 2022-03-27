@@ -27,6 +27,8 @@ jobs:
       matrix:
         k8s-version:
         - v1.21.x
+        - v1.22.x
+        - v1.23.x
 
         leg:
         - fulcio rekor ctlog e2e
@@ -81,7 +83,7 @@ jobs:
     - name: Install cosign
       uses: sigstore/cosign-installer@main
       with:
-        cosign-release: 'v1.6.0'
+        cosign-release: main
 
     - name: Setup Cluster
       working-directory: ./src/github.com/sigstore/scaffolding
@@ -188,45 +190,14 @@ jobs:
         kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
-    - name: Sign with cosign from the job using Github token
+    - name: Sign with cosign from the action using k8s token
       run: |
         cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
-    - name: Verify with cosign from the job using Github token
+    - name: Verify with cosign from the action using k8s token
       run: |
         SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
-    - name: Collect node diagnostics
+    - name: Collect diagnostics
       if: ${{ failure() }}
-      run: |
-        for x in $(kubectl get nodes -oname); do
-          echo "::group:: describe $x"
-          kubectl describe $x
-          echo '::endgroup::'
-        done
-
-    - name: Collect pod diagnostics
-      if: ${{ failure() }}
-      run: |
-        for ns in fulcio-system rekor-system trillian-system ctlog-system; do
-          kubectl get pods -n${ns}
-
-          for x in $(kubectl get pods -n${ns} -oname); do
-            echo "::group:: describe $x"
-            kubectl describe -n${ns} $x
-            echo '::endgroup::'
-          done
-        done
-
-    - name: Collect logs
-      if: ${{ failure() }}
-      run: |
-        mkdir -p /tmp/logs
-        kind export logs /tmp/logs
-
-    - name: Upload artifacts
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: logs
-        path: /tmp/logs
+      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main

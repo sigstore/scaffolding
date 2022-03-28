@@ -23,6 +23,11 @@ data:
           "ClientID": "sigstore",
           "Type": "email",
           "IssuerClaim": "$.federated_claims.connector_id"
+        },
+        "https://token.actions.githubusercontent.com": {
+          "IssuerURL": "https://token.actions.githubusercontent.com",
+          "ClientID": "sigstore",
+          "Type": "github-workflow"
         }
       },
       "MetaIssuers": {

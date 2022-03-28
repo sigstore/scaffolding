@@ -4,10 +4,12 @@ on:
   pull_request:
     branches: [ main ]
 
+permissions: read-all
+
 defaults:
   run:
     shell: bash
-    working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    working-directory: ./src/github.com/sigstore/scaffolding
 
 concurrency:
   group: fulcio-rekor-kind-${{ github.head_ref }}
@@ -17,11 +19,18 @@ jobs:
   fulcio-rekor-ctlog-tests:
     name: e2e tests
     runs-on: ubuntu-latest
+
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
         - v1.21.x
+        - v1.22.x
+        # 1.23 has wierd behaviour with job backoffs, there's not exponential
+        # backoff. If you set it to say, 12, they all completed in about 30s.
+        # Once that gets sorted we can test with it. I'll dig for an upstream
+        # issue.
+        #- v1.23.x
 
         leg:
         - fulcio rekor ctlog e2e
@@ -33,6 +42,7 @@ jobs:
       GOFLAGS: -ldflags=-s -ldflags=-w
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
+      COSIGN_EXPERIMENTAL: true
 
     steps:
     - name: Configure DockerHub mirror
@@ -70,10 +80,21 @@ jobs:
     - name: Check out our repo
       uses: actions/checkout@v3
       with:
-        path: ./src/github.com/vaikas/sigstore-scaffolding
+        path: ./src/github.com/sigstore/scaffolding
+
+    - name: Check out cosign repo so we get the head of the main cosign
+      uses: actions/checkout@v3
+      with:
+        repository: sigstore/cosign
+        path: ./src/github.com/sigstore/cosign
+
+    - name: Install cosign
+      working-directory: ./src/github.com/sigstore/cosign
+      run: |
+        go install ./cmd/cosign
 
     - name: Setup Cluster
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         ./hack/setup-kind.sh \
           --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
@@ -81,8 +102,24 @@ jobs:
           --k8s-version ${{ matrix.k8s-version }} \
           --knative-version ${KNATIVE_VERSION}
 
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
     - name: Install all the everythings
-      working-directory: ./src/github.com//vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 20
       run: |
         ko apply -BRf ./config/
@@ -102,8 +139,8 @@ jobs:
           kubectl wait --timeout 10m -n ${ns} --for=condition=Ready pod --all
         done
 
-    - name: Run signing job
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    - name: Run signing job in k8s using kubernetes tokens in the cluster
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         # Grab the secret from the ctlog-system namespace and make a copy
         # in our namespace so we can get access to the CT Log public key
@@ -115,14 +152,14 @@ jobs:
         kubectl wait --for=condition=Complete --timeout=90s job/sign-job
 
     - name: Check that an entry was created in Rekor
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         ko apply -f ./testdata/config/checktree
 
         kubectl wait --for=condition=Complete --timeout=90s job/checktree
 
-    - name: Verify the image with cosign
-      working-directory: ./src/github.com/vaikas/sigstore-scaffolding
+    - name: Verify the image with cosign using kubernetes tokens in the cluster
+      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
         # Grab the secret from the fulcio-system namespace and make a copy
         # in our namespace so we can get access to the Fulcio public key
@@ -132,37 +169,43 @@ jobs:
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-    - name: Collect node diagnostics
-      if: ${{ failure() }}
+    # TODO(vaikas): There should be a fake issuer on the cluster
+    - name: Install a Knative service for fetch tokens off the cluster
       run: |
-        for x in $(kubectl get nodes -oname); do
-          echo "::group:: describe $x"
-          kubectl describe $x
-          echo '::endgroup::'
-        done
+        ko apply -f ./testdata/config/gettoken
+        sleep 2
+        kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
 
-    - name: Collect pod diagnostics
-      if: ${{ failure() }}
+    - name: Set the endpoints on the cluster and grab secrets
       run: |
-        for ns in fulcio-system rekor-system trillian-system ctlog-system; do
-          kubectl get pods -n${ns}
+        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
 
-          for x in $(kubectl get pods -n${ns} -oname); do
-            echo "::group:: describe $x"
-            kubectl describe -n${ns} $x
-            echo '::endgroup::'
-          done
-        done
+        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
-    - name: Collect logs
-      if: ${{ failure() }}
+        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
+
+        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
+
+    - name: Sign with cosign from the action using k8s token
       run: |
-        mkdir -p /tmp/logs
-        kind export logs /tmp/logs
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
-    - name: Upload artifacts
+    - name: Verify with cosign from the action using k8s token
+      run: |
+        SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: actions/upload-artifact@v2
-      with:
-        name: logs
-        path: /tmp/logs
+      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main

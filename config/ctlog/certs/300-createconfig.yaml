@@ -5,6 +5,7 @@ metadata:
   name: createctconfig
   namespace: ctlog-system
 spec:
+  backoffLimit: 12
   template:
     spec:
       serviceAccountName: createctconfig

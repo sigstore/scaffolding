@@ -58,6 +58,17 @@ jobs:
         # Wait for all the ksvc to be up.
         kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
 
+    - name: Set the endpoints on the cluster
+      run: |
+        kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4
+        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+
+    - name: Run curl against Rekor
+      run: |
+        echo ${{ env.REKOR_URL }}
+        curl ${{ env.REKOR_URL }}/api/v1/log
+
     - name: Run Tests
       run: |
         # Grab the secret from the ctlog-system namespace and make a copy

@@ -14,7 +14,7 @@ require (
 	github.com/sigstore/fulcio v0.1.2-0.20220110181937-d890471d8047
 	github.com/sigstore/rekor v0.5.0
 	google.golang.org/grpc v1.45.0
-	google.golang.org/protobuf v1.27.1
+	google.golang.org/protobuf v1.28.0
 	k8s.io/api v0.23.5
 	k8s.io/apimachinery v0.23.5
 	k8s.io/client-go v0.23.5

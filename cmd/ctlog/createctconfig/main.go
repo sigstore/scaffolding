@@ -96,7 +96,7 @@ func main() {
 	client := fulcioclient.NewClient(u)
 	root, err := client.RootCert()
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to fetch fulcio Root cert")
+		logging.FromContext(ctx).Panicf("Failed to fetch fulcio Root cert: %w", err)
 	}
 
 	// Generate RSA key. We do it here in case we need to update the config

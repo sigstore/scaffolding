@@ -10,7 +10,7 @@ defaults:
     working-directory: ./
 
 concurrency:
-  group: fulcio-rekor-kind-using-release-${{ github.head_ref }}
+  group: test-github-action${{ github.head_ref }}
   cancel-in-progress: true
 
 jobs:

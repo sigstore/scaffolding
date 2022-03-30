@@ -1,0 +1,31 @@
+name: Test github reusable action
+
+on:
+  pull_request:
+    branches: [ main ]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./
+
+concurrency:
+  group: fulcio-rekor-kind-using-release-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-github-action:
+    name: Test github action
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        k8s-version:
+        - v1.21.x
+
+        leg:
+        - test github action
+
+    steps:
+    - name: Test running the action
+      uses: vaikas/scaffolding/actions/setup@737fd9858272aeff1621249dfe22f5ae92246086

@@ -93,7 +93,7 @@ runs:
       kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
       echo "Installing and running scaffolding tests to be up and running"
-      curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
+      curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
 
       kubectl wait --for=condition=Complete --timeout=180s job/sign-job
       kubectl wait --for=condition=Complete --timeout=180s job/checktree

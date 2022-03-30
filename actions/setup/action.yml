@@ -41,7 +41,7 @@ inputs:
   k8sVersion:
     description: 'kubernetes version to install (1.21.x, 1.22.x), default: 1.22.x'
     required: true
-    default: '1.22.x'
+    default: 'v1.22.x'
 runs:
   using: "composite"
   steps:

@@ -28,4 +28,4 @@ jobs:
 
     steps:
     - name: Test running the action
-      uses: vaikas/scaffolding/actions/setup@521bdd496d8a0e2c4cf4b8d458f07699923d33d1
+      uses: vaikas/scaffolding/actions/setup@91b2092691e21133879a133e9c2243e1e1311fe9

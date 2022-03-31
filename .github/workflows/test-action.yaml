@@ -1,0 +1,33 @@
+name: Test github reusable action
+
+on:
+  pull_request:
+    branches: [ main ]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./
+
+concurrency:
+  group: test-github-action${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-github-action:
+    name: Test github action
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        k8s-version:
+        - v1.21.x
+
+        leg:
+        - test github action
+
+    steps:
+    - name: Checkout the current action
+      uses: actions/checkout@a12a3943b4bdde767164f792f33f40b04645d846 # v3
+    - name: Test running the action
+      uses: ./actions/setup

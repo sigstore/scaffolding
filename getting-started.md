@@ -10,61 +10,7 @@ including:
 
 # Using scaffolding on your own GitHub actions
 
-If you want to just incorporate into your tests, you can see how Tekton chains
-does it [here](https://github.com/tektoncd/chains/blob/main/.github/workflows/kind-e2e.yaml#L76-L104) or
-looking at [E2E](./github/workflows/fulcio-rekor-kind.yaml) test that spins all
-these up.
-
-As part of the E2E test we use [cosign](https://github.com/sigstore/cosign) to
-sign an image (and verify an entry made it Rekor), that should hopefully show
-you to use it in your tests as well. The invocation is
-[here](./testdata/config/sign-job/sign-job.yaml) and while it's wrapped in a k8s
-Job and it uses a container, it basically executes this against the stack
-deployed above:
-
-```shell
-COSIGN_EXPERIMENTAL=true SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=/var/run/sigstore-root/rootfile.pem
-cosign sign --fulcio-url=http://fulcio.fulcio-system.svc \
---rekor-url=http://rekor.rekor-system.svc \
-ko://github.com/sigstore/scaffolding/cmd/rekor/checktree
-```
-
-Where the `rootfile.pem` gets mounted by the job, and it's the public key of the
-CTLog, so we can verify the SCT coming back from Fulcio.
-
-
-But roughly the workflow in your Github Action should be along these lines. It
-setups a KinD cluster as well as sigstore and makes sure the setup works in
-three distinct steps.
-
-```
-    - name: Setup Cluster
-      run: |
-        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/setup-kind.sh
-        chmod u+x ./setup-kind.sh
-        ./setup-kind.sh \
-          --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
-          --cluster-suffix cluster.local \
-          --k8s-version ${{ matrix.k8s-version }} \
-          --knative-version ${KNATIVE_VERSION}
-    - name: Install sigstore pieces
-      timeout-minutes: 10
-      run: |
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/release.yaml | kubectl apply -f -
-        # Wait for all the ksvc to be up.
-        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
-    - name: Run sigstore tests to make sure all is well
-      run: |
-        # Grab the secret from the ctlog-system namespace and make a copy
-        # in our namespace so we can get access to the CT Log public key
-        # so we can verify the SCT coming from there.
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.SIGSTORE_SCAFFOLDING_RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
-        kubectl wait --for=condition=Complete --timeout=90s job/sign-job
-        kubectl wait --for=condition=Complete --timeout=90s job/checktree
-```
-
-Rest of this document talks about howto run locally on KinD.
+There's a reusable [action](./actions/setup/README.md) that you can use as is.
 
 # Running locally on KinD
 

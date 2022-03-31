@@ -22,23 +22,23 @@ inputs:
     description: 'Version of scaffolding to install (v0.2.2, v0.2.3 latest-release.)'
     required: true
     default: 'latest-release'
-  knativeVersion:
+  knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
     default: '1.1.0'
-  registryName:
+  registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true
     default: 'registry.local'
-  registryPort:
+  registry-port:
     description: 'Port to run registry on, default 5000'
     required: true
     default: '5000'
-  clusterSuffix:
+  cluster-suffix:
     description: 'Cluster suffix to use. Handy for testing hardcoded assumptions. Default: cluster.local'
     required: true
     default: 'cluster.local'
-  k8sVersion:
+  k8s-version:
     description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.22.x'
     required: true
     default: 'v1.22.x'
@@ -70,10 +70,10 @@ runs:
       curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
         chmod u+x ./setup-kind.sh
         ./setup-kind.sh \
-          --registry-url ${{ inputs.registryName }}:${{ inputs.registryPort }} \
-          --cluster-suffix ${{ inputs.clusterSuffix }} \
-          --k8s-version ${{ inputs.k8sVersion }} \
-          --knative-version ${{ inputs.knativeVersion }}
+          --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
+          --cluster-suffix ${{ inputs.cluster-suffix }} \
+          --k8s-version ${{ inputs.k8s-version }} \
+          --knative-version ${{ inputs.knative-version }}
 
       echo "Installing sigstore scaffolding @ ${tag}"
       kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release.yaml
@@ -115,3 +115,8 @@ runs:
       echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
       echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
+
+      ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+      echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+      OIDC_TOKEN=`curl -s $ISSUER_URL`
+      echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV

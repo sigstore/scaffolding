@@ -43,3 +43,10 @@ The following environmental variables are exported.
  * SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY
    Necessary to be set to true so that we can validate against non-standard
    Rekor instance that we use above.
+ * ISSUER_URL
+   This is the URL for fetching OIDC tokens off the cluster that you can then use as inputs to --identity-token to cosign
+ * OIDC_TOKEN
+   This is an already fetched OIDC token. Convenience if your tests do
+   not run longer than 10 minutes, which is how long this token is
+   valid for. If your tests run longer than this is valid, you can use
+   `ISSUER_URL` above to fetch a new token.

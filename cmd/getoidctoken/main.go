@@ -27,10 +27,6 @@ type envConfig struct {
 	FileName string `envconfig:"OIDC_FILE" default:"/var/run/sigstore/cosign/oidc-token" required:"true"`
 }
 
-// tokenFile is where we mount the oidc token from k8s.
-//const tokenFile = "/var/run/sigstore/cosign/oidc-token"
-const tokenFile = "/Users/vaikas/projects/go/src/github.com/sigstore/scaffolding/ctlog-public.pem"
-
 func tokenWriter(filename string) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		getToken(filename, w, req)

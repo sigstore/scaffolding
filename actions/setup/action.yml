@@ -115,3 +115,8 @@ runs:
       echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
       echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
+
+      ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+      echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+      OIDC_TOKEN=`curl -s $ISSUER_URL`
+      echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV

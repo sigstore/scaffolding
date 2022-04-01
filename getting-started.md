@@ -23,7 +23,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.2/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.3/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -59,7 +59,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.2/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.3/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -115,6 +115,13 @@ and Rekor can be accessed in the cluster with:
 
  * `rekor.rekor-system.svc`
 
+ ## default namespace
+
+ To make it easier to test keyless signing without going through the browser
+ based auth, there's an `OIDC issuer` installed on the cluster. Just by doing
+ a curl against it will give you an OIDC token that you can use as
+ --identity-token on the calls with `cosign`
+
 ## Testing Your new Sigstore Kind Cluster
 
 Let's first run a quick smoke test that does a cosign sign followed by making
@@ -129,7 +136,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 yaml (this may take a bit (~couple of minutes), since the jobs are launched
 simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.2/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.3/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed
@@ -176,6 +183,7 @@ Add the following entries to your `/etc/hosts` file
 127.0.0.1 rekor.rekor-system.svc
 127.0.0.1 fulcio.fulcio-system.svc
 127.0.0.1 ctlog.ctlog-system.svc
+127.0.0.1 gettoken.default.svc
 ```
 
 This makes using tooling easier, for example:
@@ -201,4 +209,12 @@ For example, to verify an image hosted in the local registry:
 
 ```shell
 SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url=http://rekor.rekor-system.svc:8080 --allow-insecure-registry registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
+```
+
+You can also fetch an OIDC token from the cluster:
+OIDC_TOKEN=`curl -s gettoken.default.svc:8080`
+
+And you could sign with this token then, like so:
+```shell
+SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem COSIGN_EXPERIMENTAL=true cosign sign --fulcio-url http://fulcio.fulcio-system.svc:8080 --rekor-url http://rekor.rekor-system.svc:8080  --allow-insecure-registry --force <someimagehere> --identity-token $OIDC_TOKEN
 ```

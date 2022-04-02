@@ -22,13 +22,14 @@ jobs:
       matrix:
         k8s-version:
         - v1.21.x
+        - v1.22.x
 
         leg:
         - fulcio rekor ctlog e2e
 
     env:
       KNATIVE_VERSION: "1.1.0"
-      RELEASE_VERSION: "v0.2.2"
+      RELEASE_VERSION: "v0.2.3"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 

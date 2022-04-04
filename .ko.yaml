@@ -1,4 +1,4 @@
-defaultBaseImage: gcr.io/distroless/base:nonroot
+defaultBaseImage: ghcr.io/chainguard-dev/apko:v0.2.2
 
 builds:
 - id: ctlog

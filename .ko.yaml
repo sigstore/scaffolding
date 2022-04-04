@@ -1,4 +1,4 @@
-defaultBaseImage: gcr.io/distroless/base:nonroot
+defaultBaseImage: ghcr.io/chainguard-dev/apko:v0.2.2
 
 builds:
 - id: ctlog
@@ -14,6 +14,7 @@ builds:
   - -s
   - -w
   - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
 
 - id: fulcio
   dir: .
@@ -28,6 +29,7 @@ builds:
   - -s
   - -w
   - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
 
 - id: rekor
   dir: .
@@ -42,6 +44,7 @@ builds:
   - -s
   - -w
   - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
 
 - id: trillian
   dir: .
@@ -56,3 +59,19 @@ builds:
   - -s
   - -w
   - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: getoidctoken
+  dir: .
+  main: ./cmd/getoidctoken
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"

@@ -1,17 +1,36 @@
 GIT_HASH ?= $(shell git rev-parse HEAD)
 GIT_TAG ?= $(shell git describe --tags --always --dirty)
+DATE_FMT = +%Y-%m-%dT%H:%M:%SZ
+SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
+ifdef SOURCE_DATE_EPOCH
+    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
+else
+    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
+endif
+GIT_TREESTATE = "clean"
+DIFF = $(shell git diff --quiet >/dev/null 2>&1; if [ $$? -eq 1 ]; then echo "1"; fi)
+ifeq ($(DIFF), 1)
+    GIT_TREESTATE = "dirty"
+endif
+LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) \
+        -X sigs.k8s.io/release-utils/version.gitCommit=$(GIT_HASH) \
+        -X sigs.k8s.io/release-utils/version.gitTreeState=$(GIT_TREESTATE) \
+        -X sigs.k8s.io/release-utils/version.buildDate=$(BUILD_DATE)
+
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
 .PHONY: ko-resolve
 ko-resolve:
 	# "Doing ko resolve for config"
 	# "Build a big bundle of joy, this also produces SBOMs"
+	LDFLAGS="$(LDFLAGS)" \
 	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./config --platform=all --image-refs imagerefs > release.yaml
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
 	# "Doing ko resolve for testdata"
 	# "Build a big bundle of joy, this also produces SBOMs"
+	LDFLAGS="$(LDFLAGS)" \
 	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
 
 imagerefs := $(shell cat imagerefs testimagerefs)
@@ -22,3 +41,31 @@ sign-images:
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
+
+
+### Testing
+
+.PHONY: ko-apply
+ko-apply:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/
+
+.PHONY: ko-apply-sign-job
+ko-apply-sign-job:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/sign-job
+
+.PHONY: ko-apply-verify-job
+ko-apply-verify-job:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/verify-job
+
+.PHONY: ko-apply-gettoken
+ko-apply-gettoken:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/gettoken
+
+.PHONY: ko-apply-checktree
+ko-apply-checktree:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/checktree

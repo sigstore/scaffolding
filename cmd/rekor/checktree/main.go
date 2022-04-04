@@ -31,7 +31,9 @@ import (
 	"github.com/sigstore/rekor/pkg/types"
 	"github.com/sigstore/rekor/pkg/types/hashedrekord"
 	hrv001 "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
+	"knative.dev/pkg/logging"
 	"knative.dev/pkg/signals"
+	"sigs.k8s.io/release-utils/version"
 )
 
 var (
@@ -45,6 +47,9 @@ func main() {
 	}
 
 	ctx := signals.NewContext()
+	versionInfo := version.GetVersionInfo()
+	logging.FromContext(ctx).Infof("running create_check_tree Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+
 	c, err := client.GetRekorClient(*rekorURL)
 	if err != nil {
 		log.Panic("Failed to construct rekor client", err)

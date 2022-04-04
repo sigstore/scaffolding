@@ -122,7 +122,7 @@ jobs:
       working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 20
       run: |
-        ko apply -BRf ./config/
+        make ko-apply
 
         # Make sure the jobs that are required to finish do so.
         # Note we delete the jobs after they complete because otherwise
@@ -147,14 +147,14 @@ jobs:
         # so we can verify the SCT coming from there.
         kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
-        ko apply -f ./testdata/config/sign-job
+        make ko-apply-sign-job
 
         kubectl wait --for=condition=Complete --timeout=90s job/sign-job
 
     - name: Check that an entry was created in Rekor
       working-directory: ./src/github.com/sigstore/scaffolding
       run: |
-        ko apply -f ./testdata/config/checktree
+        make ko-apply-checktree
 
         kubectl wait --for=condition=Complete --timeout=90s job/checktree
 
@@ -165,14 +165,15 @@ jobs:
         # in our namespace so we can get access to the Fulcio public key
         # so we can verify against it.
         kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-        ko apply -f ./testdata/config/verify-job
+
+        make ko-apply-verify-job
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
     # TODO(vaikas): There should be a fake issuer on the cluster
     - name: Install a Knative service for fetch tokens off the cluster
       run: |
-        ko apply -f ./testdata/config/gettoken
+        make ko-apply-gettoken
         sleep 2
         kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
 

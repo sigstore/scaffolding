@@ -38,6 +38,7 @@ import (
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/signals"
+	"sigs.k8s.io/release-utils/version"
 )
 
 const (
@@ -59,7 +60,12 @@ var (
 
 func main() {
 	flag.Parse()
+
 	ctx := signals.NewContext()
+
+	versionInfo := version.GetVersionInfo()
+	logging.FromContext(ctx).Infof("running create_ct_config Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+
 	config, err := rest.InClusterConfig()
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to get InClusterConfig: %v", err)

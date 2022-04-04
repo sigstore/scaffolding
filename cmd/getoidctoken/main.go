@@ -21,6 +21,7 @@ import (
 	"net/http"
 
 	"github.com/kelseyhightower/envconfig"
+	"sigs.k8s.io/release-utils/version"
 )
 
 type envConfig struct {
@@ -51,6 +52,10 @@ func main() {
 	if err := envconfig.Process("", &env); err != nil {
 		log.Fatalf("failed to process env var: %s", err)
 	}
+
+	versionInfo := version.GetVersionInfo()
+	log.Printf("running get_oidc_token Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+
 	http.HandleFunc("/", tokenWriter(env.FileName))
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)

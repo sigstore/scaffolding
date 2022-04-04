@@ -23,7 +23,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.3/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.4/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -59,7 +59,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.3/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.4/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -136,7 +136,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 yaml (this may take a bit (~couple of minutes), since the jobs are launched
 simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.3/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.4/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

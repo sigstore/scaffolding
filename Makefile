@@ -41,3 +41,31 @@ sign-images:
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
+
+
+### Testing
+
+.PHONY: ko-apply
+ko-apply:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/
+
+.PHONY: ko-apply-sign-job
+ko-apply-sign-job:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/sign-job
+
+.PHONY: ko-apply-verify-job
+ko-apply-verify-job:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/verify-job
+
+.PHONY: ko-apply-gettoken
+ko-apply-gettoken:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/gettoken
+
+.PHONY: ko-apply-checktree
+ko-apply-checktree:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -f ./testdata/config/checktree

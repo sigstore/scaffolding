@@ -23,7 +23,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.4/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.5/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -31,7 +31,7 @@ chmod u+x /tmp/setup-kind.sh
 **NOTE** For Macs the airplay receiver uses the 5000 port and may need to be
 disabled, details [here](https://developer.apple.com/forums/thread/682332)).
 Alternatively, you can manually modify the script and change the
-[REGISTRY_PORT](https://github.com/sigstore/scaffolding/blob/main/hack/setup-mac-kind.sh#L19)
+[REGISTRY_PORT](https://github.com/sigstore/scaffolding/blob/main/hack/setup-kind.sh#L19)
 
 *NOTE* If you run the script multiple times, you will have to uninstall the
 docker registry container between running the setup-kind.sh it spins up a
@@ -59,7 +59,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.4/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.5/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -136,7 +136,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 yaml (this may take a bit (~couple of minutes), since the jobs are launched
 simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.4/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.5/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

@@ -109,6 +109,7 @@ module "gke-cluster" {
 
   depends_on = [
     module.network,
+    module.bastion
   ]
 }
 

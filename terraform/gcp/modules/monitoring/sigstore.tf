@@ -1,0 +1,68 @@
+/**
+ * Copyright 2022 The Sigstore Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Enable required services for this module
+resource "google_project_service" "service" {
+  for_each = toset([
+    "monitoring.googleapis.com", // For monitoring alerts.
+  ])
+  project = var.project_id
+  service = each.key
+
+  // Do not disable the service on destroy. On destroy, we are going to
+  // destroy the project, but we need the APIs available to destroy the
+  // underlying resources.
+  disable_on_destroy = false
+}
+
+// Pull in submodules for rekor, fulcio, and dex
+
+// Rekor
+module "rekor" {
+  source = "./rekor"
+
+  project_id              = var.project_id
+  notification_channel_id = var.notification_channel_id
+
+  depends_on = [
+    google_project_service.service
+  ]
+}
+
+// Fulcio
+module "fulcio" {
+  source = "./fulcio"
+
+  project_id              = var.project_id
+  notification_channel_id = var.notification_channel_id
+
+  depends_on = [
+    google_project_service.service
+  ]
+}
+
+// Dex
+module "dex" {
+  source = "./dex"
+
+  project_id              = var.project_id
+  notification_channel_id = var.notification_channel_id
+
+  depends_on = [
+    google_project_service.service
+  ]
+}
+

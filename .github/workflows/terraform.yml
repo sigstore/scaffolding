@@ -1,0 +1,61 @@
+name: Terraform Checks
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+    - 'terraform/**'
+  push:
+    branches:
+      - main
+    paths:
+    - 'terraform/**'
+
+permissions:
+  contents: read      
+
+jobs:
+  terraform-fmt:
+    name: 'Terraform fmt'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - uses: hashicorp/setup-terraform@3d8debd658c92063839bc97da5c2427100420dec # v1.3.2
+        with:
+          # TODO: extract terraform from the tf file when we have pinned
+          terraform_version: 1.1.6
+
+      - name: Terraform fmt
+        id: fmt
+        run: terraform fmt -check -recursive .
+
+  terraform-tfsec:
+    name: 'Terraform tfsec'
+    runs-on: ubuntu-latest
+    permissions:
+      # required for all workflows
+      security-events: write
+
+      # only required for workflows in private repositories
+      actions: read
+      contents: read      
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - name: tfsec
+        uses: tfsec/tfsec-sarif-action@868eade2142739cee2153c9ceff9eba4beded067 # v0.0.6
+        with:
+          sarif_file: tfsec.sarif
+          working_directory: '.'
+          tfsec_args: --force-all-dirs --verbose
+
+      - name: Upload SARIF file
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          # Path to SARIF file relative to the root of the repository
+          sarif_file: tfsec.sarif

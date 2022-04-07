@@ -46,9 +46,24 @@ builds:
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
 
-- id: trillian
+- id: trillian-createtree
   dir: .
   main: ./cmd/trillian/createtree
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: trillian-createdb
+  dir: .
+  main: ./cmd/trillian/createdb
   env:
   - CGO_ENABLED=0
   flags:

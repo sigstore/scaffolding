@@ -5,6 +5,7 @@ go 1.17
 require (
 	github.com/go-openapi/runtime v0.23.3
 	github.com/go-openapi/strfmt v0.21.2
+	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/certificate-transparency-go v1.1.2
 	github.com/google/trillian v1.4.0
 	github.com/google/uuid v1.3.0

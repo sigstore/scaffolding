@@ -205,16 +205,143 @@ Timestamp: 2022-02-04T22:09:46Z
 You can then execute various cosign/rekor-cli commands against these. However,
 until [this issue](https://github.com/sigstore/cosign/issues/1405) gets fixed
 for cosign you have to use `--allow-insecure-flag` in your cosign invocations.
+
+Instead of having to specify various ENV flags, when calling cosign and long
+URLs, let's create some up front:
+
+```
+export REKOR_URL=http://rekor.rekor-system.svc:8080
+export FULCIO_URL=http://fulcio.fulcio-system.svc:8080
+export ISSUER_URL=http://gettoken.default.svc:8080
+# Since we run our own Rekor, when we are verifying things, we need to fetch
+# the Rekor Public Key. This flag allows for that.
+export SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1
+# This one is necessary to perform keyless signing with Fulcio.
+export COSIGN_EXPERIMENTAL=1
+```
+
+If you have an image that you want to play with, great, you can also create
+one easily like this (that gets then uploaded to our local registry):
+
+```
+KO_DOCKER_REPO=registry.local:5000/knative
+pushd $(mktemp -d)
+go mod init example.com/demo
+cat <<EOF > main.go
+package main
+import "fmt"
+func main() {
+   fmt.Println("hello world")
+}
+EOF
+demoimage=`ko publish -B example.com/demo`
+export demoimage=$demoimage
+echo Created image $demoimage
+popd
+```
+
+Then let's sign it (or change $demoimage to something else).
+
+```
+cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --force --allow-insecure-registry $demoimage --identity-token `curl -s $ISSUER_URL`
+```
+
+An example invocation from my local instance is like so:
+
+```
+vaikas@villes-mbp cosign % cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --force --allow-insecure-registry $demoimage --identity-token `curl -s $ISSUER_URL`
+Handling connection for 8080
+Generating ephemeral keys...
+Retrieving signed certificate...
+Handling connection for 8080
+**Warning** Using a non-standard public key for verifying SCT: ./ctlog-public.pem
+Successfully verified SCT...
+Handling connection for 8080
+tlog entry created with index: 4
+Pushing signature to: registry.local:5000/knative/demo
+```
+
+Then let's verify the signature.
+
+```
+./cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```
+
+An example invocation from my local instance is like so:
+
+```
+vaikas@villes-mbp cosign % cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+**Warning** Using a non-standard public key for Rekor: ./rekor-public.pem
+
+Verification for registry.local:5000/knative/demo@sha256:6c6fd6a4115c6e998ff357cd914680931bb9a6c1a7cd5f5cb2f5e1c0932ab6ed --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - Any certificates were verified against the Fulcio roots.
+
+[{"critical":{"identity":{"docker-reference":"registry.local:5000/knative/demo"},"image":{"docker-manifest-digest":"sha256:6c6fd6a4115c6e998ff357cd914680931bb9a6c1a7cd5f5cb2f5e1c0932ab6ed"},"type":"cosign container image signature"},"optional":{"Bundle":{"SignedEntryTimestamp":"MEYCIQC7nD8O7J79X2yx/Jj1Jd0YNOMZHvtfF8czrwVZs68TjgIhAJBvz5fIy/54f0ozScRZUu0h/aVxEp60shasI/mKmfgx","Payload":{"body":"eyJhcGlWZX<<SNIPPED HERE FOR READABILITYUzB0Q2c9PSJ9fX19","integratedTime":1649358969,"logIndex":4,"logID":"77f6de90a6672a37e47286c96c4a7ae0a18dc224403dd6dc7567604a99658c1c"}},"Issuer":"https://kubernetes.default.svc","Subject":"https://kubernetes.io/namespaces/default/serviceaccounts/default"}}]
+```
+
+And the `**Warning**` is just letting us know that we're using a different
+SCT than the public instance, which we are :)
+
+Then let's create an attestation for it:
+
+```
+echo -n 'foobar test attestation' > ./predicate-file
+cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --force $demoimage --identity-token `curl -s $ISSUER_URL`
+```
+
+An example invocation from my local instance:
+
+```
+vaikas@villes-mbp cosign % cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --force $demoimage --identity-token `curl -s $ISSUER_URL`
+Handling connection for 8080
+Generating ephemeral keys...
+Retrieving signed certificate...
+Handling connection for 8080
+**Warning** Using a non-standard public key for verifying SCT: ./ctlog-public.pem
+Successfully verified SCT...
+Using payload from: ./predicate-file
+Handling connection for 8080
+tlog entry created with index: 5
+```
+
+
 For example, to verify an image hosted in the local registry:
 
 ```shell
 SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url=http://rekor.rekor-system.svc:8080 --allow-insecure-registry registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
 ```
 
-You can also fetch an OIDC token from the cluster:
-OIDC_TOKEN=`curl -s gettoken.default.svc:8080`
 
-And you could sign with this token then, like so:
-```shell
-SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem COSIGN_EXPERIMENTAL=true cosign sign --fulcio-url http://fulcio.fulcio-system.svc:8080 --rekor-url http://rekor.rekor-system.svc:8080  --allow-insecure-registry --force <someimagehere> --identity-token $OIDC_TOKEN
+And then finally let's verify the attestation we just created:
+
 ```
+cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```
+
+An example invocation from my local instance:
+
+```
+vaikas@villes-mbp cosign % cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+**Warning** Using a non-standard public key for Rekor: ./rekor-public.pem
+Right before checking policies
+Verification for registry.local:5000/knative/demo@sha256:6c6fd6a4115c6e998ff357cd914680931bb9a6c1a7cd5f5cb2f5e1c0932ab6ed --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - Any certificates were verified against the Fulcio roots.
+Certificate subject:  https://kubernetes.io/namespaces/default/serviceaccounts/default
+Certificate issuer URL:  https://kubernetes.default.svc
+{"payloadType":"application/vnd.in-toto+json","payload":"eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjAuMSIsInByZWRpY2F0ZVR5cGUiOiJjb3NpZ24uc2lnc3RvcmUuZGV2L2F0dGVzdGF0aW9uL3YxIiwic3ViamVjdCI6W3sibmFtZSI6InJlZ2lzdHJ5LmxvY2FsOjUwMDAva25hdGl2ZS9kZW1vIiwiZGlnZXN0Ijp7InNoYTI1NiI6IjZjNmZkNmE0MTE1YzZlOTk4ZmYzNTdjZDkxNDY4MDkzMWJiOWE2YzFhN2NkNWY1Y2IyZjVlMWMwOTMyYWI2ZWQifX1dLCJwcmVkaWNhdGUiOnsiRGF0YSI6ImZvb2JhciB0ZXN0IGF0dGVzdGF0aW9uIiwiVGltZXN0YW1wIjoiMjAyMi0wNC0wN1QxOToyMjoyNVoifX0=","signatures":[{"keyid":"","sig":"MEUCIQC/slGQVpRKgw4Jo8tcbgo85WNG/FOJfxcvQFvTEnG9swIgP4LeOmID+biUNwLLeylBQpAEgeV6GVcEpyG6r8LVnfY="}]}
+```
+
+And you can inspect the payload of the attestation by base64 decoding the payload, so for me:
+
+```
+vaikas@villes-mbp cosign % echo 'eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjAuMSIsInByZWRpY2F0ZVR5cGUiOiJjb3NpZ24uc2lnc3RvcmUuZGV2L2F0dGVzdGF0aW9uL3YxIiwic3ViamVjdCI6W3sibmFtZSI6InJlZ2lzdHJ5LmxvY2FsOjUwMDAva25hdGl2ZS9kZW1vIiwiZGlnZXN0Ijp7InNoYTI1NiI6IjZjNmZkNmE0MTE1YzZlOTk4ZmYzNTdjZDkxNDY4MDkzMWJiOWE2YzFhN2NkNWY1Y2IyZjVlMWMwOTMyYWI2ZWQifX1dLCJwcmVkaWNhdGUiOnsiRGF0YSI6ImZvb2JhciB0ZXN0IGF0dGVzdGF0aW9uIiwiVGltZXN0YW1wIjoiMjAyMi0wNC0wN1QxOToyMjoyNVoifX0=' | base64 -d
+{"_type":"https://in-toto.io/Statement/v0.1","predicateType":"cosign.sigstore.dev/attestation/v1","subject":[{"name":"registry.local:5000/knative/demo","digest":{"sha256":"6c6fd6a4115c6e998ff357cd914680931bb9a6c1a7cd5f5cb2f5e1c0932ab6ed"}}],"predicate":{"Data":"foobar test attestation","Timestamp":"2022-04-07T19:22:25Z"}}%
+```
+
+Notice our predicate is `foobar test attestation` as was in our predicate file.

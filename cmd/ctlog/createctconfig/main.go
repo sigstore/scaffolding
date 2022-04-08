@@ -56,6 +56,8 @@ var (
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
 	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
+	keyPassword        = flag.String("key-password", "test", "Password for the PEM key")
+	pemPassword        = flag.String("pem-password", "test", "Password for encrypting PEM")
 )
 
 func main() {
@@ -113,7 +115,7 @@ func main() {
 	}
 
 	if _, ok := cm.Data[configKey]; !ok {
-		privKeyProto := mustMarshalAny(&keyspb.PEMKeyFile{Path: "/ctfe-keys/privkey.pem", Password: "test"})
+		privKeyProto := mustMarshalAny(&keyspb.PEMKeyFile{Path: "/ctfe-keys/privkey.pem", Password: *keyPassword})
 
 		keyDER, err := x509.MarshalPKIXPublicKey(key.Public())
 		if err != nil {
@@ -163,7 +165,7 @@ func main() {
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
 	// Encrypt the pem
-	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte("test"), x509.PEMCipherAES256) // nolint
+	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(*pemPassword), x509.PEMCipherAES256) // nolint
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to encrypt private key: %v", err)
 	}

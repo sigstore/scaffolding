@@ -38,3 +38,9 @@ variable "ca_pool_name" {
   description = "Certificate authority pool name"
   type        = string
 }
+
+variable "enable_ca" {
+  description = "Enable a certificate authority via GCP CA Service"
+  type        = bool
+  default     = true
+}

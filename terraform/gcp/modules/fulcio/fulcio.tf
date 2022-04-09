@@ -18,6 +18,9 @@
 module "ca" {
   source = "../ca"
 
+  # Disable CA creation if enable_ca is false
+  count = var.enable_ca ? 1 : 0
+
   region       = var.region
   project_id   = var.project_id
   ca_pool_name = var.ca_pool_name

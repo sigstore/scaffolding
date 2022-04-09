@@ -44,7 +44,13 @@ const (
 )
 
 var (
-	secretName = flag.String("secret", "fulcio-secrets", "Name of the secret to create for the certs")
+	secretName   = flag.String("secret", "fulcio-secrets", "Name of the secret to create for the certs")
+	certOrg      = flag.String("cert-organization", "Linux Foundation", "Name of the organization for certificate creation")
+	certCountry  = flag.String("cert-country", "USA", "Name of the country for certificate creation")
+	certProvince = flag.String("cert-province", "California", "Name of the province for certificate creation")
+	certLocality = flag.String("cert-locality", "San Francisco", "Name of the locality for certificate creation")
+	certAddr     = flag.String("cert-address", "548 Market St", "Name of the address for certificate creation")
+	certPostal   = flag.String("cert-postal", "57274", "Name of the postal code for certificate creation")
 )
 
 func main() {
@@ -136,12 +142,12 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	rootCA := &x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization:  []string{"chainguard"},
-			Country:       []string{"USA"},
-			Province:      []string{"WA"},
-			Locality:      []string{"Kirkland"},
-			StreetAddress: []string{"767 6th St S"},
-			PostalCode:    []string{"98033"},
+			Organization:  []string{*certOrg},
+			Country:       []string{*certCountry},
+			Province:      []string{*certProvince},
+			Locality:      []string{*certLocality},
+			StreetAddress: []string{*certAddr},
+			PostalCode:    []string{*certPostal},
 		},
 		NotBefore:             time.Now(),
 		NotAfter:              time.Now().AddDate(1, 0, 0),

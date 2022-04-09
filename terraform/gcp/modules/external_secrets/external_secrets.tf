@@ -125,9 +125,9 @@ spec:
     name: trillian-mysql
     template:
       data:
-        database: trillian
-        password: "{{ .mysqlPassword }}"
-        user: trillian
+        mysql-database: trillian
+        mysql-password: "{{ .mysqlPassword | toString }}"  # <-- convert []byte to string
+        mysql-user: trillian
   data:
   - secretKey: mysqlPassword
     remoteRef:

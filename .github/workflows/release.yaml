@@ -28,7 +28,7 @@ jobs:
       uses: imjasonh/setup-ko@2c3450ca27f6e6f2b02e72a40f2163c281a1f675 # v0.4
 
     - name: Install cosign
-      uses: sigstore/cosign-installer@581838fbedd492d2350a9ecd427a95d6de1e5d01 # v2.1.0
+      uses: sigstore/cosign-installer@d6a3abf1bdea83574e28d40543793018b6035605 # v2.1.0
 
     - name: Install GoReleaser
       uses: goreleaser/goreleaser-action@b953231f81b8dfd023c58e0854a721e35037f28b # v2.9.1

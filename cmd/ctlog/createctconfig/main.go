@@ -28,6 +28,7 @@ import (
 	"github.com/google/certificate-transparency-go/trillian/ctfe/configpb"
 	"github.com/google/trillian/crypto/keyspb"
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -182,10 +183,20 @@ func main() {
 		},
 	)
 
+	// Fetch only root certificate from the chain
+	certs, err := cryptoutils.UnmarshalCertificatesFromPEM(root.ChainPEM)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("unable to unmarshal certficate chain: %v", err)
+	}
+	rootCertPEM, err := cryptoutils.MarshalCertificateToPEM(certs[len(certs)-1])
+	if err != nil {
+		logging.FromContext(ctx).Panicf("unable to marshal root certificate: %v", err)
+	}
+
 	data := make(map[string][]byte)
 	data["private"] = privPEM
 	data["public"] = pubPEM
-	data["rootca"] = root.ChainPEM
+	data["rootca"] = rootCertPEM
 
 	existingSecret, err := clientset.CoreV1().Secrets(*ns).Get(ctx, *secretName, metav1.GetOptions{})
 	if err != nil && !apierrs.IsNotFound(err) {

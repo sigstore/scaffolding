@@ -34,10 +34,16 @@ variable "cluster_name" {
   default = "sigstore-staging"
 }
 
-variable "name" {
-  description = "KMS KeyRing name"
+variable "rekor_keyring_name" {
+  description = "Rekor KMS KeyRing name"
   type        = string
   default     = "rekor-keyring"
+}
+
+variable "fulcio_keyring_name" {
+  description = "Fulcio KMS KeyRing name"
+  type        = string
+  default     = "Fulcio-keyring"
 }
 
 variable "location" {
@@ -45,8 +51,14 @@ variable "location" {
   default = "global"
 }
 
-variable "key_name" {
-  description = "KMS Key name"
+variable "rekor_key_name" {
+  description = "Rekor KMS Key name"
   type        = string
   default     = "rekor-key"
+}
+
+variable "fulcio_key_name" {
+  description = "Fulcio KMS Key name for intermediate CA certificate signing"
+  type        = string
+  default     = "fulcio-intermediate-key"
 }

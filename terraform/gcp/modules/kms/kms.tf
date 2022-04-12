@@ -29,14 +29,14 @@ resource "google_project_service" "service" {
 }
 
 resource "google_kms_key_ring" "rekor-keyring" {
-  name       = var.name
+  name       = var.rekor_keyring_name
   location   = var.location
   project    = var.project_id
   depends_on = [google_project_service.service]
 }
 
 resource "google_kms_crypto_key" "rekor-key" {
-  name     = var.key_name
+  name     = var.rekor_key_name
   key_ring = google_kms_key_ring.rekor-keyring.id
   purpose  = "ASYMMETRIC_SIGN"
   version_template {
@@ -52,4 +52,23 @@ resource "google_kms_key_ring_iam_member" "rekor_sa_kms_iam" {
   role        = "roles/cloudkms.viewer"
   member      = format("serviceAccount:%s-rekor-sa@%s.iam.gserviceaccount.com", var.cluster_name, var.project_id)
   depends_on  = [google_kms_key_ring.rekor-keyring]
+}
+
+resource "google_kms_key_ring" "fulcio-keyring" {
+  name       = var.fulcio_keyring_name
+  location   = var.location
+  project    = var.project_id
+  depends_on = [google_project_service.service]
+}
+
+resource "google_kms_crypto_key" "fulcio-intermediate-key" {
+  name     = var.fulcio_key_name
+  key_ring = google_kms_key_ring.fulcio-keyring.id
+  purpose  = "ASYMMETRIC_SIGN"
+  version_template {
+    algorithm        = "EC_SIGN_P384_SHA384"
+    protection_level = "SOFTWARE"
+  }
+
+  depends_on = [google_kms_key_ring.fulcio-keyring]
 }

@@ -34,3 +34,17 @@ resource "google_project_iam_member" "fulcio_member" {
   member     = "serviceAccount:${google_service_account.fulcio-sa.email}"
   depends_on = [google_service_account.fulcio-sa]
 }
+
+resource "google_project_iam_member" "fulcio_kms_signer_verifier_member" {
+  project    = var.project_id
+  role       = "roles/cloudkms.signerVerifier"
+  member     = "serviceAccount:${google_service_account.fulcio-sa.email}"
+  depends_on = [google_service_account.fulcio-sa]
+}
+
+resource "google_project_iam_member" "fulcio_kms_viewer_member" {
+  project    = var.project_id
+  role       = "roles/cloudkms.viewer"
+  member     = "serviceAccount:${google_service_account.fulcio-sa.email}"
+  depends_on = [google_service_account.fulcio-sa]
+}

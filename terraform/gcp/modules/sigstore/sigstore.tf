@@ -158,9 +158,11 @@ module "rekor" {
   network = module.network.network_self_link
 
   // KMS
-  kms_keyring  = "rekor-keyring"
-  kms_location = "global"
-  kms_key_name = "rekor-key"
+  rekor_keyring_name  = "rekor-keyring"
+  rekor_key_name      = "rekor-key"
+  fulcio_keyring_name = "fulcio-keyring"
+  fulcio_key_name     = "fulcio-key"
+  kms_location        = "global"
 
   // Storage
   attestation_bucket = var.attestation_bucket

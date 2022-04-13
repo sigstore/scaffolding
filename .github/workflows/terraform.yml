@@ -32,6 +32,31 @@ jobs:
         id: fmt
         run: terraform fmt -check -recursive .
 
+  terraform-validate:
+    name: 'Terraform validate'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./terraform/gcp/modules/sigstore
+
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@ec3a7ce113134d7a93b817d10a8272cb61118579 # v2.4.0
+
+      - uses: hashicorp/setup-terraform@ed3a0531877aca392eb870f440d9ae7aba83a6bd # v1.4.0
+        with:
+          # TODO: extract terraform from the tf file when we have pinned
+          terraform_version: 1.1.6
+
+      - name: Terraform init
+        id: init
+        run: terraform init
+
+      - name: Terraform validate
+        id: validate
+        run: terraform validate
+
+
   terraform-tfsec:
     name: 'Terraform tfsec'
     runs-on: ubuntu-latest

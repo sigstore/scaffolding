@@ -34,22 +34,23 @@ jobs:
       KOCACHE: ~/ko
 
     steps:
-    - name: Configure DockerHub mirror
-      run: |
-        tmp=$(mktemp)
-        jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
-        sudo mv "$tmp" /etc/docker/daemon.json
-        sudo service docker restart
+    - uses: chainguard-dev/actions/setup-mirror@main
 
     - name: Setup Cluster
-      run: |
-        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-kind.sh
-        chmod u+x ./setup-kind.sh
-        ./setup-kind.sh \
-          --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
-          --cluster-suffix cluster.local \
-          --k8s-version ${{ matrix.k8s-version }} \
-          --knative-version ${KNATIVE_VERSION}
+      uses: chainguard-dev/actions/setup-kind@main
+      id: kind
+      with:
+        k8s-version: ${{ matrix.k8s-version }}
+        registry-authority: registry.local:5000
+        cluster-suffix: cluster.local
+
+    - name: Setup Knative
+      uses: chainguard-dev/actions/setup-knative@main
+      with:
+        version: ${KNATIVE_VERSION}
+        serving-features: '{"kubernetes.podspec-fieldref":"enabled", "kubernetes.podspec-volumes-emptydir":"enabled", "kubernetes.podspec-init-containers": "enabled", "kubernetes.podspec-securitycontext":"enabled"}'
+        serving-defaults: '{"revision-timeout-seconds":"5","container-concurrency":"100"}'
+        serving-autoscaler: '{"min-scale":"1","max-scale":"1"}'
 
     - name: Install all the everythings
       timeout-minutes: 10
@@ -88,37 +89,6 @@ jobs:
         kubectl wait --for=condition=Complete --timeout=180s job/checktree
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-    - name: Collect node diagnostics
+    - name: Collect diagnostics
       if: ${{ failure() }}
-      run: |
-        for x in $(kubectl get nodes -oname); do
-          echo "::group:: describe $x"
-          kubectl describe $x
-          echo '::endgroup::'
-        done
-
-    - name: Collect pod diagnostics
-      if: ${{ failure() }}
-      run: |
-        for ns in default fulcio-system rekor-system trillian-system ctlog-system; do
-          kubectl get pods -n${ns}
-
-          for x in $(kubectl get pods -n${ns} -oname); do
-            echo "::group:: describe $x"
-            kubectl describe -n${ns} $x
-            echo '::endgroup::'
-          done
-        done
-
-    - name: Collect logs
-      if: ${{ failure() }}
-      run: |
-        mkdir -p /tmp/logs
-        kind export logs /tmp/logs
-
-    - name: Upload artifacts
-      if: ${{ failure() }}
-      uses: actions/upload-artifact@6673cd052c4cd6fcf4b4e6e60ea986c889389535 # v3.0.0
-      with:
-        name: logs
-        path: /tmp/logs
+      uses: chainguard-dev/actions/kind-diag@main

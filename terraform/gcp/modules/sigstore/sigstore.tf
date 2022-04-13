@@ -184,7 +184,7 @@ module "fulcio" {
 
   // KMS
   fulcio_keyring_name = "fulcio-keyring"
-  fulcio_key_name     = "fulcio-key"
+  fulcio_key_name     = "fulcio-intermediate-key"
 
   depends_on = [
     module.gke-cluster,

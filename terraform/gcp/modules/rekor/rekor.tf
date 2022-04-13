@@ -22,9 +22,11 @@ module "kms" {
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
-  name     = var.kms_keyring
-  location = var.kms_location
-  key_name = var.kms_key_name
+  fulcio_keyring_name = var.fulcio_keyring_name
+  rekor_keyring_name  = var.rekor_keyring_name
+  fulcio_key_name     = var.fulcio_key_name
+  rekor_key_name      = var.rekor_key_name
+  location            = var.kms_location
 }
 
 // Redis for Rekor.

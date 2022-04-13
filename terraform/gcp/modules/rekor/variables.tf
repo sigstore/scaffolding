@@ -46,9 +46,24 @@ variable "attestation_bucket" {
 
 
 // KMS
-variable "kms_keyring" {
+variable "rekor_keyring_name" {
   type        = string
-  description = "Name of KMS keyring"
+  description = "Name of KMS keyring for Rekor"
+}
+
+variable "fulcio_keyring_name" {
+  type        = string
+  description = "Name of KMS keyring for Fulcio"
+}
+
+variable "rekor_key_name" {
+  type        = string
+  description = "Name of KMS key for Rekor"
+}
+
+variable "fulcio_key_name" {
+  type        = string
+  description = "Name of KMS key for Fulcio"
 }
 
 variable "kms_location" {
@@ -56,7 +71,3 @@ variable "kms_location" {
   description = "Location of KMS keyring"
 }
 
-variable "kms_key_name" {
-  type        = string
-  description = "Name of KMS key for Rekor"
-}

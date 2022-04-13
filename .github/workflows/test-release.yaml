@@ -28,7 +28,6 @@ jobs:
         - fulcio rekor ctlog e2e
 
     env:
-      KNATIVE_VERSION: "1.1.0"
       RELEASE_VERSION: "v0.2.5"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
@@ -47,10 +46,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: ${KNATIVE_VERSION}
-        serving-features: '{"kubernetes.podspec-fieldref":"enabled", "kubernetes.podspec-volumes-emptydir":"enabled", "kubernetes.podspec-init-containers": "enabled", "kubernetes.podspec-securitycontext":"enabled"}'
-        serving-defaults: '{"revision-timeout-seconds":"5","container-concurrency":"100"}'
-        serving-autoscaler: '{"min-scale":"1","max-scale":"1"}'
+        version: "1.1.0"
 
     - name: Install all the everythings
       timeout-minutes: 10

@@ -14,20 +14,6 @@
  * limitations under the License.
  */
 
-// Enable required services for this module
-resource "google_project_service" "service" {
-  for_each = toset([
-    "storage.googleapis.com", // For GCS bucket. roles/storage.admin
-  ])
-  project = var.project_id
-  service = each.key
-
-  // Do not disable the service on destroy. On destroy, we are going to
-  // destroy the project, but we need the APIs available to destroy the
-  // underlying resources.
-  disable_on_destroy = false
-}
-
 // Attestation bucket and relevant IAM
 resource "google_storage_bucket" "attestation" {
   name     = var.attestation_bucket

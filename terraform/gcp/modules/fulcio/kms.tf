@@ -28,35 +28,9 @@ resource "google_project_service" "service" {
   disable_on_destroy = false
 }
 
-resource "google_kms_key_ring" "rekor-keyring" {
-  name       = var.rekor_keyring_name
-  location   = var.location
-  project    = var.project_id
-  depends_on = [google_project_service.service]
-}
-
-resource "google_kms_crypto_key" "rekor-key" {
-  name     = var.rekor_key_name
-  key_ring = google_kms_key_ring.rekor-keyring.id
-  purpose  = "ASYMMETRIC_SIGN"
-  version_template {
-    algorithm        = "EC_SIGN_P256_SHA256"
-    protection_level = "SOFTWARE"
-  }
-
-  depends_on = [google_kms_key_ring.rekor-keyring]
-}
-
-resource "google_kms_key_ring_iam_member" "rekor_sa_kms_iam" {
-  key_ring_id = google_kms_key_ring.rekor-keyring.id
-  role        = "roles/cloudkms.viewer"
-  member      = format("serviceAccount:%s-rekor-sa@%s.iam.gserviceaccount.com", var.cluster_name, var.project_id)
-  depends_on  = [google_kms_key_ring.rekor-keyring]
-}
-
 resource "google_kms_key_ring" "fulcio-keyring" {
   name       = var.fulcio_keyring_name
-  location   = var.location
+  location   = var.kms_location
   project    = var.project_id
   depends_on = [google_project_service.service]
 }

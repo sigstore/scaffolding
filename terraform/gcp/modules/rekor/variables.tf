@@ -49,25 +49,17 @@ variable "attestation_bucket" {
 variable "rekor_keyring_name" {
   type        = string
   description = "Name of KMS keyring for Rekor"
-}
-
-variable "fulcio_keyring_name" {
-  type        = string
-  description = "Name of KMS keyring for Fulcio"
+  default     = "rekor-keyring"
 }
 
 variable "rekor_key_name" {
   type        = string
   description = "Name of KMS key for Rekor"
-}
-
-variable "fulcio_key_name" {
-  type        = string
-  description = "Name of KMS key for Fulcio"
+  default     = "rekor-key"
 }
 
 variable "kms_location" {
   type        = string
   description = "Location of KMS keyring"
+  default     = "global"
 }
-

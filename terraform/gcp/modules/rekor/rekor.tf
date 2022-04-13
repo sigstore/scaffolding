@@ -14,19 +14,19 @@
  * limitations under the License.
  */
 
-// KMS resources
-module "kms" {
-  source = "../kms"
+// Enable required services for this module
+resource "google_project_service" "service" {
+  for_each = toset([
+    "storage.googleapis.com",  // For GCS bucket. roles/storage.admin
+    "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
+  ])
+  project = var.project_id
+  service = each.key
 
-  region       = var.region
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
-
-  fulcio_keyring_name = var.fulcio_keyring_name
-  rekor_keyring_name  = var.rekor_keyring_name
-  fulcio_key_name     = var.fulcio_key_name
-  rekor_key_name      = var.rekor_key_name
-  location            = var.kms_location
+  // Do not disable the service on destroy. On destroy, we are going to
+  // destroy the project, but we need the APIs available to destroy the
+  // underlying resources.
+  disable_on_destroy = false
 }
 
 // Redis for Rekor.

@@ -44,3 +44,22 @@ variable "enable_ca" {
   type        = bool
   default     = true
 }
+
+// KMS
+variable "fulcio_keyring_name" {
+  type        = string
+  description = "Name of KMS keyring for Fulcio"
+  default     = "fulcio-keyring"
+}
+
+variable "fulcio_key_name" {
+  type        = string
+  description = "Name of KMS key for Fulcio"
+  default     = "fulcio-intermediate-key"
+}
+
+variable "kms_location" {
+  type        = string
+  description = "Location of KMS keyring"
+  default     = "global"
+}

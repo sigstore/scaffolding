@@ -158,11 +158,9 @@ module "rekor" {
   network = module.network.network_self_link
 
   // KMS
-  rekor_keyring_name  = "rekor-keyring"
-  rekor_key_name      = "rekor-key"
-  fulcio_keyring_name = "fulcio-keyring"
-  fulcio_key_name     = "fulcio-key"
-  kms_location        = "global"
+  rekor_keyring_name = "rekor-keyring"
+  rekor_key_name     = "rekor-key"
+  kms_location       = "global"
 
   // Storage
   attestation_bucket = var.attestation_bucket
@@ -184,6 +182,9 @@ module "fulcio" {
   // Certificate authority
   ca_pool_name = var.ca_pool_name
 
+  // KMS
+  fulcio_keyring_name = "fulcio-keyring"
+  fulcio_key_name     = "fulcio-intermediate-key"
 
   depends_on = [
     module.gke-cluster,

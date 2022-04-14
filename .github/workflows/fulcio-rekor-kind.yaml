@@ -36,7 +36,6 @@ jobs:
         - fulcio rekor ctlog e2e
 
     env:
-      KNATIVE_VERSION: "1.1.0"
       GOPATH: ${{ github.workspace }}
       GO111MODULE: on
       GOFLAGS: -ldflags=-s -ldflags=-w
@@ -45,15 +44,7 @@ jobs:
       COSIGN_EXPERIMENTAL: true
 
     steps:
-    - name: Configure DockerHub mirror
-      working-directory: ./
-      run: |
-        tmp=$(mktemp)
-        jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
-        sudo mv "$tmp" /etc/docker/daemon.json
-        sudo service docker restart
-
-
+    - uses: chainguard-dev/actions/setup-mirror@main
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
     - uses: actions/cache@v3
       with:
@@ -94,13 +85,17 @@ jobs:
         go install ./cmd/cosign
 
     - name: Setup Cluster
-      working-directory: ./src/github.com/sigstore/scaffolding
-      run: |
-        ./hack/setup-kind.sh \
-          --registry-url $(echo ${KO_DOCKER_REPO} | cut -d'/' -f 1) \
-          --cluster-suffix cluster.local \
-          --k8s-version ${{ matrix.k8s-version }} \
-          --knative-version ${KNATIVE_VERSION}
+      uses: chainguard-dev/actions/setup-kind@main
+      id: kind
+      with:
+        k8s-version: ${{ matrix.k8s-version }}
+        registry-authority: registry.local:5000
+        cluster-suffix: cluster.local
+
+    - name: Setup Knative
+      uses: chainguard-dev/actions/setup-knative@main
+      with:
+        version: "1.1.0"
 
     - name: Create sample image
       run: |

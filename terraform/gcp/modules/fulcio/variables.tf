@@ -49,7 +49,7 @@ variable "enable_ca" {
 variable "fulcio_keyring_name" {
   type        = string
   description = "Name of KMS keyring for Fulcio"
-  default     = "Fulcio-keyring"
+  default     = "fulcio-keyring"
 }
 
 variable "fulcio_key_name" {

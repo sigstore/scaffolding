@@ -129,6 +129,7 @@ func main() {
 			PrivateKey:     privKeyProto,
 			PublicKey:      &keyspb.PublicKey{Der: keyDER},
 			LogBackendName: "trillian",
+			ExtKeyUsages:   []string{"CodeSigning"},
 		}
 
 		multiConfig := configpb.LogMultiConfig{

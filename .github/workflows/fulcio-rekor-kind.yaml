@@ -130,7 +130,7 @@ jobs:
         done
 
         # Now wait for all of the rollouts to complete!
-        for ns in fulcio-system trillian-system rekor-system ctlog-system; do
+        for ns in trillian-system rekor-system ctlog-system fulcio-system; do
           kubectl wait --timeout 10m -n ${ns} --for=condition=Ready pod --all
         done
 

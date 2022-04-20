@@ -68,6 +68,11 @@ variable "cluster_name" {
   default     = "sigstore-staging"
 }
 
+variable "cluster_network_tag" {
+  type    = string
+  default = ""
+}
+
 variable "tunnel_accessor_sa" {
   type        = string
   description = "Email of group to give access to the tunnel to"

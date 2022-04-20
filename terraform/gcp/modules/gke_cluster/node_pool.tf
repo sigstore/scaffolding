@@ -57,6 +57,7 @@ resource "google_container_node_pool" "cluster_nodes" {
     metadata = {
       disable-legacy-endpoints = true
     }
+    tags = [local.cluster_network_tag]
     shielded_instance_config {
       enable_secure_boot = var.enable_secure_boot
     }

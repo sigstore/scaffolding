@@ -128,6 +128,11 @@ variable "network_policy_provider" {
   default = "PROVIDER_UNSPECIFIED"
 }
 
+variable "cluster_network_tag" {
+  type    = string
+  default = ""
+}
+
 variable "cluster_autoscaling_profile" {
   type    = string
   default = "BALANCED"

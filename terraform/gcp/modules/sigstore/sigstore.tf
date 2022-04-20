@@ -104,6 +104,7 @@ module "gke-cluster" {
   subnetwork                    = module.network.subnetwork_self_link
   cluster_secondary_range_name  = module.network.secondary_ip_range.0.range_name
   services_secondary_range_name = module.network.secondary_ip_range.1.range_name
+  cluster_network_tag           = var.cluster_network_tag
 
   bastion_ip_address = module.bastion.ip_address
 

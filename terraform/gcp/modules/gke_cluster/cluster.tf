@@ -55,6 +55,7 @@ resource "google_container_cluster" "cluster" {
     metadata = {
       disable-legacy-endpoints = true
     }
+    tags            = [local.cluster_network_tag]
     service_account = google_service_account.gke-sa.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
   }
@@ -122,3 +123,33 @@ resource "google_container_cluster" "cluster" {
 
   depends_on = [google_project_service.service]
 }
+
+resource "random_id" "suffix" {
+  byte_length = 4
+}
+
+locals {
+  cluster_network_tag = var.cluster_network_tag != "" ? var.cluster_network_tag : "gke-${var.cluster_name}"
+}
+
+// Allow master to talk to worker nodes on port 8443 for ingress webhook.
+// https://github.com/kubernetes/kubernetes/issues/79739
+// https://cloud.google.com/kubernetes-engine/docs/how-to/private-clusters#add_firewall_rules
+resource "google_compute_firewall" "master-webhooks" {
+  name      = "gke-${var.cluster_name}-webhooks-${random_id.suffix.hex}"
+  project   = var.project_id
+  network   = var.network
+  direction = "INGRESS"
+
+  source_ranges = [var.master_ipv4_cidr_block]
+
+  allow {
+    protocol = "tcp"
+    ports    = ["8443"]
+  }
+
+  target_tags = [local.cluster_network_tag]
+
+  depends_on = [google_container_cluster.cluster]
+}
+

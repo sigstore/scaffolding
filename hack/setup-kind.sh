@@ -92,16 +92,22 @@ if [ ${RUNNING_ON_MAC} == "false" ]; then
   # See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600009955324200
   sudo swapoff -a
   sudo rm -f /swapfile
+
   # Use in-memory storage to avoid etcd server timeouts.
   # https://kubernetes.slack.com/archives/CEKK1KTN2/p1615134111016300
   # https://github.com/kubernetes-sigs/kind/issues/845
+  if mountpoint -q /tmp/etcd; then
+    sudo umount /tmp/etcd
+  fi
   sudo mkdir -p /tmp/etcd
   sudo mount -t tmpfs tmpfs /tmp/etcd
 fi
 
-curl -Lo ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64"
-chmod +x ./kind
-sudo mv kind /usr/local/bin
+if ! command -v kind > /dev/null; then
+  curl -Lo ./kind "https://github.com/kubernetes-sigs/kind/releases/download/${KIND_VERSION}/kind-$(uname)-amd64"
+  chmod +x ./kind
+  sudo mv kind /usr/local/bin
+fi
 
 echo '::endgroup::'
 
@@ -224,9 +230,11 @@ docker run -d --restart=always \
 # Connect the registry to the KinD network.
 docker network connect "kind" "$REGISTRY_NAME"
 
-# Make the $REGISTRY_NAME -> 127.0.0.1, to tell `ko` to publish to
-# local reigstry, even when pushing $REGISTRY_NAME:$REGISTRY_PORT/some/image
-sudo echo "127.0.0.1 $REGISTRY_NAME" | sudo tee -a /etc/hosts
+if ! grep -q "$REGISTRY_NAME" /etc/hosts; then
+  # Make the $REGISTRY_NAME -> 127.0.0.1, to tell `ko` to publish to
+  # local reigstry, even when pushing $REGISTRY_NAME:$REGISTRY_PORT/some/image
+  echo "127.0.0.1 $REGISTRY_NAME" | sudo tee -a /etc/hosts
+fi
 
 echo '::endgroup::'
 

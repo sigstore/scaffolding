@@ -23,7 +23,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.5/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.8/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -59,7 +59,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.5/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.8/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -132,11 +132,16 @@ sure that the rekor entry is created for it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 ```
 
-2) Create the three test jobs (checktree, sign-job, and verify-job)  using this
+2) Get fulcio-secret and add to default namespace
+```shell
+kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+```
+
+3) Create the three test jobs (checktree, sign-job, and verify-job)  using this
 yaml (this may take a bit (~couple of minutes), since the jobs are launched
 simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.5/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.8/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed
@@ -306,14 +311,6 @@ Using payload from: ./predicate-file
 Handling connection for 8080
 tlog entry created with index: 5
 ```
-
-
-For example, to verify an image hosted in the local registry:
-
-```shell
-SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url=http://rekor.rekor-system.svc:8080 --allow-insecure-registry registry.local:5000/knative/pythontest@sha256:080c3ad99fdd8b6f23da3085fb321d8a4fa57f8d4dd30135132e0fe3b31aa602
-```
-
 
 And then finally let's verify the attestation we just created:
 

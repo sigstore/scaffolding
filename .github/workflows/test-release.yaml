@@ -28,7 +28,7 @@ jobs:
         - fulcio rekor ctlog e2e
 
     env:
-      RELEASE_VERSION: "v0.2.5"
+      RELEASE_VERSION: "v0.2.8"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 

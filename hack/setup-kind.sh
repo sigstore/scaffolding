@@ -26,6 +26,12 @@ else
   RUNNING_ON_MAC="false"
 fi
 
+# Check required utilities are on path
+for i in "yq" "kubectl"
+do
+  command -v $i >/dev/null 2>&1 || { echo >&2 "$i not found"; exit 1; }
+done
+
 # Defaults
 K8S_VERSION="v1.21.x"
 KNATIVE_VERSION="1.1.0"

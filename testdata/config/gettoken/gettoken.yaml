@@ -4,6 +4,10 @@ metadata:
   name: gettoken
 spec:
   template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/initial-scale: "1"
+        autoscaling.knative.dev/min-scale: "1"
     spec:
       containers:
       - name: gettoken

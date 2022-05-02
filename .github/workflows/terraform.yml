@@ -80,7 +80,7 @@ jobs:
           tfsec_args: --force-all-dirs --verbose
 
       - name: Upload SARIF file
-        uses: github/codeql-action/upload-sarif@7502d6e991ca767d2db617bfd823a1ed925a0d59 # v2.1.8
+        uses: github/codeql-action/upload-sarif@7502d6e991ca767d2db617bfd823a1ed925a0d59 # v2.1.9
         with:
           # Path to SARIF file relative to the root of the repository
           sarif_file: tfsec.sarif

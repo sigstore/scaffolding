@@ -1,0 +1,16 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: inactive-tree
+  namespace: trillian-system
+spec:
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: cosign
+        image: ko://github.com/sigstore/scaffolding/cmd/trillian/updatetree
+        args: [
+          "--tree_id=[ YOUR TREE ID ]",
+        ]
+

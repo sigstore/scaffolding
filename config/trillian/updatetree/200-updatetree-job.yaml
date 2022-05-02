@@ -11,6 +11,6 @@ spec:
       - name: cosign
         image: ko://github.com/sigstore/scaffolding/cmd/trillian/updatetree
         args: [
-          "--tree_id=[ YOUR TREE ID ]",
+          "--tree_id=0",
         ]
 

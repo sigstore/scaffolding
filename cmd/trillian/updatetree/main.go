@@ -121,6 +121,11 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), *rpcDeadline)
 	defer cancel()
+	if *treeID == 0 {
+		fmt.Println("No tree ID passed in, returning")
+		return
+	}
+
 	tree, err := updateTree(ctx)
 	if err != nil {
 		glog.Exitf("Failed to update tree: %v", err)

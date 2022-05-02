@@ -3,7 +3,7 @@ module github.com/sigstore/scaffolding
 go 1.17
 
 require (
-	github.com/go-openapi/runtime v0.23.3
+	github.com/go-openapi/runtime v0.24.0
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/google/certificate-transparency-go v1.1.2

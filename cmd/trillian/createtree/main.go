@@ -48,6 +48,7 @@ var (
 	displayName     = flag.String("display_name", "", "Display name of the new tree")
 	description     = flag.String("description", "", "Description of the new tree")
 	maxRootDuration = flag.Duration("max_root_duration", time.Hour, "Interval after which a new signed root is produced despite no submissions; zero means never")
+	force           = flag.Bool("force", false, "Force create a new tree and update configmap")
 )
 
 func main() {
@@ -72,7 +73,7 @@ func main() {
 	if cm.Data == nil {
 		cm.Data = make(map[string]string)
 	}
-	if treeID, ok := cm.Data[treeKey]; ok {
+	if treeID, ok := cm.Data[treeKey]; ok && !*force {
 		logging.FromContext(ctx).Infof("Found existing TreeID: %s", treeID)
 		return
 	}

@@ -3,9 +3,10 @@ module github.com/sigstore/scaffolding
 go 1.17
 
 require (
-	github.com/go-openapi/runtime v0.24.0
+	github.com/go-openapi/runtime v0.24.1
 	github.com/go-openapi/strfmt v0.21.2
 	github.com/go-sql-driver/mysql v1.6.0
+	github.com/golang/glog v1.0.0
 	github.com/google/certificate-transparency-go v1.1.2
 	github.com/google/trillian v1.4.0
 	github.com/google/uuid v1.3.0
@@ -16,6 +17,7 @@ require (
 	github.com/sigstore/fulcio v0.1.2-0.20220110181937-d890471d8047
 	github.com/sigstore/rekor v0.6.0
 	github.com/sigstore/sigstore v1.2.0
+	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf
 	google.golang.org/grpc v1.45.0
 	google.golang.org/protobuf v1.28.0
 	k8s.io/api v0.23.6
@@ -76,7 +78,6 @@ require (
 	github.com/go-playground/validator/v10 v10.10.1 // indirect
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
-	github.com/golang/glog v1.0.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
@@ -174,7 +175,6 @@ require (
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/api v0.70.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
-	google.golang.org/genproto v0.0.0-20220222213610-43724f9ea8cf // indirect
 	gopkg.in/cheggaaa/pb.v1 v1.0.28 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect

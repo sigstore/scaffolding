@@ -39,6 +39,12 @@ variable "ca_pool_name" {
   type        = string
 }
 
+variable "ca_name" {
+  description = "Certificate authority name"
+  type        = string
+  default     = "sigstore-authority"
+}
+
 variable "enable_ca" {
   description = "Enable a certificate authority via GCP CA Service"
   type        = bool

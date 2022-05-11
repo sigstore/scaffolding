@@ -125,6 +125,8 @@ module "mysql" {
 
   network = module.network.network_self_link
 
+  instance_name = var.mysql_instance_name
+
   depends_on = [
     module.network,
     module.gke-cluster
@@ -159,8 +161,8 @@ module "rekor" {
   network = module.network.network_self_link
 
   // KMS
-  rekor_keyring_name = "rekor-keyring"
-  rekor_key_name     = "rekor-key"
+  rekor_keyring_name = var.rekor_keyring_name
+  rekor_key_name     = var.rekor_key_name
   kms_location       = "global"
 
   // Storage
@@ -182,10 +184,11 @@ module "fulcio" {
 
   // Certificate authority
   ca_pool_name = var.ca_pool_name
+  ca_name      = var.ca_name
 
   // KMS
-  fulcio_keyring_name = "fulcio-keyring"
-  fulcio_key_name     = "fulcio-intermediate-key"
+  fulcio_keyring_name = var.fulcio_keyring_name
+  fulcio_key_name     = var.fulcio_intermediate_key_name
 
   depends_on = [
     module.gke-cluster,

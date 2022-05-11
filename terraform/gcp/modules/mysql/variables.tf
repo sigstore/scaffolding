@@ -43,3 +43,10 @@ variable "subnetwork" {
   type    = string
   default = "default"
 }
+
+variable "instance_name" {
+  type        = string
+  description = "Name for MySQL instance. If unspecified, will default to '[var.cluster-name]-mysql-[random.suffix]'"
+  default     = ""
+}
+

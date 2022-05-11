@@ -92,7 +92,7 @@ resource "google_privateca_ca_pool" "sigstore-ca-pool" {
 }
 
 resource "google_privateca_certificate_authority" "sigstore-ca" {
-  certificate_authority_id = "sigstore-authority"
+  certificate_authority_id = var.ca_name
   location                 = var.region
   project                  = var.project_id
   pool                     = google_privateca_ca_pool.sigstore-ca-pool.name

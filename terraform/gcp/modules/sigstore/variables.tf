@@ -43,6 +43,12 @@ variable "ca_pool_name" {
   default     = "sigstore"
 }
 
+variable "ca_name" {
+  description = "Certificate authority name"
+  type        = string
+  default     = "sigstore-authority"
+}
+
 variable "monitoring" {
   description = "Monitoring and alerting"
   type = object({
@@ -81,4 +87,34 @@ variable "tunnel_accessor_sa" {
 variable "github_repo" {
   description = "Github repo for running Github Actions from."
   type        = string
+}
+
+variable "mysql_instance_name" {
+  type        = string
+  description = "Name for MySQL instance. If unspecified, will default to '[var.cluster-name]-mysql-[random.suffix]'"
+  default     = ""
+}
+
+variable "fulcio_keyring_name" {
+  type        = string
+  description = "Name of Fulcio keyring."
+  default     = "fulcio-keyring"
+}
+
+variable "fulcio_intermediate_key_name" {
+  type        = string
+  description = "Name of Fulcio intermediate key."
+  default     = "fulcio-intermediate-key"
+}
+
+variable "rekor_keyring_name" {
+  type        = string
+  description = "Name of Rekor keyring."
+  default     = "rekor-keyring"
+}
+
+variable "rekor_key_name" {
+  type        = string
+  description = "Name of Rekor key."
+  default     = "rekor-key"
 }

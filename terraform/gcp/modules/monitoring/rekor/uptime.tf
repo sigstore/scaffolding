@@ -16,7 +16,7 @@
 
 
 // Enable required services for this module
-resource "google_monitoring_uptime_check_config" "rekor_uptime_alerts" {
+resource "google_monitoring_uptime_check_config" "rekor_uptime_alerts_get" {
   for_each = toset(var.api_endpoints_get)
 
   display_name = format("Rekor uptime - %s", each.key)
@@ -43,4 +43,3 @@ resource "google_monitoring_uptime_check_config" "rekor_uptime_alerts" {
   project = var.project_id
   timeout = "10s"
 }
-

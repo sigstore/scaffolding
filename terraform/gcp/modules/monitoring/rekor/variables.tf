@@ -37,14 +37,11 @@ variable "notification_channel_id" {
 
 variable "api_endpoints_get" {
   type = list(string)
-  default = ["",
+  default = [
+    "/",
     "/api/v1/version",
-    "/api/v1/index/retrieve",
     "/api/v1/log",
     "/api/v1/log/publicKey",
-    "/api/v1/log/proof",
-    "/api/v1/log/entries",
-    "/api/v1/log/entries/retrieve"
   ]
 }
 

@@ -16,17 +16,7 @@
 
 # Alert for Rekor uptime: GET
 resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
-  for_each = toset([
-    // API endpoints we want to test
-    "",
-    "/api/v1/version",
-    "/api/v1/index/retrieve",
-    "/api/v1/log",
-    "/api/v1/log/publicKey",
-    "/api/v1/log/proof",
-    "/api/v1/log/entries",
-    "/api/v1/log/entries/retrieve"
-  ])
+  for_each = toset(var.api_endpoints_get)
 
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {

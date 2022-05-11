@@ -17,17 +17,7 @@
 
 // Enable required services for this module
 resource "google_monitoring_uptime_check_config" "rekor_uptime_alerts" {
-  for_each = toset([
-    // API endpoints we want to test
-    "",
-    "/api/v1/version",
-    "/api/v1/index/retrieve",
-    "/api/v1/log",
-    "/api/v1/log/publicKey",
-    "/api/v1/log/proof",
-    "/api/v1/log/entries",
-    "/api/v1/log/entries/retrieve"
-  ])
+  for_each = toset(var.api_endpoints_get)
 
   display_name = format("Rekor uptime - %s", each.key)
 

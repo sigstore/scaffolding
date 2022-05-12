@@ -90,7 +90,7 @@ resource "random_id" "db_name_suffix" {
 
 resource "google_sql_database_instance" "trillian" {
   project          = var.project_id
-  name             = format("%s-mysql-%s", var.cluster_name, random_id.db_name_suffix.hex)
+  name             = var.instance_name != "" ? var.instance_name : format("%s-mysql-%s", var.cluster_name, random_id.db_name_suffix.hex)
   database_version = "MYSQL_8_0"
   region           = var.region
 

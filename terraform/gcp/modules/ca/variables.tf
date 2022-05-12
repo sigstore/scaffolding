@@ -34,3 +34,10 @@ variable "ca_pool_name" {
   type        = string
   default     = "sigstore"
 }
+
+variable "ca_name" {
+  description = "Certificate authority name"
+  type        = string
+  default     = "sigstore-authority"
+}
+

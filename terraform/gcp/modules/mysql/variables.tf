@@ -50,3 +50,9 @@ variable "instance_name" {
   default     = ""
 }
 
+variable "db_name" {
+  type        = string
+  description = "Name for MySQL database name."
+  default     = "trillian"
+}
+

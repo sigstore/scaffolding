@@ -126,6 +126,7 @@ module "mysql" {
   network = module.network.network_self_link
 
   instance_name = var.mysql_instance_name
+  db_name       = var.mysql_db_name
 
   depends_on = [
     module.network,

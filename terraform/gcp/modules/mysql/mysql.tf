@@ -126,7 +126,7 @@ resource "google_sql_database_instance" "trillian" {
 }
 
 resource "google_sql_database" "trillian" {
-  name       = "trillian"
+  name       = var.db_name
   project    = var.project_id
   instance   = google_sql_database_instance.trillian.name
   collation  = "utf8_general_ci"

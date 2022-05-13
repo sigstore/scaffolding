@@ -30,14 +30,14 @@ func init() {
 }
 
 func main() {
-	prometheus.MustRegister(endpointLatenciesSummary)
-	prometheus.MustRegister(endpointLatenciesHistogram)
+	reg := prometheus.NewRegistry()
+	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram)
 
 	go runProbers()
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
-		prometheus.DefaultGatherer,
+		reg,
 		promhttp.HandlerOpts{
 			// Opt into OpenMetrics to support exemplars.
 			EnableOpenMetrics: true,

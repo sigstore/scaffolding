@@ -33,7 +33,7 @@ resource "google_storage_bucket" "tuf" {
   location = var.region
   project  = var.project_id
 
-  storage_class               = "REGIONAL"
+  storage_class               = var.storage_class
   uniform_bucket_level_access = true
 
   versioning {

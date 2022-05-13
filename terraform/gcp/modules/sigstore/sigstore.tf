@@ -45,7 +45,8 @@ module "tuf" {
   region     = var.region
   project_id = var.project_id
 
-  tuf_bucket = var.tuf_bucket
+  tuf_bucket    = var.tuf_bucket
+  storage_class = var.tuf_storage_class
 }
 
 // Monitoring
@@ -168,6 +169,8 @@ module "rekor" {
 
   // Storage
   attestation_bucket = var.attestation_bucket
+  attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
+  storage_class      = var.attestation_storage_class
 
   depends_on = [
     module.network,

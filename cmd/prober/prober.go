@@ -1,9 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -30,9 +30,10 @@ func init() {
 }
 
 func main() {
-	go runProbers()
+	prometheus.MustRegister(endpointLatenciesSummary)
+	prometheus.MustRegister(endpointLatenciesHistogram)
 
-	prometheus.MustRegister(endpointLatencies)
+	go runProbers()
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
@@ -48,39 +49,54 @@ func main() {
 func runProbers() {
 	for {
 		for _, r := range RekorEndpoints {
-			if err := runRequest(rekorURL, r); err != nil {
+			if err := observeRequest(rekorURL, r); err != nil {
 				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
 			}
 		}
+		fmt.Println("Complete")
 		time.Sleep(time.Duration(frequency) * time.Second)
 	}
 }
 
-func runRequest(host string, r ReadProberCheck) error {
+func observeRequest(host string, r ReadProberCheck) error {
+	fmt.Println("Observing ", host+r.endpoint)
 	client := &http.Client{}
 
-	s := time.Now()
-	req, err := http.NewRequest(r.method, host+r.endpoint, nil)
+	req, err := httpRequest(host, r)
 	if err != nil {
 		return err
 	}
+
+	s := time.Now()
 	resp, err := client.Do(req)
 	latency := time.Since(s).Milliseconds()
 
-	endpointLatencies.WithLabelValues(r.endpoint).Observe(float64(latency))
-
-	fmt.Println("latency:", latency)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		bytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			return err
-		}
-		fmt.Println(string(bytes))
+	labels := prometheus.Labels{
+		endpointLabel:   r.endpoint,
+		statusCodeLabel: fmt.Sprintf("%d", resp.StatusCode),
+		hostLabel:       host,
 	}
+	fmt.Println("Status code: ", resp.StatusCode)
+	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
+	endpointLatenciesSummary.With(labels).Observe(float64(latency))
 	return nil
+}
+
+func httpRequest(host string, r ReadProberCheck) (*http.Request, error) {
+	req, err := http.NewRequest(r.method, host+r.endpoint, bytes.NewBuffer([]byte(r.body)))
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	q := req.URL.Query()
+	for k, v := range r.queries {
+		q.Add(k, v)
+	}
+	req.URL.RawQuery = q.Encode()
+	return req, nil
 }

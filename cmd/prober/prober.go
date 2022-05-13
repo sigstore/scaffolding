@@ -53,6 +53,11 @@ func runProbers() {
 				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
 			}
 		}
+		for _, r := range FulcioEndpoints {
+			if err := observeRequest(fulcioURL, r); err != nil {
+				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
+			}
+		}
 		fmt.Println("Complete")
 		time.Sleep(time.Duration(frequency) * time.Second)
 	}

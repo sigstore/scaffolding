@@ -41,3 +41,10 @@ var RekorEndpoints = []ReadProberCheck{
 		body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
 	},
 }
+
+var FulcioEndpoints = []ReadProberCheck{
+	{
+		endpoint: "/api/v1/rootCert",
+		method:   GET,
+	},
+}

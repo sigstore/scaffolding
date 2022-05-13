@@ -95,6 +95,12 @@ variable "mysql_instance_name" {
   default     = ""
 }
 
+variable "mysql_db_name" {
+  type        = string
+  description = "Name for MySQL database name."
+  default     = "trillian"
+}
+
 variable "fulcio_keyring_name" {
   type        = string
   description = "Name of Fulcio keyring."

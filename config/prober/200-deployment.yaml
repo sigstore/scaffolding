@@ -25,17 +25,3 @@ spec:
         image: ko://github.com/sigstore/scaffolding/cmd/prober
         ports:
         - containerPort: 8080 # metrics
----
-apiVersion: v1
-kind: Service
-metadata:
-  namespace: sigstore-prober
-  name: sigstore-prober
-spec:
-  selector:
-    app: sigstore-prober
-  type: LoadBalancer
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 3000

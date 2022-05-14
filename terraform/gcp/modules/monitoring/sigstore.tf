@@ -66,3 +66,14 @@ module "dex" {
   ]
 }
 
+// Prober
+module "prober" {
+  source = "./prober"
+
+  project_id              = var.project_id
+  notification_channel_id = var.notification_channel_id
+
+  depends_on = [
+    google_project_service.service
+  ]
+}

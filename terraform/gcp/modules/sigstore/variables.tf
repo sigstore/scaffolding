@@ -27,14 +27,38 @@ variable "region" {
   type        = string
 }
 
+variable "tuf_region" {
+  description = "The region in which to create the TUF bucket"
+  type        = string
+  default     = ""
+}
+
+variable "attestation_region" {
+  description = "The region in which to create the attestation bucket"
+  type        = string
+  default     = ""
+}
+
 variable "attestation_bucket" {
   type        = string
   description = "Name of GCS bucket for attestation."
 }
 
+variable "attestation_storage_class" {
+  type        = string
+  description = "Storage class for attestation bucket."
+  default     = "REGIONAL"
+}
+
 variable "tuf_bucket" {
   type        = string
   description = "Name of GCS bucket for TUF root."
+}
+
+variable "tuf_storage_class" {
+  type        = string
+  description = "Storage class for TUF bucket."
+  default     = "REGIONAL"
 }
 
 variable "ca_pool_name" {

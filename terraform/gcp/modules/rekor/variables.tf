@@ -44,6 +44,17 @@ variable "attestation_bucket" {
   description = "Name of GCS bucket for attestation."
 }
 
+variable "attestation_region" {
+  type        = string
+  description = "Attestation bucket region"
+  default     = ""
+}
+
+variable "storage_class" {
+  type        = string
+  description = "Storage class for TUF root bucket."
+  default     = "REGIONAL"
+}
 
 // KMS
 variable "rekor_keyring_name" {

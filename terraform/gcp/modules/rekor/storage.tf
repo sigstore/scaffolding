@@ -17,10 +17,10 @@
 // Attestation bucket and relevant IAM
 resource "google_storage_bucket" "attestation" {
   name     = var.attestation_bucket
-  location = var.region
+  location = var.attestation_region == "" ? var.region : var.attestation_region
   project  = var.project_id
 
-  storage_class               = "REGIONAL"
+  storage_class               = var.storage_class
   uniform_bucket_level_access = true
 
   versioning {

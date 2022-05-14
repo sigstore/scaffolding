@@ -32,3 +32,9 @@ variable "tuf_bucket" {
   type        = string
   description = "Name of GCS bucket for TUF root."
 }
+
+variable "storage_class" {
+  type        = string
+  description = "Storage class for TUF root bucket."
+  default     = "REGIONAL"
+}

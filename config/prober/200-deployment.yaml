@@ -1,0 +1,27 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: sigstore-prober
+  name: sigstore-prober
+  labels:
+    app: sigstore-prober
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sigstore-prober
+  template:
+    metadata:
+      labels:
+        app: sigstore-prober
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: /metrics
+        prometheus.io/port: "8080"
+    spec:
+      containers:
+      - name: sigstore-prober
+        image: ko://github.com/sigstore/scaffolding/cmd/prober
+        ports:
+        - containerPort: 8080 # metrics

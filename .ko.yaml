@@ -90,3 +90,18 @@ builds:
   - -w
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
+
+- id: prober
+  dir: .
+  main: ./cmd/prober
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"

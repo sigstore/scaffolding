@@ -97,14 +97,14 @@ resource "google_sql_database_instance" "trillian" {
   depends_on = [google_service_networking_connection.private_vpc_connection]
 
   settings {
-    tier              = "db-n1-standard-1"
+    tier              = var.tier
     activation_policy = "ALWAYS"
-    availability_type = "REGIONAL"
+    availability_type = var.availability_type
 
     ip_configuration {
-      ipv4_enabled    = "false"
+      ipv4_enabled    = var.ipv4_enabled
       private_network = var.network
-      require_ssl     = "true"
+      require_ssl     = var.require_ssl
     }
 
     database_flags {
@@ -113,8 +113,8 @@ resource "google_sql_database_instance" "trillian" {
     }
 
     backup_configuration {
-      enabled            = true
-      binary_log_enabled = true
+      enabled            = var.backup_enabled
+      binary_log_enabled = var.binary_log_backup_enabled
     }
   }
 

@@ -50,6 +50,13 @@ resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus" {
   depends_on         = [google_service_account.prometheus-sa, google_container_cluster.cluster]
 }
 
+resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus_prober" {
+  service_account_id = google_service_account.prometheus-sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[sigstore-prober/sigstore-prober]"
+  depends_on         = [google_service_account.prometheus-sa, google_container_cluster.cluster]
+}
+
 resource "google_project_iam_member" "prometheus_member" {
   project    = var.project_id
   role       = "roles/monitoring.metricWriter"

@@ -42,7 +42,7 @@ module "bastion" {
 module "tuf" {
   source = "../tuf"
 
-  region     = var.region
+  region     = var.tuf_region == "" ? var.region : var.tuf_region
   project_id = var.project_id
 
   tuf_bucket    = var.tuf_bucket

@@ -47,6 +47,11 @@ variable "rekor_url" {
   default     = "rekor.sigstore.dev"
 }
 
+variable "ctlog_url" {
+  description = "CT Log URL"
+  default     = "ctfe.sigstore.dev"
+}
+
 variable "dex_url" {
   description = "Dex URL"
   default     = "oauth2.sigstore.dev"

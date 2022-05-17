@@ -42,6 +42,10 @@ variable "fulcio_url" {
   default     = "fulcio.sigstore.dev"
 }
 
+variable "ctlog_url" {
+  description = "CT Log URL"
+  default     = "ctfe.sigstore.dev"
+}
 
 // Set-up for notification channel for alerting
 variable "notification_channel_id" {
@@ -51,6 +55,7 @@ variable "notification_channel_id" {
 
 locals {
   notification_channels = [format("projects/%v/notificationChannels/%v", var.project_id, var.notification_channel_id)]
+  hosts                 = [var.fulcio_url, var.ctlog_url]
 }
 
 // Certificate Authority name for alerting

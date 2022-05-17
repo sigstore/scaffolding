@@ -41,10 +41,10 @@ resource "google_monitoring_alert_policy" "prober_rekor_endpoint_latency" {
       }
     }
 
-    display_name = "Rekor API Endpoint Latency > 750 ms"
+    display_name = "API Prober: Rekor API Endpoint Latency > 750 ms"
   }
 
-  display_name = "Rekor API Endpoint Latency > 750 ms for 5 minutes"
+  display_name = "API Prober: Rekor API Endpoint Latency > 750 ms for 5 minutes"
 
   documentation {
     content   = "At least one supported Rekor API Endpoint has had latency > 750 ms for 5 minutes."
@@ -83,10 +83,10 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
       }
     }
 
-    display_name = "Fulcio API Endpoint Latency > 750 ms"
+    display_name = "API Prober: Fulcio API Endpoint Latency > 750 ms"
   }
 
-  display_name = "Fulcio API Endpoint Latency > 750 ms for 5 minutes"
+  display_name = "API Prober: Fulcio API Endpoint Latency > 750 ms for 5 minutes"
 
   documentation {
     content   = "At least one supported Fulcio API Endpoint has had latency > 750 ms for 5 minutes."
@@ -125,10 +125,10 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
     }
 
-    display_name = format("API Endpoint Latency Data Absent for 5 minutes: %s", each.key)
+    display_name = format("API Prober: Latency Data Absent for 5 minutes: %s", each.key)
   }
 
-  display_name = format("API Endpoint Latency Data Absent for 5 minutes: %s", each.key)
+  display_name = format("API Prober: Latency Data Absent for 5 minutes: %s", each.key)
 
   documentation {
     content   = format("API Endpoint Latency Data Absent for 5 minutes: %s. Check playbook for more details.", each.key)
@@ -167,10 +167,10 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
       }
     }
 
-    display_name = "Sigstore API Prober Error Codes"
+    display_name = "API Prober: Error Codes are non-200"
   }
 
-  display_name = "Sigstore API Prober Error Codes"
+  display_name = "API Prober: Error Codes are non-200"
 
   documentation {
     content   = "At least one Sigstore API endpoint has returned non-200 error codes for at least 5 minutes.\n"

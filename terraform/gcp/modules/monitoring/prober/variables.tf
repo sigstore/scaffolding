@@ -42,4 +42,5 @@ variable "notification_channel_id" {
 
 locals {
   notification_channels = [format("projects/%v/notificationChannels/%v", var.project_id, var.notification_channel_id)]
+  hosts                 = [var.rekor_url, var.fulcio_url]
 }

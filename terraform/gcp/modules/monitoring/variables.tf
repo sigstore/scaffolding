@@ -60,6 +60,8 @@ variable "notification_channel_id" {
 
 locals {
   notification_channels = [format("projects/%v/notificationChannels/%v", var.project_id, var.notification_channel_id)]
+  qualified_rekor_url   = format("https://%s", var.rekor_url)
+  qualified_fulcio_url  = format("https://%s", var.fulcio_url)
 }
 
 // Certificate Authority name for alerting

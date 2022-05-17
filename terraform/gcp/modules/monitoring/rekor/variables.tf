@@ -35,6 +35,16 @@ variable "notification_channel_id" {
   description = "The notification channel ID which alerts should be sent to. You can find this by running `gcloud alpha monitoring channels list`."
 }
 
+variable "api_endpoints_get" {
+  type = list(string)
+  default = [
+    "/",
+    "/api/v1/version",
+    "/api/v1/log",
+    "/api/v1/log/publicKey",
+  ]
+}
+
 locals {
   notification_channels = [format("projects/%v/notificationChannels/%v", var.project_id, var.notification_channel_id)]
 }

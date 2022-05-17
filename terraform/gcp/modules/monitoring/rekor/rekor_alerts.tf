@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-# Alert for Rekor uptime
-resource "google_monitoring_alert_policy" "rekor_uptime_alert" {
+# Alert for Rekor uptime: GET
+resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
+  for_each = toset(var.api_endpoints_get)
+
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -33,7 +35,7 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alert" {
 
       comparison = "COMPARISON_GT"
       duration   = "60s"
-      filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_rekor.uptime_check_id)
+      filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.rekor_uptime_alerts_get[format("%s", each.key)].uptime_check_id)
 
       threshold_value = "1"
 
@@ -43,18 +45,20 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alert" {
       }
     }
 
-    display_name = "Failure of uptime check_id rekor-uptime"
+    display_name = format("Failure of uptime check_id %s", format("rekor-uptime%s", replace(each.key, "/", "-")))
   }
 
-  display_name          = "Rekor uptime alert"
+  display_name          = format("Rekor uptime alert - %s", each.key)
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_monitoring_uptime_check_config.uptime_rekor]
+  depends_on            = [google_monitoring_uptime_check_config.rekor_uptime_alerts_get]
 }
+
 
 # Rekor API Latency > 750ms for 1 minute in any region
 resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
+  for_each = toset(var.api_endpoints_get)
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -71,7 +75,7 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
 
       comparison = "COMPARISON_GT"
       duration   = "0s"
-      filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/request_latency\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_rekor.uptime_check_id)
+      filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/request_latency\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.rekor_uptime_alerts_get[format("%s", each.key)].uptime_check_id)
 
       threshold_value = "750"
 
@@ -81,10 +85,10 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
       }
     }
 
-    display_name = "Rekor API Latency > 750ms for 1 minute"
+    display_name = format("Rekor API Latency > 750ms for 1 minute in any region - %s", each.key)
   }
 
-  display_name = "Rekor API Latency > 750ms for 1 minute in any region"
+  display_name = format("Rekor API Latency > 750ms for 1 minute in any region - %s", each.key)
 
   documentation {
     content   = "This alert triggered because Rekor API Latency is greater than 750ms for 1 minute in any of the available regions."
@@ -94,6 +98,6 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_monitoring_alert_policy.rekor_uptime_alert]
+  depends_on            = [google_monitoring_alert_policy.rekor_uptime_alerts]
 }
 

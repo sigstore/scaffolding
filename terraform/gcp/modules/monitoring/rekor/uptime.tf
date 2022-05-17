@@ -14,12 +14,16 @@
  * limitations under the License.
  */
 
-resource "google_monitoring_uptime_check_config" "uptime_rekor" {
-  display_name = "Rekor uptime"
+
+// Enable required services for this module
+resource "google_monitoring_uptime_check_config" "rekor_uptime_alerts_get" {
+  for_each = toset(var.api_endpoints_get)
+
+  display_name = format("Rekor uptime - %s", each.key)
 
   http_check {
     mask_headers   = "false"
-    path           = "/"
+    path           = each.key
     port           = "443"
     request_method = "GET"
     use_ssl        = "true"

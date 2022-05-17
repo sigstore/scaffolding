@@ -122,12 +122,20 @@ module "mysql" {
   region     = var.region
   project_id = var.project_id
 
-  cluster_name = var.cluster_name
+  cluster_name      = var.cluster_name
+  tier              = var.mysql_tier
+  availability_type = var.mysql_availability_type
 
   network = module.network.network_self_link
 
   instance_name = var.mysql_instance_name
   db_name       = var.mysql_db_name
+
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
 
   depends_on = [
     module.network,

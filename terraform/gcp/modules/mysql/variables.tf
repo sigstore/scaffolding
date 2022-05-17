@@ -34,6 +34,42 @@ variable "cluster_name" {
   default = ""
 }
 
+variable "tier" {
+  type        = string
+  description = "Machine tier for MySQL instance."
+  default     = "db-n1-standard-1"
+}
+
+variable "availability_type" {
+  type        = string
+  description = "Availability tier for MySQL"
+  default     = "REGIONAL"
+}
+
+variable "ipv4_enabled" {
+  type        = bool
+  description = "Whether to enable ipv4 for MySQL instance."
+  default     = false
+}
+
+variable "require_ssl" {
+  type        = bool
+  description = "Whether to require ssl for MySQL instance."
+  default     = true
+}
+
+variable "backup_enabled" {
+  type        = bool
+  description = "Whether to enable backup configuration."
+  default     = true
+}
+
+variable "binary_log_backup_enabled" {
+  type        = bool
+  description = "Whether to enable binary log for backup."
+  default     = true
+}
+
 variable "network" {
   type    = string
   default = "default"

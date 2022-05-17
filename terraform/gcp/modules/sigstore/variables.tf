@@ -125,6 +125,44 @@ variable "mysql_db_name" {
   default     = "trillian"
 }
 
+variable "mysql_tier" {
+  type        = string
+  description = "Machine tier for MySQL instance."
+  default     = "db-n1-standard-1"
+}
+
+variable "mysql_availability_type" {
+  type        = string
+  description = "Availability tier for MySQL"
+  default     = "REGIONAL"
+}
+
+variable "mysql_ipv4_enabled" {
+  type        = bool
+  description = "Whether to enable ipv4 for MySQL instance."
+  default     = false
+}
+
+variable "mysql_require_ssl" {
+  type        = bool
+  description = "Whether to require ssl for MySQL instance."
+  default     = true
+}
+
+variable "mysql_backup_enabled" {
+  type        = bool
+  description = "Whether to enable backup configuration for MySQL instance."
+  default     = true
+}
+
+variable "mysql_binary_log_backup_enabled" {
+  type        = bool
+  description = "Whether to enable binary log for backup for MySQL instance."
+  default     = true
+}
+
+
+
 variable "fulcio_keyring_name" {
   type        = string
   description = "Name of Fulcio keyring."

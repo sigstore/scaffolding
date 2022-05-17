@@ -26,7 +26,7 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "1200s"
+        alignment_period     = "300s"
         cross_series_reducer = "REDUCE_MEAN"
         group_by_fields      = ["resource.label.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
@@ -167,7 +167,7 @@ resource "google_monitoring_alert_policy" "kms_read_request_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period   = "60s"
+        alignment_period   = "300s"
         per_series_aligner = "ALIGN_RATE"
       }
 
@@ -194,6 +194,7 @@ resource "google_monitoring_alert_policy" "kms_read_request_alert" {
   display_name = "KMS Read Requests quota usage"
 
   documentation {
+    content   = "KMS Read Requests Above Quota, please see playbook for help."
     mime_type = "text/markdown"
   }
 
@@ -214,7 +215,7 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period   = "60s"
+        alignment_period   = "300s"
         per_series_aligner = "ALIGN_RATE"
       }
 
@@ -241,6 +242,7 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
   display_name = "KMS Crypto Requests Rate Above Quota"
 
   documentation {
+    content   = "KMS Crypto Requests Above Quota, please see playbook for help."
     mime_type = "text/markdown"
   }
 

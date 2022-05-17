@@ -27,7 +27,7 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "1200s"
+        alignment_period     = "300s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
@@ -56,7 +56,7 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
 }
 
 
-# Rekor API Latency > 750ms for 1 minute in any region
+# Rekor API Latency > 750ms for 5 minutes in any region
 resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
   for_each = toset(var.api_endpoints_get)
   # In the absence of data, incident will auto-close in 7 days
@@ -70,11 +70,11 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
     condition_threshold {
       aggregations {
         alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN"
+        per_series_aligner = "ALIGN_MAX"
       }
 
       comparison = "COMPARISON_GT"
-      duration   = "0s"
+      duration   = "300s"
       filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/request_latency\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.rekor_uptime_alerts_get[format("%s", each.key)].uptime_check_id)
 
       threshold_value = "750"
@@ -85,13 +85,13 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
       }
     }
 
-    display_name = format("Rekor API Latency > 750ms for 1 minute in any region - %s", each.key)
+    display_name = format("Rekor API Latency > 750ms for 5 minutes in any region - %s", each.key)
   }
 
-  display_name = format("Rekor API Latency > 750ms for 1 minute in any region - %s", each.key)
+  display_name = format("Rekor API Latency > 750ms for 5 minutes in any region - %s", each.key)
 
   documentation {
-    content   = "This alert triggered because Rekor API Latency is greater than 750ms for 1 minute in any of the available regions."
+    content   = "This alert triggered because Rekor API Latency is greater than 750ms for 5 minutes in any of the available regions."
     mime_type = "text/markdown"
   }
 

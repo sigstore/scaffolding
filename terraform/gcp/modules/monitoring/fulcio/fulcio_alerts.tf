@@ -25,7 +25,7 @@ resource "google_monitoring_alert_policy" "fulcio_uptime_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "1200s"
+        alignment_period     = "300s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
@@ -52,7 +52,45 @@ resource "google_monitoring_alert_policy" "fulcio_uptime_alert" {
   depends_on            = [google_monitoring_uptime_check_config.uptime_fulcio]
 }
 
-# Fulcio API Latency > 750ms for 1 minute in any region
+# Alert for CT Log uptime
+resource "google_monitoring_alert_policy" "ctlog_uptime_alert" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period     = "300s"
+        cross_series_reducer = "REDUCE_COUNT_FALSE"
+        group_by_fields      = ["resource.*"]
+        per_series_aligner   = "ALIGN_NEXT_OLDER"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "300s"
+      filter          = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_ct_log.uptime_check_id)
+      threshold_value = "1"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Failure of uptime check_id ctlog-uptime"
+  }
+
+  display_name          = "CT Log Uptime Alert"
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+  depends_on            = [google_monitoring_uptime_check_config.uptime_fulcio]
+}
+
+# Fulcio API Latency > 750ms for 5 minutes in any region
 resource "google_monitoring_alert_policy" "fulcio_api_latency_alert" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -80,13 +118,13 @@ resource "google_monitoring_alert_policy" "fulcio_api_latency_alert" {
       }
     }
 
-    display_name = "Fulcio API Latency > 750ms for 1 minute"
+    display_name = "Fulcio API Latency > 750ms for 5 minutes"
   }
 
-  display_name = "Fulcio API Latency > 750ms for 1 minute in any region"
+  display_name = "Fulcio API Latency > 750ms for 5 minutes in any region"
 
   documentation {
-    content   = "This alert triggered because Fulcio API Latency is greater than 750ms for 1 minute in any of the available regions."
+    content   = "This alert triggered because Fulcio API Latency is greater than 750ms for 5 minutes in any of the available regions."
     mime_type = "text/markdown"
   }
 
@@ -156,7 +194,7 @@ resource "google_monitoring_alert_policy" "ca_service_cert_quota" {
       }
 
       comparison      = "COMPARISON_GT"
-      duration        = "60s"
+      duration        = "300s"
       filter          = format("metric.type=\"privateca.googleapis.com/ca/cert/create_count\" resource.type=\"privateca.googleapis.com/CertificateAuthority\" resource.label.\"ca_pool_id\"=\"%s\"", var.ca_pool_name)
       threshold_value = "25"
 
@@ -172,7 +210,7 @@ resource "google_monitoring_alert_policy" "ca_service_cert_quota" {
   display_name = "Certificate creation count for sigstore CA above quota"
 
   documentation {
-    content   = "According to docs for the CA service, the DevOps tier CA has a [request quota](https://cloud.google.com/certificate-authority-service/quotas#request_quotas) of 25 certs/second.\n;\nThis alert will fire if we exceed 25 certs/second for longer than 1 minute.\n\nIf this happens, consider increasing quotas as described [here](https://cloud.google.com/docs/quota#requesting_higher_quota)"
+    content   = "According to docs for the CA service, the DevOps tier CA has a [request quota](https://cloud.google.com/certificate-authority-service/quotas#request_quotas) of 25 certs/second.\n;\nThis alert will fire if we exceed 25 certs/second for longer than 5 minutes.\n\nIf this happens, consider increasing quotas as described [here](https://cloud.google.com/docs/quota#requesting_higher_quota)"
     mime_type = "text/markdown"
   }
 

@@ -28,8 +28,8 @@ resource "google_monitoring_uptime_check_config" "uptime_dex" {
 
   monitored_resource {
     labels = {
-      host    = var.dex_url
-      project = var.project_id
+      host       = var.dex_url
+      project_id = var.project_id
     }
 
     type = "uptime_url"
@@ -51,7 +51,7 @@ resource "google_monitoring_alert_policy" "dex_uptime_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "1200s"
+        alignment_period     = "300s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"

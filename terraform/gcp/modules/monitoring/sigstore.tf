@@ -36,6 +36,7 @@ module "rekor" {
 
   project_id              = var.project_id
   notification_channel_id = var.notification_channel_id
+  rekor_url               = var.rekor_url
 
   depends_on = [
     google_project_service.service
@@ -48,6 +49,8 @@ module "fulcio" {
 
   project_id              = var.project_id
   notification_channel_id = var.notification_channel_id
+  ctlog_url               = var.ctlog_url
+  fulcio_url              = var.fulcio_url
 
   depends_on = [
     google_project_service.service
@@ -61,6 +64,8 @@ module "dex" {
   project_id              = var.project_id
   notification_channel_id = var.notification_channel_id
 
+  dex_url = var.dex_url
+
   depends_on = [
     google_project_service.service
   ]
@@ -72,6 +77,8 @@ module "prober" {
 
   project_id              = var.project_id
   notification_channel_id = var.notification_channel_id
+  rekor_url               = local.qualified_rekor_url
+  fulcio_url              = local.qualified_fulcio_url
 
   depends_on = [
     google_project_service.service

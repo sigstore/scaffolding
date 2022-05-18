@@ -43,10 +43,17 @@ resource "google_service_account" "prometheus-sa" {
   depends_on   = [google_project_service.service]
 }
 
-resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus" {
+resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus_default" {
   service_account_id = google_service_account.prometheus-sa.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.project_id}.svc.id.goog[prometheus/default]"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[monitoring-system/default]"
+  depends_on         = [google_service_account.prometheus-sa, google_container_cluster.cluster]
+}
+
+resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus_server" {
+  service_account_id = google_service_account.prometheus-sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[monitoring-system/prometheus-server]"
   depends_on         = [google_service_account.prometheus-sa, google_container_cluster.cluster]
 }
 

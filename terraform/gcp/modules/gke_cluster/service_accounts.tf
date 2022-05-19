@@ -64,9 +64,16 @@ resource "google_service_account_iam_member" "gke_sa_iam_member_prometheus_probe
   depends_on         = [google_service_account.prometheus-sa, google_container_cluster.cluster]
 }
 
+// Add the service account to the project
 resource "google_project_iam_member" "prometheus_member" {
+  for_each = toset([
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/monitoring.viewer",
+    "roles/stackdriver.resourceMetadata.writer",
+  ])
   project    = var.project_id
-  role       = "roles/monitoring.metricWriter"
+  role       = each.key
   member     = "serviceAccount:${google_service_account.prometheus-sa.email}"
   depends_on = [google_service_account.prometheus-sa]
 }

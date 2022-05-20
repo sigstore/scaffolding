@@ -69,7 +69,7 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period   = "300s"
+        alignment_period   = "60s"
         per_series_aligner = "ALIGN_MAX"
       }
 

@@ -102,12 +102,12 @@ resource "google_monitoring_alert_policy" "fulcio_api_latency_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN"
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_MAX"
       }
 
       comparison = "COMPARISON_GT"
-      duration   = "0s"
+      duration   = "300s"
       filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/request_latency\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_fulcio.uptime_check_id)
 
       threshold_value = "750"

@@ -125,7 +125,7 @@ spec:
     name: trillian-mysql
     template:
       data:
-        mysql-database: trillian
+        mysql-database: "${var.mysql_dbname}"
         mysql-password: "{{ .mysqlPassword | toString }}"  # <-- convert []byte to string
         mysql-user: trillian
   data:

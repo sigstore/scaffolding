@@ -14,7 +14,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
-	github.com/prometheus/client_golang v1.12.1
+	github.com/prometheus/client_golang v1.12.2
 	github.com/sigstore/fulcio v0.1.2-0.20220110181937-d890471d8047
 	github.com/sigstore/rekor v0.6.0
 	github.com/sigstore/sigstore v1.2.0

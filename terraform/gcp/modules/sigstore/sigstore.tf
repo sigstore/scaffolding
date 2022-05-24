@@ -123,6 +123,7 @@ module "mysql" {
   project_id = var.project_id
 
   cluster_name      = var.cluster_name
+  database_version  = var.mysql_db_version
   tier              = var.mysql_tier
   availability_type = var.mysql_availability_type
 

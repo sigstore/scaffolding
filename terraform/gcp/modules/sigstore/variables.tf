@@ -125,6 +125,12 @@ variable "mysql_db_name" {
   default     = "trillian"
 }
 
+variable "mysql_db_version" {
+  type        = string
+  description = "MySQL database version."
+  default     = "MYSQL_5_7"
+}
+
 variable "mysql_tier" {
   type        = string
   description = "Machine tier for MySQL instance."
@@ -160,8 +166,6 @@ variable "mysql_binary_log_backup_enabled" {
   description = "Whether to enable binary log for backup for MySQL instance."
   default     = true
 }
-
-
 
 variable "fulcio_keyring_name" {
   type        = string

@@ -20,6 +20,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
@@ -31,6 +32,7 @@ var (
 	addr      string
 	rekorURL  string
 	fulcioURL string
+	oneTime   bool
 )
 
 func init() {
@@ -40,6 +42,8 @@ func init() {
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 
+	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
+
 	flag.Parse()
 }
 
@@ -47,7 +51,7 @@ func main() {
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram)
 
-	go runProbers()
+	go runProbers(frequency, oneTime)
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
@@ -60,19 +64,32 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func runProbers() {
+func runProbers(freq int, runOnce bool) {
 	for {
+		hasErr := false
+
 		for _, r := range RekorEndpoints {
 			if err := observeRequest(rekorURL, r); err != nil {
+				hasErr = true
 				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
 			}
 		}
 		for _, r := range FulcioEndpoints {
 			if err := observeRequest(fulcioURL, r); err != nil {
+				hasErr = true
 				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
 			}
 		}
 		fmt.Println("Complete")
+
+		if runOnce {
+			if hasErr {
+				os.Exit(1)
+			} else {
+				os.Exit(0)
+			}
+		}
+
 		time.Sleep(time.Duration(frequency) * time.Second)
 	}
 }

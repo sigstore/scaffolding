@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding
 
-go 1.17
+go 1.18
 
 require (
 	github.com/go-openapi/runtime v0.24.0

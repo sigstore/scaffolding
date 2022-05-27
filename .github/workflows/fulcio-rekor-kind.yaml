@@ -36,7 +36,7 @@ jobs:
         - fulcio rekor ctlog e2e
 
         go-version:
-          - 1.17.x
+          - 1.18
 
     env:
       GOPATH: ${{ github.workspace }}
@@ -54,6 +54,8 @@ jobs:
       uses: actions/setup-go@fcdc43634adb5f7ae75a9d7a9b9361790f7293e2 # v3.0.0
       with:
         go-version: ${{ matrix.go-version }}
+        check-latest: true
+        cache: true
 
     - name: Check out our repo
       uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2

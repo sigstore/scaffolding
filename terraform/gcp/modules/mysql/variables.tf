@@ -92,3 +92,8 @@ variable "db_name" {
   default     = "trillian"
 }
 
+variable "database_version" {
+  type        = string
+  description = "MySQL database version."
+  default     = "MYSQL_5_7"
+}

@@ -4,3 +4,4 @@ testimagerefs
 release.yaml
 testrelease.yaml
 kind.yaml
+.vscode/*

@@ -24,7 +24,7 @@ jobs:
       with:
         go-version: 1.18
         check-latest: true
-        cache: true
+
     # will use the latest release available for ko
     - name: Install ko
       uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4

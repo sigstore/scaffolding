@@ -109,7 +109,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization" {
   depends_on            = [google_project_service.service]
 }
 
-# Cloud SQL Database Disk Utilization > 90%
+# Cloud SQL Database Disk Utilization > 95%
 resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -128,7 +128,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       comparison      = "COMPARISON_GT"
       duration        = "0s"
       filter          = "metric.type=\"cloudsql.googleapis.com/database/disk/utilization\" resource.type=\"cloudsql_database\""
-      threshold_value = "0.9"
+      threshold_value = "0.95"
 
       trigger {
         count   = "1"
@@ -139,10 +139,10 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
     display_name = "Cloud SQL Database - Disk utilization [MEAN]"
   }
 
-  display_name = "Cloud Sql Disk Utilization > 90%"
+  display_name = "Cloud Sql Disk Utilization > 95%"
 
   documentation {
-    content   = "Cloud SQL disk utilization is > 90%. Please increase capacity. "
+    content   = "Cloud SQL disk utilization is > 95%. Please increase capacity. "
     mime_type = "text/markdown"
   }
 

@@ -16,6 +16,7 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -25,14 +26,17 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
+	_ "github.com/sigstore/cosign/pkg/providers/all"
 )
 
 var (
-	frequency int
-	addr      string
-	rekorURL  string
-	fulcioURL string
-	oneTime   bool
+	frequency      int
+	addr           string
+	rekorURL       string
+	fulcioURL      string
+	oneTime        bool
+	runWriteProber bool
 )
 
 func init() {
@@ -43,15 +47,17 @@ func init() {
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
+	flag.BoolVar(&runWriteProber, "write-prober", true, " [Kubernetes only] run the probers for the write endpoints.")
 
 	flag.Parse()
 }
 
 func main() {
+	ctx := context.Background()
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram)
 
-	go runProbers(frequency, oneTime)
+	go runProbers(ctx, frequency, oneTime)
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
@@ -64,7 +70,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func runProbers(freq int, runOnce bool) {
+func runProbers(ctx context.Context, freq int, runOnce bool) {
 	for {
 		hasErr := false
 
@@ -78,6 +84,12 @@ func runProbers(freq int, runOnce bool) {
 			if err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
 				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
+			}
+		}
+		if runWriteProber {
+			if err := fulcioWriteEndpoint(ctx); err != nil {
+				hasErr = true
+				fmt.Printf("error running fulcio write prober: %v\n", err)
 			}
 		}
 		fmt.Println("Complete")

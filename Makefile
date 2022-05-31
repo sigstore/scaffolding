@@ -50,6 +50,11 @@ ko-apply:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -BRf ./config/
 
+.PHONY: ko-apply-prober
+ko-apply-prober:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/prober
+
 .PHONY: ko-apply-sign-job
 ko-apply-sign-job:
 	LDFLAGS="$(LDFLAGS)" \

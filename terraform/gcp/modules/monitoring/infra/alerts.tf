@@ -61,7 +61,6 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
     uptime  = "ssl_cert_expiration"
     version = "1"
   }
-  depends_on = [google_project_service.service]
 }
 
 ### Cloud SQL Alerts
@@ -106,7 +105,6 @@ resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization" {
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_project_service.service]
 }
 
 # Cloud SQL Database Disk Utilization > 95%
@@ -149,7 +147,6 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_project_service.service]
 }
 
 
@@ -201,7 +198,6 @@ resource "google_monitoring_alert_policy" "kms_read_request_alert" {
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_project_service.service]
 }
 
 resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
@@ -249,5 +245,4 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_project_service.service]
 }

@@ -49,6 +49,7 @@ var (
 	description     = flag.String("description", "", "Description of the new tree")
 	maxRootDuration = flag.Duration("max_root_duration", time.Hour, "Interval after which a new signed root is produced despite no submissions; zero means never")
 	force           = flag.Bool("force", false, "Force create a new tree and update configmap")
+	treeIDFlag      = flag.Int("tree-id", -1, "Tree ID to use.")
 )
 
 func main() {
@@ -77,13 +78,17 @@ func main() {
 		logging.FromContext(ctx).Infof("Found existing TreeID: %s", treeID)
 		return
 	}
-
-	tree, err := createTree(ctx)
-	if err != nil {
-		logging.FromContext(ctx).Fatalf("Failed to create the trillian tree: %v", err)
+	if *treeIDFlag > 0 {
+		cm.Data[treeKey] = fmt.Sprint(*treeIDFlag)
+		logging.FromContext(ctx).Infof("Using specified treeID %d updating configmap %s/%s", *treeIDFlag, *ns, *cmname)
+	} else {
+		tree, err := createTree(ctx)
+		if err != nil {
+			logging.FromContext(ctx).Fatalf("Failed to create the trillian tree: %v", err)
+		}
+		cm.Data[treeKey] = fmt.Sprint(tree.TreeId)
+		logging.FromContext(ctx).Infof("Created a new tree %d updating configmap %s/%s", tree.TreeId, *ns, *cmname)
 	}
-	cm.Data[treeKey] = fmt.Sprint(tree.TreeId)
-	logging.FromContext(ctx).Infof("Created a new tree %d updating configmap %s/%s", tree.TreeId, *ns, *cmname)
 
 	_, err = clientset.CoreV1().ConfigMaps(*ns).Update(ctx, cm, metav1.UpdateOptions{})
 	if err != nil {

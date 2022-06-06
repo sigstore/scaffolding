@@ -59,6 +59,7 @@ var (
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
 	keyPassword        = flag.String("key-password", "test", "Password for the PEM key")
 	pemPassword        = flag.String("pem-password", "test", "Password for encrypting PEM")
+	treeIDFlag         = flag.Int("tree-id", -1, "Tree ID to use.")
 )
 
 func main() {
@@ -85,16 +86,22 @@ func main() {
 	if cm.Data == nil {
 		cm.Data = make(map[string]string)
 	}
-	treeID, ok := cm.Data[treeKey]
-	if !ok {
-		logging.FromContext(ctx).Errorf("No treeid yet, bailing")
-		os.Exit(-1)
-	}
 
-	logging.FromContext(ctx).Infof("Found treeid: %s", treeID)
-	treeIDInt, err := strconv.ParseInt(treeID, 10, 64)
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Invalid TreeID %s : %v", treeID, err)
+	var treeIDInt int64
+	if *treeIDFlag > 0 {
+		treeIDInt = int64(*treeIDFlag)
+	} else {
+		treeID, ok := cm.Data[treeKey]
+		if !ok {
+			logging.FromContext(ctx).Errorf("No treeid yet, bailing")
+			os.Exit(-1)
+		}
+
+		logging.FromContext(ctx).Infof("Found treeid: %s", treeID)
+		treeIDInt, err = strconv.ParseInt(treeID, 10, 64)
+		if err != nil {
+			logging.FromContext(ctx).Panicf("Invalid TreeID %s : %v", treeID, err)
+		}
 	}
 
 	// Fetch the fulcio Root CA
@@ -147,7 +154,7 @@ func main() {
 		if err != nil {
 			logging.FromContext(ctx).Panicf("Failed to marshal config proto: %v", err)
 		}
-		logging.FromContext(ctx).Infof("Updating config with treeid: %s", treeID)
+		logging.FromContext(ctx).Infof("Updating config with treeid: %d", treeIDInt)
 		if cm.BinaryData == nil {
 			cm.BinaryData = make(map[string][]byte)
 		}

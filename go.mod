@@ -20,7 +20,7 @@ require (
 	github.com/sigstore/rekor v0.7.0
 	github.com/sigstore/sigstore v1.2.1-0.20220512194100-3ed986cc9758
 	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.47.0
 	google.golang.org/protobuf v1.28.0
 	k8s.io/api v0.23.6
 	k8s.io/apimachinery v0.23.6

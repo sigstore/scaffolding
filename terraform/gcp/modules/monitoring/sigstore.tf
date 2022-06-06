@@ -84,3 +84,16 @@ module "prober" {
     google_project_service.service
   ]
 }
+// Infra
+module "infra" {
+  source = "./infra"
+
+  project_id              = var.project_id
+  notification_channel_id = var.notification_channel_id
+  rekor_url               = local.qualified_rekor_url
+  fulcio_url              = local.qualified_fulcio_url
+
+  depends_on = [
+    google_project_service.service
+  ]
+}

@@ -151,14 +151,14 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
     condition_threshold {
       aggregations {
         alignment_period     = "300s"
-        cross_series_reducer = "REDUCE_COUNT"
+        cross_series_reducer = "REDUCE_MAX"
         group_by_fields      = ["metric.label.endpoint"]
-        per_series_aligner   = "ALIGN_MEAN"
+        per_series_aligner   = "ALIGN_RATE"
       }
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency\" AND metric.labels.status_code != \"200\""
+      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency_count\" AND metric.labels.status_code != \"200\""
       threshold_value = "0"
 
       trigger {
@@ -181,4 +181,3 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
   notification_channels = local.notification_channels
   project               = var.project_id
 }
-

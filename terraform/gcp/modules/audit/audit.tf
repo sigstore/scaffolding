@@ -14,21 +14,18 @@
  * limitations under the License.
  */
 
-terraform {
-  required_version = ">= 1.1.3, < 1.3.0"
 
-  required_providers {
-    google = {
-      version = ">= 4.11.0, < 4.12.0"
-      source  = "hashicorp/google-beta"
-    }
-    google-beta = {
-      version = ">= 4.11.0, < 4.12.0"
-      source  = "hashicorp/google-beta"
-    }
-    random = {
-      version = ">= 3.1.0, < 3.2.0"
-      source  = "hashicorp/random"
-    }
+resource "google_project_iam_audit_config" "all-services" {
+  project = var.project_id
+  service = "allServices"
+
+  audit_log_config {
+    log_type = "ADMIN_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_READ"
+  }
+  audit_log_config {
+    log_type = "DATA_WRITE"
   }
 }

@@ -208,3 +208,9 @@ module "fulcio" {
     module.network
   ]
 }
+
+// Audit
+module "audit" {
+  source     = "../audit"
+  project_id = var.project_id
+}

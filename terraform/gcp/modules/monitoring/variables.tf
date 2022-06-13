@@ -57,6 +57,17 @@ variable "dex_url" {
   default     = "oauth2.sigstore.dev"
 }
 
+// Prober variables
+variable "prober_rekor_url" {
+  type    = string
+  default = "http://rekor-server.rekor-system.svc"
+}
+
+variable "prober_fulcio_url" {
+  type    = string
+  default = "http://fulcio-server.fulcio-system.svc"
+}
+
 // Set-up for notification channel for alerting
 variable "notification_channel_id" {
   type        = string

@@ -17,32 +17,48 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
+	"github.com/go-openapi/strfmt"
+	"github.com/go-openapi/swag"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
+
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
+	"github.com/sigstore/rekor/pkg/generated/models"
+	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
+	"github.com/sigstore/sigstore/pkg/signature"
+
+	// Loads OIDC providers
+	"github.com/sigstore/cosign/pkg/providers/all"
 )
 
 const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
 	defaultOIDCClientID = "sigstore"
+
+	fulcioEndpoint = "/api/v1/signingCert"
+	rekorEndpoint  = "/api/v1/log/entries"
 )
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
 // which is "/api/v1/signingCert", which requests a cert from Fulcio
 func fulcioWriteEndpoint(ctx context.Context) error {
-	if !providers.Enabled(ctx) {
+	if !all.Enabled(ctx) {
 		return fmt.Errorf("no auth provider for fulcio is enabled")
 	}
 	tok, err := providers.Provide(ctx, "sigstore")
@@ -55,7 +71,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	}
 
 	// Construct the API endpoint for this handler
-	endpoint := "/api/v1/signingCert"
+	endpoint := fulcioEndpoint
 	hostPath := fulcioURL + endpoint
 
 	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
@@ -75,19 +91,87 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	}
 
 	// Export data to prometheus
-	statusCode := resp.StatusCode
-	labels := prometheus.Labels{
-		endpointLabel:   endpoint,
-		statusCodeLabel: fmt.Sprintf("%d", statusCode),
-		hostLabel:       fulcioURL,
-	}
-	endpointLatenciesSummary.With(labels).Observe(float64(latency))
-	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
-
-	fmt.Println("Observing ", fulcioURL+endpoint)
-	fmt.Println("Status code: ", statusCode)
-	fmt.Println("Latency: ", latency)
+	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
 	return nil
+}
+
+// rekorWriteEndpoint tests the write endpoint for rekor, which is
+// /api/v1/log/entries and adds an entry to the log
+func rekorWriteEndpoint(ctx context.Context) error {
+	endpoint := rekorEndpoint
+	hostPath := rekorURL + endpoint
+
+	body, err := rekorEntryRequest()
+	if err != nil {
+		return errors.Wrap(err, "rekor entry")
+	}
+	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	if err != nil {
+		return errors.Wrap(err, "new request")
+	}
+	// Set the content-type to reflect we're sending JSON.
+	req.Header.Set("Content-Type", "application/json")
+
+	t := time.Now()
+	resp, err := http.DefaultClient.Do(req)
+	latency := time.Since(t).Milliseconds()
+	if err != nil {
+		fmt.Println("error adding entry: ", err)
+	}
+
+	// Export data to prometheus
+	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
+
+	body, _ = io.ReadAll(resp.Body)
+	fmt.Println(string(body))
+	return nil
+}
+
+func rekorEntryRequest() ([]byte, error) {
+	payload := []byte(time.Now().String())
+	priv, err := cosign.GeneratePrivateKey()
+	if err != nil {
+		return nil, fmt.Errorf("generating keys: %w", err)
+	}
+	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
+	if err != nil {
+		return nil, errors.Wrap(err, "loading signer verifier")
+	}
+	pub, err := signer.PublicKey()
+	if err != nil {
+		return nil, errors.Wrap(err, "public key")
+	}
+	pubKey, err := cryptoutils.MarshalPublicKeyToPEM(pub)
+	if err != nil {
+		return nil, errors.Wrap(err, "marshal public key")
+	}
+	sig, err := signer.SignMessage(bytes.NewReader(payload))
+	if err != nil {
+		return nil, errors.Wrap(err, "sign message")
+	}
+
+	h := sha256.Sum256(payload)
+	e := &hashedrekord.V001Entry{
+		HashedRekordObj: models.HashedrekordV001Schema{
+			Data: &models.HashedrekordV001SchemaData{
+				Hash: &models.HashedrekordV001SchemaDataHash{
+					Algorithm: swag.String(models.HashedrekordV001SchemaDataHashAlgorithmSha256),
+					Value:     swag.String(hex.EncodeToString(h[:])),
+				},
+			},
+			Signature: &models.HashedrekordV001SchemaSignature{
+				Content: strfmt.Base64(sig),
+				PublicKey: &models.HashedrekordV001SchemaSignaturePublicKey{
+					Content: strfmt.Base64(pubKey),
+				},
+			},
+		},
+	}
+	pe := &models.Hashedrekord{
+		APIVersion: swag.String(e.APIVersion()),
+		Spec:       e.HashedRekordObj,
+	}
+	return json.Marshal(pe)
 }
 
 func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {

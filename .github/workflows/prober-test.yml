@@ -2,9 +2,6 @@ name: Prober Unit Test
 
 on:
   workflow_dispatch:
-  pull_request:
-    paths:
-    - 'cmd/prober/**'
   push:
     branches:
       - main
@@ -33,4 +30,4 @@ jobs:
           
       - name: Prober test
         id: prober-test
-        run: go run ./cmd/prober --one-time
+        run: go run ./cmd/prober --one-time --write-prober

@@ -14,12 +14,18 @@
 
 package main
 
-import "github.com/prometheus/client_golang/prometheus"
+import (
+	"fmt"
+	"net/http"
+
+	"github.com/prometheus/client_golang/prometheus"
+)
 
 var (
 	endpointLabel   = "endpoint"
 	hostLabel       = "host"
 	statusCodeLabel = "status_code"
+	methodLabel     = "method"
 )
 
 var (
@@ -30,7 +36,7 @@ var (
 			Help:       "API endpoint latency distributions (milliseconds).",
 			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, .999: 0.0001},
 		},
-		[]string{endpointLabel, hostLabel, statusCodeLabel},
+		[]string{endpointLabel, hostLabel, statusCodeLabel, methodLabel},
 	)
 
 	endpointLatenciesHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -38,5 +44,21 @@ var (
 		Help:    "API endpoint latency distribution across Rekor and Fulcio (milliseconds)",
 		Buckets: []float64{0.0, 200.0, 400.0, 600.0, 800.0, 1000.0},
 	},
-		[]string{endpointLabel, hostLabel, statusCodeLabel})
+		[]string{endpointLabel, hostLabel, statusCodeLabel, methodLabel})
 )
+
+func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, latency int64) {
+	statusCode := resp.StatusCode
+	labels := prometheus.Labels{
+		endpointLabel:   endpoint,
+		statusCodeLabel: fmt.Sprintf("%d", statusCode),
+		hostLabel:       host,
+		methodLabel:     method,
+	}
+	endpointLatenciesSummary.With(labels).Observe(float64(latency))
+	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
+
+	fmt.Println("Observing ", method, host+endpoint)
+	fmt.Println("Status code: ", statusCode)
+	fmt.Println("Latency: ", latency)
+}

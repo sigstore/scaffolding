@@ -91,13 +91,18 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 				hasErr = true
 				fmt.Printf("error running fulcio write prober: %v\n", err)
 			}
+			if err := rekorWriteEndpoint(ctx); err != nil {
+				hasErr = true
+				fmt.Printf("error running rekor write prober: %v\n", err)
+			}
 		}
-		fmt.Println("Complete")
 
 		if runOnce {
 			if hasErr {
+				fmt.Println("Failed")
 				os.Exit(1)
 			} else {
+				fmt.Println("Complete")
 				os.Exit(0)
 			}
 		}

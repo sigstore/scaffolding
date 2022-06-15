@@ -45,6 +45,12 @@ resource "google_container_cluster" "cluster" {
     channel = var.channel
   }
 
+  maintenance_policy {
+    daily_maintenance_window {
+      start_time = "06:00" // GMT, 10PM PST
+    }
+  }
+
   # We can't create a cluster with no node pool defined, but we want to only use
   # separately managed node pools. So we create the smallest possible default
   # node pool and immediately delete it.

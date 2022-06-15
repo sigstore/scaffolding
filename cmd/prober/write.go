@@ -50,6 +50,9 @@ import (
 const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
 	defaultOIDCClientID = "sigstore"
+
+	fulcioEndpoint = "/api/v1/signingCert"
+	rekorEndpoint  = "/api/v1/log/entries"
 )
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
@@ -68,7 +71,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	}
 
 	// Construct the API endpoint for this handler
-	endpoint := "/api/v1/signingCert"
+	endpoint := fulcioEndpoint
 	hostPath := fulcioURL + endpoint
 
 	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
@@ -95,7 +98,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 // rekorWriteEndpoint tests the write endpoint for rekor, which is
 // /api/v1/log/entries and adds an entry to the log
 func rekorWriteEndpoint(ctx context.Context) error {
-	endpoint := "/api/v1/log/entries"
+	endpoint := rekorEndpoint
 	hostPath := rekorURL + endpoint
 
 	body, err := rekorEntryRequest()
@@ -132,19 +135,19 @@ func rekorEntryRequest() ([]byte, error) {
 	}
 	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "loading signer verifier")
 	}
 	pub, err := signer.PublicKey()
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "public key")
 	}
 	pubKey, err := cryptoutils.MarshalPublicKeyToPEM(pub)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "marshal public key")
 	}
 	sig, err := signer.SignMessage(bytes.NewReader(payload))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "sign message")
 	}
 
 	h := sha256.Sum256(payload)

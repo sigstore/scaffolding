@@ -34,7 +34,6 @@ import (
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 
 	"github.com/pkg/errors"
-	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
@@ -43,6 +42,9 @@ import (
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
+
+	// Loads OIDC providers
+	"github.com/sigstore/cosign/pkg/providers/all"
 )
 
 const (
@@ -53,7 +55,7 @@ const (
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
 // which is "/api/v1/signingCert", which requests a cert from Fulcio
 func fulcioWriteEndpoint(ctx context.Context) error {
-	if !providers.Enabled(ctx) {
+	if !all.Enabled(ctx) {
 		return fmt.Errorf("no auth provider for fulcio is enabled")
 	}
 	tok, err := providers.Provide(ctx, "sigstore")
@@ -86,7 +88,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, fulcioURL, endpoint, latency)
+	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
 	return nil
 }
 
@@ -115,7 +117,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, rekorURL, endpoint, latency)
+	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
 	body, _ = io.ReadAll(resp.Body)
 	fmt.Println(string(body))
@@ -200,19 +202,4 @@ func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {
 	}
 
 	return json.Marshal(cr)
-}
-
-func exportDataToPrometheus(resp *http.Response, host, endpoint string, latency int64) {
-	statusCode := resp.StatusCode
-	labels := prometheus.Labels{
-		endpointLabel:   endpoint,
-		statusCodeLabel: fmt.Sprintf("%d", statusCode),
-		hostLabel:       host,
-	}
-	endpointLatenciesSummary.With(labels).Observe(float64(latency))
-	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
-
-	fmt.Println("Observing ", host+endpoint)
-	fmt.Println("Status code: ", statusCode)
-	fmt.Println("Latency: ", latency)
 }

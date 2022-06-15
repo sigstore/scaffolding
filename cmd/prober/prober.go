@@ -47,7 +47,7 @@ func init() {
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
-	flag.BoolVar(&runWriteProber, "write-prober", true, " [Kubernetes only] run the probers for the write endpoints.")
+	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
 
 	flag.Parse()
 }
@@ -112,7 +112,6 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 }
 
 func observeRequest(host string, r ReadProberCheck) error {
-	fmt.Println("Observing ", host+r.endpoint)
 	client := &http.Client{}
 
 	req, err := httpRequest(host, r)
@@ -129,15 +128,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	defer resp.Body.Close()
 
-	labels := prometheus.Labels{
-		endpointLabel:   r.endpoint,
-		statusCodeLabel: fmt.Sprintf("%d", resp.StatusCode),
-		hostLabel:       host,
-	}
-	fmt.Println("Status code: ", resp.StatusCode)
-	fmt.Println("Latency: ", latency)
-	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
-	endpointLatenciesSummary.With(labels).Observe(float64(latency))
+	exportDataToPrometheus(resp, host, r.endpoint, r.method, latency)
 	return nil
 }
 

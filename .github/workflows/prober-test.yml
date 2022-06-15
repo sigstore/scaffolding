@@ -33,4 +33,4 @@ jobs:
           
       - name: Prober test
         id: prober-test
-        run: go run ./cmd/prober --one-time
+        run: go run ./cmd/prober --one-time --write-prober

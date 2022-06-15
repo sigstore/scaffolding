@@ -33,3 +33,8 @@ variable "gcp_secret_name_ssh" {
   description = "GCP Secret name that holds the SSH key for GitHub repository access."
   type        = string
 }
+
+variable "gcp_secret_name_slack_token" {
+  description = "GCP Secret name that holds the slack token to argocd send notifications."
+  type        = string
+}

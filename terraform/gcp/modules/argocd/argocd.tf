@@ -50,6 +50,30 @@ YAML
   ]
 }
 
+resource "kubectl_manifest" "externalsecret_argocd_slack" {
+  yaml_body = <<YAML
+apiVersion: external-secrets.io/v1alpha1
+kind: ExternalSecret
+metadata:
+  name: slack-argocd-notification
+  namespace: "${kubernetes_namespace_v1.argocd.metadata[0].name}"
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-backend
+  target:
+    name: argocd-notifications-secret
+  data:
+  - secretKey: slack-token
+    remoteRef:
+      key: "${var.gcp_secret_name_slack_token}"
+YAML
+
+  depends_on = [
+    kubernetes_namespace_v1.argocd
+  ]
+}
+
 resource "helm_release" "argocd" {
   name       = "argocd"
   namespace  = "argocd"
@@ -62,6 +86,7 @@ resource "helm_release" "argocd" {
   ]
 
   depends_on = [
-    kubectl_manifest.externalsecret_argocd_ssh
+    kubectl_manifest.externalsecret_argocd_ssh,
+    kubectl_manifest.externalsecret_argocd_slack
   ]
 }

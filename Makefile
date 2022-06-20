@@ -1,21 +1,6 @@
-GIT_HASH ?= $(shell git rev-parse HEAD)
 GIT_TAG ?= $(shell git describe --tags --always --dirty)
-DATE_FMT = +%Y-%m-%dT%H:%M:%SZ
-SOURCE_DATE_EPOCH ?= $(shell git log -1 --pretty=%ct)
-ifdef SOURCE_DATE_EPOCH
-    BUILD_DATE ?= $(shell date -u -d "@$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u -r "$(SOURCE_DATE_EPOCH)" "$(DATE_FMT)" 2>/dev/null || date -u "$(DATE_FMT)")
-else
-    BUILD_DATE ?= $(shell date "$(DATE_FMT)")
-endif
-GIT_TREESTATE = "clean"
-DIFF = $(shell git diff --quiet >/dev/null 2>&1; if [ $$? -eq 1 ]; then echo "1"; fi)
-ifeq ($(DIFF), 1)
-    GIT_TREESTATE = "dirty"
-endif
-LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) \
-        -X sigs.k8s.io/release-utils/version.gitCommit=$(GIT_HASH) \
-        -X sigs.k8s.io/release-utils/version.gitTreeState=$(GIT_TREESTATE) \
-        -X sigs.k8s.io/release-utils/version.buildDate=$(BUILD_DATE)
+
+LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
@@ -41,7 +26,6 @@ sign-images:
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
-
 
 ### Testing
 

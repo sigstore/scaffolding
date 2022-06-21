@@ -1,4 +1,4 @@
-defaultBaseImage: ghcr.io/chainguard-dev/apko:v0.2.2
+defaultBaseImage: ghcr.io/distroless/alpine-base:latest
 
 builds:
 - id: ctlog

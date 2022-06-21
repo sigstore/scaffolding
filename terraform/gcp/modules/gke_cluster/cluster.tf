@@ -23,6 +23,7 @@ resource "google_project_service" "service" {
     "compute.googleapis.com",              // For Node Pool, roles/compute.instanceAdmin
     "container.googleapis.com",            // For GKE cluster. roles/container.admin
     "iam.googleapis.com",                  // For creating service accounts and access control. roles/iam.serviceAccountAdmin, roles/iam.serviceAccountUser
+    "monitoring.googleapis.com",           // For managed prometheus
   ])
   project = var.project_id
   service = each.key
@@ -34,6 +35,7 @@ resource "google_project_service" "service" {
 }
 
 resource "google_container_cluster" "cluster" {
+  provider = google-beta
   # This is where to enable Dataplane v2.
   datapath_provider = var.datapath_provider
 
@@ -82,6 +84,17 @@ resource "google_container_cluster" "cluster" {
   networking_mode = var.networking_mode
   network         = var.network
   subnetwork      = var.subnetwork
+
+  logging_config {
+    enable_components = ["SYSTEM_COMPONENTS", "WORKLOADS"]
+  }
+  monitoring_config {
+    enable_components = ["SYSTEM_COMPONENTS"]
+
+    managed_prometheus {
+      enabled = var.managed_prometheus
+    }
+  }
 
   // Use VPC Aliasing to improve performance and reduce network hops between nodes and load balancers.  References the secondary ranges specified in the VPC subnet.
   ip_allocation_policy {

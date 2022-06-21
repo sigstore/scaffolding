@@ -209,3 +209,8 @@ variable "workload_metadata_config_mode" {
   type    = string
   default = "GKE_METADATA"
 }
+
+variable "managed_prometheus" {
+  type    = bool
+  default = true
+}

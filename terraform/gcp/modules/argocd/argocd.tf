@@ -80,6 +80,7 @@ resource "helm_release" "argocd" {
   chart      = "argo-cd"
   repository = "https://argoproj.github.io/argo-helm"
   version    = var.argocd_chart_version
+  timeout    = 900
 
   values = [
     file(var.argo_chart_values_yaml_path)

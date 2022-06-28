@@ -32,13 +32,11 @@ terraform {
     }
     kubectl = {
       source  = "gavinbunney/kubectl"
-      version = "1.13.1"
+      version = "1.14.0"
     }
     helm = {
-      // Using custom built version for proxy access.
-      // Switch to public instance once https://github.com/hashicorp/terraform-provider-helm/pull/834 lands.
-      source  = "nsmith5/helm"
-      version = "2.4.3"
+      source  = "hashicorp/helm"
+      version = "2.6.0"
     }
   }
 }

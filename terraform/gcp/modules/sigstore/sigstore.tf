@@ -45,8 +45,9 @@ module "tuf" {
   region     = var.tuf_region == "" ? var.region : var.tuf_region
   project_id = var.project_id
 
-  tuf_bucket    = var.tuf_bucket
-  storage_class = var.tuf_storage_class
+  tuf_bucket         = var.tuf_bucket
+  tuf_preprod_bucket = var.tuf_preprod_bucket
+  storage_class      = var.tuf_storage_class
 }
 
 // Monitoring

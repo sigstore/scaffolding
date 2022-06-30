@@ -55,6 +55,11 @@ variable "tuf_bucket" {
   description = "Name of GCS bucket for TUF root."
 }
 
+variable "tuf_preprod_bucket" {
+  type        = string
+  description = "Name of GCS bucket for preprod/staged TUF root."
+}
+
 variable "tuf_storage_class" {
   type        = string
   description = "Storage class for TUF bucket."

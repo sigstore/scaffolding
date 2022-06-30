@@ -67,3 +67,41 @@ resource "google_storage_bucket_iam_member" "public_tuf_member" {
   depends_on = [google_storage_bucket.tuf]
 }
 
+resource "google_storage_bucket" "tuf_preprod" {
+  name     = var.tuf_preprod_bucket
+  location = var.region
+  project  = var.project_id
+
+  storage_class               = var.storage_class
+  uniform_bucket_level_access = true
+
+  versioning {
+    enabled = true
+  }
+
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      with_state         = "ANY"
+      num_newer_versions = 10
+    }
+  }
+  lifecycle_rule {
+    action {
+      type = "Delete"
+    }
+    condition {
+      days_since_noncurrent_time = 730
+    }
+  }
+}
+
+resource "google_storage_bucket_iam_member" "public_tuf_preprod_member" {
+  bucket = google_storage_bucket.tuf_preprod.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+
+  depends_on = [google_storage_bucket.tuf_preprod]
+}

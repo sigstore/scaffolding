@@ -15,10 +15,15 @@
  */
 
 
+locals {
+  namespace = "external-secrets"
+  k8s_sa    = "external-secrets"
+}
+
 // External-Secrets
 resource "helm_release" "external_secrets" {
   name             = "external-secrets"
-  namespace        = "external-secrets"
+  namespace        = local.namespace
   create_namespace = true
   chart            = "external-secrets"
   repository       = "https://charts.external-secrets.io"
@@ -42,37 +47,23 @@ resource "google_project_iam_member" "external_secrets_binding" {
   depends_on = [google_service_account.external_secrets_sa]
 }
 
+resource "google_project_iam_member" "external_secrets_binding_token" {
+  project    = var.project_id
+  role       = "roles/iam.serviceAccountTokenCreator"
+  member     = "serviceAccount:${google_service_account.external_secrets_sa.email}"
+  depends_on = [google_service_account.external_secrets_sa]
+}
+
 resource "google_service_account_iam_member" "gke_sa_iam_member_external_secrets" {
   service_account_id = google_service_account.external_secrets_sa.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.project_id}.svc.id.goog[external-secrets/external-secrets]"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[${local.namespace}/${local.k8s_sa}]"
   depends_on         = [google_service_account.external_secrets_sa]
 }
 
 // Needs roles/iam.serviceAccountKeyAdmin
 resource "google_service_account_key" "external_secrets_key" {
   service_account_id = google_service_account.external_secrets_sa.name
-}
-
-resource "kubernetes_secret_v1" "gcpsm_secret" {
-  metadata {
-    name        = "gcpsm-secret"
-    namespace   = "external-secrets"
-    annotations = {}
-    labels      = {}
-  }
-
-  binary_data = {
-    secret-access-credentials = google_service_account_key.external_secrets_key.private_key
-  }
-
-  type = "Opaque"
-
-  depends_on = [
-    google_service_account.external_secrets_sa,
-    google_service_account_key.external_secrets_key,
-    helm_release.external_secrets
-  ]
 }
 
 resource "kubectl_manifest" "secretstore_gcp_backend" {
@@ -84,19 +75,18 @@ metadata:
 spec:
   provider:
       gcpsm:
-        auth:
-          secretRef:
-            secretAccessKeySecretRef:
-              name: gcpsm-secret
-              key: secret-access-credentials
-              namespace: "external-secrets"
         projectID: "${var.project_id}"
+        auth:
+          workloadIdentity:
+            clusterLocation: "${var.cluster_location}"
+            clusterName: "${var.cluster_name}"
+            clusterProjectID: "${var.project_id}"
+            serviceAccountRef:
+              name: local.k8s_sa
+              namespace: local.namespace
 YAML
 
-  depends_on = [
-    helm_release.external_secrets,
-    kubernetes_secret_v1.gcpsm_secret
-  ]
+  depends_on = [helm_release.external_secrets]
 }
 
 resource "kubectl_manifest" "trillian_namespace" {

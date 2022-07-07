@@ -316,6 +316,6 @@ done
 resource_blaster serving serving-default-domain.yaml | kubectl apply -f -
 
 # Wait for the job to complete, so we can reliably use ksvc hostnames.
-kubectl wait -n knative-serving --timeout=90s --for=condition=Complete jobs --all
+kubectl wait -n knative-serving --timeout=180s --for=condition=Complete jobs --all
 
 echo '::endgroup::'

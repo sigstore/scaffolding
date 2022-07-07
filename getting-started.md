@@ -12,6 +12,13 @@ including:
 
 There's a reusable [action](./actions/setup/README.md) that you can use as is.
 
+# Prerequisites
+
+You need to install `yq`. You can do this like so:
+```
+go install github.com/mikefarah/yq/v4@latest
+```
+
 # Running locally on KinD
 
 You should be able to install KinD and Knative bits by running (from head, after
@@ -23,7 +30,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.2.8/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.3.0/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -33,7 +40,8 @@ disabled, details [here](https://developer.apple.com/forums/thread/682332)).
 Alternatively, you can manually modify the script and change the
 [REGISTRY_PORT](https://github.com/sigstore/scaffolding/blob/main/hack/setup-kind.sh#L19)
 
-*NOTE* If you run the script multiple times, you will have to uninstall the
+*NOTE* If you run the script multiple times, you will have to delete the cluster
+and uninstall the
 docker registry container between running the setup-kind.sh it spins up a
 registry container in a daemon mode.
 To clean a previously running registry, you can do one of these:
@@ -59,7 +67,7 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.8/release.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.3.0/release.yaml | kubectl apply -f -
 ```
 
 # Then wait for the jobs that setup dependencies to finish
@@ -141,7 +149,7 @@ kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*
 yaml (this may take a bit (~couple of minutes), since the jobs are launched
 simultaneously)
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.2.8/testrelease.yaml | kubectl apply -f -
+curl -L https://github.com/sigstore/scaffolding/releases/download/v0.3.0/testrelease.yaml | kubectl apply -f -
 ```
 
 3) To view if jobs have completed

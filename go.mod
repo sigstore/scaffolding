@@ -18,7 +18,7 @@ require (
 	github.com/prometheus/client_golang v1.12.2
 	github.com/sigstore/cosign v1.9.0
 	github.com/sigstore/fulcio v0.5.0
-	github.com/sigstore/rekor v0.9.0
+	github.com/sigstore/rekor v0.9.1
 	github.com/sigstore/sigstore v1.2.1-0.20220526001230-8dc4fa90a468
 	google.golang.org/genproto v0.0.0-20220527130721-00d5c0f3be58
 	google.golang.org/grpc v1.47.0
@@ -154,7 +154,7 @@ require (
 	github.com/subosito/gotenv v1.3.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7 // indirect
 	github.com/tent/canonical-json-go v0.0.0-20130607151641-96e4ba3a7613 // indirect
-	github.com/theupdateframework/go-tuf v0.3.0 // indirect
+	github.com/theupdateframework/go-tuf v0.3.1 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/tmc/grpc-websocket-proxy v0.0.0-20201229170055-e5319fda7802 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect

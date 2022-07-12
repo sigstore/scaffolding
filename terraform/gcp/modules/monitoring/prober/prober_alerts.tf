@@ -32,7 +32,7 @@ resource "google_monitoring_alert_policy" "prober_rekor_endpoint_latency" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency\" AND metric.labels.host = \"%s\"", var.rekor_url)
+      filter          = format("resource.type = \"k8s_container\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", var.rekor_url)
       threshold_value = "750"
 
       trigger {
@@ -74,7 +74,7 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency\" AND metric.labels.host = \"%s\"", var.fulcio_url)
+      filter          = format("resource.type = \"k8s_container\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", var.fulcio_url)
       threshold_value = "750"
 
       trigger {
@@ -117,7 +117,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
 
       duration = "300s"
-      filter   = format("resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency\" AND metric.labels.host = \"%s\"", each.key)
+      filter   = format("resource.type = \"k8s_container\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", each.key)
 
       trigger {
         count   = "1"
@@ -158,7 +158,7 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/api_endpoint_latency_count\" AND metric.labels.status_code != \"200\""
+      filter          = "resource.type = \"k8s_container\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != \"200\""
       threshold_value = "0"
 
       trigger {

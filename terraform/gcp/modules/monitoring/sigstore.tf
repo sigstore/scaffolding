@@ -34,9 +34,9 @@ resource "google_project_service" "service" {
 module "rekor" {
   source = "./rekor"
 
-  project_id              = var.project_id
-  notification_channel_id = var.notification_channel_id
-  rekor_url               = var.rekor_url
+  project_id               = var.project_id
+  notification_channel_ids = var.notification_channel_ids
+  rekor_url                = var.rekor_url
 
   depends_on = [
     google_project_service.service
@@ -47,10 +47,10 @@ module "rekor" {
 module "fulcio" {
   source = "./fulcio"
 
-  project_id              = var.project_id
-  notification_channel_id = var.notification_channel_id
-  ctlog_url               = var.ctlog_url
-  fulcio_url              = var.fulcio_url
+  project_id               = var.project_id
+  notification_channel_ids = var.notification_channel_ids
+  ctlog_url                = var.ctlog_url
+  fulcio_url               = var.fulcio_url
 
   depends_on = [
     google_project_service.service
@@ -61,8 +61,8 @@ module "fulcio" {
 module "dex" {
   source = "./dex"
 
-  project_id              = var.project_id
-  notification_channel_id = var.notification_channel_id
+  project_id               = var.project_id
+  notification_channel_ids = var.notification_channel_ids
 
   dex_url = var.dex_url
 
@@ -75,10 +75,10 @@ module "dex" {
 module "prober" {
   source = "./prober"
 
-  project_id              = var.project_id
-  notification_channel_id = var.notification_channel_id
-  rekor_url               = var.prober_rekor_url
-  fulcio_url              = var.prober_fulcio_url
+  project_id               = var.project_id
+  notification_channel_ids = var.notification_channel_ids
+  rekor_url                = var.prober_rekor_url
+  fulcio_url               = var.prober_fulcio_url
 
   depends_on = [
     google_project_service.service
@@ -88,10 +88,10 @@ module "prober" {
 module "infra" {
   source = "./infra"
 
-  project_id              = var.project_id
-  notification_channel_id = var.notification_channel_id
-  rekor_url               = local.qualified_rekor_url
-  fulcio_url              = local.qualified_fulcio_url
+  project_id               = var.project_id
+  notification_channel_ids = var.notification_channel_ids
+  rekor_url                = local.qualified_rekor_url
+  fulcio_url               = local.qualified_fulcio_url
 
   depends_on = [
     google_project_service.service

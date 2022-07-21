@@ -69,13 +69,13 @@ variable "prober_fulcio_url" {
 }
 
 // Set-up for notification channel for alerting
-variable "notification_channel_id" {
-  type        = string
-  description = "The notification channel ID which alerts should be sent to. You can find this by running `gcloud alpha monitoring channels list`."
+variable "notification_channel_ids" {
+  type        = list(string)
+  description = "List of notification channel IDs which alerts should be sent to. You can find this by running `gcloud alpha monitoring channels list`."
 }
 
 locals {
-  notification_channels = [format("projects/%v/notificationChannels/%v", var.project_id, var.notification_channel_id)]
+  notification_channels = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
   qualified_rekor_url   = format("https://%s", var.rekor_url)
   qualified_fulcio_url  = format("https://%s", var.fulcio_url)
 }

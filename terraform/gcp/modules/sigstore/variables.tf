@@ -81,18 +81,18 @@ variable "ca_name" {
 variable "monitoring" {
   description = "Monitoring and alerting"
   type = object({
-    enabled                 = bool
-    fulcio_url              = string
-    rekor_url               = string
-    dex_url                 = string
-    notification_channel_id = string
+    enabled                  = bool
+    fulcio_url               = string
+    rekor_url                = string
+    dex_url                  = string
+    notification_channel_ids = list(string)
   })
   default = {
-    enabled                 = false
-    fulcio_url              = "fulcio.example.com"
-    rekor_url               = "rekor.example.com"
-    dex_url                 = "oauth2.example.com"
-    notification_channel_id = ""
+    enabled                  = false
+    fulcio_url               = "fulcio.example.com"
+    rekor_url                = "rekor.example.com"
+    dex_url                  = "oauth2.example.com"
+    notification_channel_ids = []
   }
 }
 

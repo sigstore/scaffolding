@@ -25,7 +25,7 @@ inputs:
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
-    default: '1.1.0'
+    default: '1.5.0'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true
@@ -39,7 +39,7 @@ inputs:
     required: true
     default: 'cluster.local'
   k8s-version:
-    description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.22.x'
+    description: 'kubernetes version to install (v1.22.x, v1.23.x), default: v1.22.x'
     required: true
     default: 'v1.22.x'
 runs:

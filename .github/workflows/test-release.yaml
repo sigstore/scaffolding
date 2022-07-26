@@ -23,7 +23,6 @@ jobs:
         k8s-version:
         - v1.22.x
         - v1.23.x
-        - v1.24.x
 
         leg:
         - fulcio rekor ctlog e2e

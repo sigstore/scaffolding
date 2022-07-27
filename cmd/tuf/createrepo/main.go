@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/theupdateframework/go-tuf"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -35,11 +36,14 @@ import (
 )
 
 var (
-	rekorURL         = flag.String("rekor_url", "http://rekor.rekor-system.svc", "Address of the Rekor server")
-	fulcioCert       = flag.String("fulcio-cert", "", "Path to the fulcio certificate")
-	ctPubKey         = flag.String("ct-pubkey", "", "Path to a CT Log public key")
-	secretName       = flag.String("secret", "tuf-secrets", "Name of the secret to create for the initial root file")
-	pubKeySecretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create containing only the initial root")
+	// URL to Rekor to query for the Rekor public key to include in the trust root.
+	// Could replace with rekor-pubkey, if that can be resolved early enough (don't know)
+	rekorURL = flag.String("rekor-url", "http://rekor.rekor-system.svc", "Address of the Rekor server")
+	// Static data to include in the trust root.
+	fulcioCert = flag.String("fulcio-cert", "", "Path to the fulcio certificate")
+	ctPubKey   = flag.String("ct-pubkey", "", "Path to a CT Log public key")
+	// Name of the "secret" initial 1.root.json.
+	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
 
 func main() {
@@ -63,9 +67,31 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
 	}
 
-	// Create a new TUF root with the listed artifacts.
+	// Get rekor public key.
+	rekorClient, err := rekor.NewClient(*rekorURL)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Unable to get rekor client: %v", err)
+	}
+	rekorKey, err := rekorClient.Pubkey.GetPublicKey(nil)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Unable to fetch rkeor key: %v", err)
+	}
 
-	// Add the initial root to secrets.
+	// Create a new TUF root with the listed artifacts.
+	local, err := createRepo(*fulcioCert, rekorKey.Payload, *ctPubKey)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Creating repot: %v", err)
+	}
+	meta, err := local.GetMeta()
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Getting meta: %v", err)
+	}
+	rootJSON, ok := meta["root.json"]
+	if !ok {
+		logging.FromContext(ctx).Panicf("Getting root: %v", err)
+	}
+
+	// Add the initial 1.root.json to secrets.
 	data := make(map[string][]byte)
 	data["root"] = rootJSON
 
@@ -103,7 +129,7 @@ func main() {
 	}
 	logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
 
-	// Serve the TUF repo
+	// Serve the TUF repository.
 	fs := http.FileServer(http.Dir("./repo"))
 	http.Handle("/", fs)
 
@@ -112,13 +138,15 @@ func main() {
 	}
 }
 
-func createRepo(local tuf.LocalStore, targets map[string]json.RawMessage) error {
-	local := tuf.FileSystemStore(dir)
+func createRepo(fulcio, rekor, ctlog string) (tuf.LocalStore, error) {
+	// TODO: Make this an in-memory fileystem.
+	dir := os.TempDir()
+	local := tuf.FileSystemStore(dir, nil)
 
 	// Create and commit a new TUF repo with the targets to the store.
 	r, err := tuf.NewRepo(local)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Make all metadata files expire in 6 months.
@@ -127,38 +155,48 @@ func createRepo(local tuf.LocalStore, targets map[string]json.RawMessage) error 
 	for _, role := range []string{"root", "targets", "snapshot", "timestamp"} {
 		_, err := r.GenKeyWithExpires(role, expires)
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
+	// This is the map of targets to add to the trust root with their custom metadata.
+	var targets map[string]json.RawMessage
+	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
+		return nil, err
+	}
+	if err := writeStagedTarget(dir, "fulcio_v1.crt.pem", []byte(fulcio)); err != nil {
+		return nil, err
+	}
+	if err := writeStagedTarget(dir, "ctlog.pub", []byte(ctlog)); err != nil {
+		return nil, err
+	}
+
+	// Now add targets to the TUF repository.
 	for targetName, customMetadata := range targets {
 		r.AddTargetsWithExpires([]string{targetName}, customMetadata, expires)
 	}
 
+	// Snapshot, Timestamp, and Publish the repository.
 	if err := r.SnapshotWithExpires(expires); err != nil {
-		return err
+		return nil, err
 	}
 	if err := r.TimestampWithExpires(expires); err != nil {
-		return err
+		return nil, err
 	}
 	if err := r.Commit(); err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return local, nil
 }
 
-func (t *tmpDir) writeStagedTarget(path, data string) error {
-	path = filepath.Join(t.path, "staged", "targets", path)
+func writeStagedTarget(dir, path string, data []byte) error {
+	path = filepath.Join(dir, "staged", "targets", path)
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
 	if err := ioutil.WriteFile(path, []byte(data), 0644); err != nil {
 		return err
 	}
-	return nil
-}
-
-func createMetadata(usage string) json.RawMessage {
 	return nil
 }

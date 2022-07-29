@@ -29,6 +29,12 @@ variable "region" {
   default     = "us-west1"
 }
 
+variable "replica_zones" {
+  description = "List of zones for read replicas."
+  type        = list(any)
+  default     = []
+}
+
 variable "cluster_name" {
   type    = string
   default = ""
@@ -37,6 +43,12 @@ variable "cluster_name" {
 variable "tier" {
   type        = string
   description = "Machine tier for MySQL instance."
+  default     = "db-n1-standard-1"
+}
+
+variable "replica_tier" {
+  type        = string
+  description = "Machine tier for MySQL replica."
   default     = "db-n1-standard-1"
 }
 

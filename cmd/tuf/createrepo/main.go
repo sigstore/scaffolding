@@ -15,6 +15,7 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"flag"
 	"io/ioutil"
@@ -23,7 +24,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/sigstore/cosign/cmd/cosign/cli/rekor"
 	"github.com/theupdateframework/go-tuf"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -36,12 +36,10 @@ import (
 )
 
 var (
-	// URL to Rekor to query for the Rekor public key to include in the trust root.
-	// Could replace with rekor-pubkey, if that can be resolved early enough (don't know)
-	rekorURL = flag.String("rekor-url", "http://rekor.rekor-system.svc", "Address of the Rekor server")
 	// Static data to include in the trust root.
-	fulcioCert = flag.String("fulcio-cert", "", "Path to the fulcio certificate")
-	ctPubKey   = flag.String("ct-pubkey", "", "Path to a CT Log public key")
+	rekorPubKey = flag.String("rekor-pubkey", "/var/run/tuf-secrets/rekor-pubkey", "Path to public key of Rekor server")
+	fulcioCert  = flag.String("fulcio-cert", "/var/run/tuf-secrets/fulcio-cert", "Path to the fulcio certificate")
+	ctPubKey    = flag.String("ct-pubkey", "/var/run/tuf-secrets/ct-pubkey", "Path to a CT Log public key")
 	// Name of the "secret" initial 1.root.json.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
@@ -67,18 +65,24 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
 	}
 
-	// Get rekor public key.
-	rekorClient, err := rekor.NewClient(*rekorURL)
+	// Read the Rekor file
+	rekor, err := ioutil.ReadFile(*rekorPubKey)
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Unable to get rekor client: %v", err)
+		logging.FromContext(ctx).Panicf("Failed to read Rekor pubkey %s: %v", *rekorPubKey, err)
 	}
-	rekorKey, err := rekorClient.Pubkey.GetPublicKey(nil)
+
+	fulcio, err := ioutil.ReadFile(*fulcioCert)
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Unable to fetch rkeor key: %v", err)
+		logging.FromContext(ctx).Panicf("Failed to read Fulcio cert %s: %v", *fulcioCert, err)
+	}
+
+	ct, err := ioutil.ReadFile(*ctPubKey)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Failed to read ctPubkey %s: %v", *ctPubKey, err)
 	}
 
 	// Create a new TUF root with the listed artifacts.
-	local, err := createRepo(*fulcioCert, rekorKey.Payload, *ctPubKey)
+	local, err := createRepo(ctx, fulcio, rekor, ct)
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Creating repot: %v", err)
 	}
@@ -138,14 +142,17 @@ func main() {
 	}
 }
 
-func createRepo(fulcio, rekor, ctlog string) (tuf.LocalStore, error) {
+func createRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStore, error) {
 	// TODO: Make this an in-memory fileystem.
 	dir := os.TempDir()
+	logging.FromContext(ctx).Infof("Creating the FS in %q", dir)
 	local := tuf.FileSystemStore(dir, nil)
 
 	// Create and commit a new TUF repo with the targets to the store.
+	logging.FromContext(ctx).Infof("Creating new repo in %q", dir)
 	r, err := tuf.NewRepo(local)
 	if err != nil {
+		logging.FromContext(ctx).Errorf("Failed to create NewRepo %s", err)
 		return nil, err
 	}
 
@@ -162,12 +169,15 @@ func createRepo(fulcio, rekor, ctlog string) (tuf.LocalStore, error) {
 	// This is the map of targets to add to the trust root with their custom metadata.
 	var targets map[string]json.RawMessage
 	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %s", err)
 		return nil, err
 	}
 	if err := writeStagedTarget(dir, "fulcio_v1.crt.pem", []byte(fulcio)); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %s", err)
 		return nil, err
 	}
 	if err := writeStagedTarget(dir, "ctlog.pub", []byte(ctlog)); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %s", err)
 		return nil, err
 	}
 
@@ -178,12 +188,15 @@ func createRepo(fulcio, rekor, ctlog string) (tuf.LocalStore, error) {
 
 	// Snapshot, Timestamp, and Publish the repository.
 	if err := r.SnapshotWithExpires(expires); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to SnashotWithExpires %s", err)
 		return nil, err
 	}
 	if err := r.TimestampWithExpires(expires); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to TimestampWithExpires %s", err)
 		return nil, err
 	}
 	if err := r.Commit(); err != nil {
+		logging.FromContext(ctx).Errorf("Failed to Commit %s", err)
 		return nil, err
 	}
 

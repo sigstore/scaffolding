@@ -15,16 +15,12 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"flag"
 	"io/ioutil"
 	"net/http"
 	"os"
-	"path/filepath"
-	"time"
 
-	"github.com/theupdateframework/go-tuf"
+	"github.com/sigstore/scaffolding/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -82,9 +78,9 @@ func main() {
 	}
 
 	// Create a new TUF root with the listed artifacts.
-	local, err := createRepo(ctx, fulcio, rekor, ct)
+	local, dir, err := repo.CreateRepo(ctx, fulcio, rekor, ct)
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Creating repot: %v", err)
+		logging.FromContext(ctx).Panicf("Creating repo: %v", err)
 	}
 	meta, err := local.GetMeta()
 	if err != nil {
@@ -134,82 +130,10 @@ func main() {
 	logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
 
 	// Serve the TUF repository.
-	fs := http.FileServer(http.Dir("./repo"))
+	fs := http.FileServer(http.Dir(dir))
 	http.Handle("/", fs)
 
-	if err := http.ListenAndServe(":8000", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}
-}
-
-func createRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStore, error) {
-	// TODO: Make this an in-memory fileystem.
-	dir := os.TempDir()
-	logging.FromContext(ctx).Infof("Creating the FS in %q", dir)
-	local := tuf.FileSystemStore(dir, nil)
-
-	// Create and commit a new TUF repo with the targets to the store.
-	logging.FromContext(ctx).Infof("Creating new repo in %q", dir)
-	r, err := tuf.NewRepo(local)
-	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to create NewRepo %s", err)
-		return nil, err
-	}
-
-	// Make all metadata files expire in 6 months.
-	expires := time.Now().AddDate(0, 6, 0)
-
-	for _, role := range []string{"root", "targets", "snapshot", "timestamp"} {
-		_, err := r.GenKeyWithExpires(role, expires)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	// This is the map of targets to add to the trust root with their custom metadata.
-	var targets map[string]json.RawMessage
-	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %s", err)
-		return nil, err
-	}
-	if err := writeStagedTarget(dir, "fulcio_v1.crt.pem", []byte(fulcio)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %s", err)
-		return nil, err
-	}
-	if err := writeStagedTarget(dir, "ctlog.pub", []byte(ctlog)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %s", err)
-		return nil, err
-	}
-
-	// Now add targets to the TUF repository.
-	for targetName, customMetadata := range targets {
-		r.AddTargetsWithExpires([]string{targetName}, customMetadata, expires)
-	}
-
-	// Snapshot, Timestamp, and Publish the repository.
-	if err := r.SnapshotWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to SnashotWithExpires %s", err)
-		return nil, err
-	}
-	if err := r.TimestampWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to TimestampWithExpires %s", err)
-		return nil, err
-	}
-	if err := r.Commit(); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to Commit %s", err)
-		return nil, err
-	}
-
-	return local, nil
-}
-
-func writeStagedTarget(dir, path string, data []byte) error {
-	path = filepath.Join(dir, "staged", "targets", path)
-	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
-		return err
-	}
-	if err := ioutil.WriteFile(path, []byte(data), 0644); err != nil {
-		return err
-	}
-	return nil
 }

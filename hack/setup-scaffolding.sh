@@ -91,6 +91,7 @@ kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*
 
 # Then launch the tuf server
 ko apply -BRf ./config/tuf/server
+<<<<<<< HEAD
 
 # Above however is currently failing with the following error, and I'm not
 # entirely sure how to fix, so I'm just creating this as a checkpoint.
@@ -104,3 +105,18 @@ vaikas@villes-mbp scaffolding % kubectl -n tuf-system logs tuf-00003-deployment-
 panic: Creating repot: tuf: missing metadata file targets.json
 ```
 >>>>>>> c641b2f (Create a secret that's used by the tuf server.)
+||||||| parent of d5030ca (oops, forgot to update scaffolding script.)
+
+# Above however is currently failing with the following error, and I'm not
+# entirely sure how to fix, so I'm just creating this as a checkpoint.
+```
+vaikas@villes-mbp scaffolding % kubectl -n tuf-system logs tuf-00003-deployment-57f574c94c-kgbhr tuf
+{"level":"info","ts":1659224120.0725565,"logger":"fallback","caller":"createrepo/main.go:57","msg":"running create_repo Version: devel GitCommit: 46ebe1479b33e5e0ba1efd0a6d967a68d1bbab5a BuildDate: 2022-07-27T23:51:17"}
+{"level":"info","ts":1659224120.1282668,"logger":"fallback","caller":"createrepo/main.go:148","msg":"Creating the FS in \"/tmp\""}
+{"level":"info","ts":1659224120.1304667,"logger":"fallback","caller":"createrepo/main.go:152","msg":"Creating new repo in \"/tmp\""}
+{"level":"error","ts":1659224120.3686304,"logger":"fallback","caller":"createrepo/main.go:191","msg":"Failed to SnashotWithExpires tuf: missing metadata file targets.json","stacktrace":"main.createRepo\n\tgithub.com/sigstore/scaffolding/cmd/tuf/createrepo/main.go:191\nmain.main\n\tgithub.com/sigstore/scaffolding/cmd/tuf/createrepo/main.go:85\nruntime.main\n\truntime/proc.go:250"}
+{"level":"panic","ts":1659224120.369749,"logger":"fallback","caller":"createrepo/main.go:87","msg":"Creating repot: tuf: missing metadata file targets.json","stacktrace":"main.main\n\tgithub.com/sigstore/scaffolding/cmd/tuf/createrepo/main.go:87\nruntime.main\n\truntime/proc.go:250"}
+panic: Creating repot: tuf: missing metadata file targets.json
+```
+=======
+>>>>>>> d5030ca (oops, forgot to update scaffolding script.)

@@ -19,6 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/sigstore/scaffolding/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
@@ -105,7 +106,6 @@ func main() {
 
 		if rootok {
 			logging.FromContext(ctx).Infof("Found existing secret config with the TUF root")
-			return
 		}
 		existingSecret.Data = data
 		_, err = clientset.CoreV1().Secrets(ns).Update(ctx, existingSecret, metav1.UpdateOptions{})
@@ -113,24 +113,22 @@ func main() {
 			logging.FromContext(ctx).Fatalf("Failed to update secret %s/%s: %v", ns, *secretName, err)
 		}
 		logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, *secretName)
-		return
+	} else {
+		secret := &corev1.Secret{
+			ObjectMeta: metav1.ObjectMeta{
+				Namespace: ns,
+				Name:      *secretName,
+			},
+			Data: data,
+		}
+		_, err = clientset.CoreV1().Secrets(ns).Create(ctx, secret, metav1.CreateOptions{})
+		if err != nil {
+			logging.FromContext(ctx).Fatalf("Failed to create secret %s/%s: %v", ns, *secretName, err)
+		}
+		logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
 	}
-
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns,
-			Name:      *secretName,
-		},
-		Data: data,
-	}
-	_, err = clientset.CoreV1().Secrets(ns).Create(ctx, secret, metav1.CreateOptions{})
-	if err != nil {
-		logging.FromContext(ctx).Fatalf("Failed to create secret %s/%s: %v", ns, *secretName, err)
-	}
-	logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
-
 	// Serve the TUF repository.
-	fs := http.FileServer(http.Dir(dir))
+	fs := http.FileServer(http.Dir(strings.TrimRight(dir, "/")))
 	http.Handle("/", fs)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {

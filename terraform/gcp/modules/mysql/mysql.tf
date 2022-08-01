@@ -125,6 +125,35 @@ resource "google_sql_database_instance" "trillian" {
   }
 }
 
+resource "google_sql_database_instance" "read_replica" {
+  for_each = toset(var.replica_zones)
+
+  name                 = "${google_sql_database_instance.trillian.name}-replica-${each.key}"
+  master_instance_name = google_sql_database_instance.trillian.name
+  region               = var.region
+  database_version     = var.database_version
+
+  replica_configuration {
+    failover_target = false
+  }
+
+  settings {
+    tier              = var.replica_tier
+    availability_type = "ZONAL"
+
+    ip_configuration {
+      ipv4_enabled    = var.ipv4_enabled
+      private_network = var.network
+      require_ssl     = var.require_ssl
+    }
+
+    database_flags {
+      name  = "cloudsql_iam_authentication"
+      value = "on"
+    }
+  }
+}
+
 resource "google_sql_database" "trillian" {
   name       = var.db_name
   project    = var.project_id

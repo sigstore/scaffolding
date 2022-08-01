@@ -66,7 +66,7 @@ spec:
       serviceAccountName: tuf
       containers:
       # v0.2.0
-      - image: ko://github.com/sigstore/scaffolding/cmd/tuf/createrepo
+      - image: ko://github.com/sigstore/scaffolding/cmd/tuf/server
         name: tuf
         ports:
         - containerPort: 8080 # tuf remote repo service

@@ -77,30 +77,18 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %s", err)
 		return nil, "", err
 	}
-	if err := writeStagedTarget(dir, "ctlog.pub", []byte(ctlog)); err != nil {
+	if err := writeStagedTarget(dir, "ctfe.pub", []byte(ctlog)); err != nil {
 		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %s", err)
 		return nil, "", err
 	}
 
 	// Now add targets to the TUF repository.
-	// TODO(asraa): Targets does not get populated, so these never get added to
-	// repo. What should it contain?
-	// Looking at the gist that does work, it does AddTargets but without
-	// the expiry, so I changed to that since I don't know what I should be
-	// putting into the CustomMetadata below.
-	/*
-		for targetName, customMetadata := range targets {
-			logging.FromContext(ctx).Errorf("Adding target with expires %s", targetName)
-			r.AddTargetsWithExpires([]string{targetName}, customMetadata, expires)
-		}
-	*/
-
 	targets := []string{
 		"fulcio_v1.crt.pem",
-		"ctlog.pub",
+		"ctfe.pub",
 		"rekor.pub",
 	}
-	err = r.AddTargets(targets, nil)
+	err = r.AddTargetsWithExpires(targets, nil, expires)
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to AddTargets: %s", err)
 		return nil, "", err

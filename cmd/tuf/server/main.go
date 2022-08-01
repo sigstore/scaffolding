@@ -128,7 +128,10 @@ func main() {
 		logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
 	}
 	// Serve the TUF repository.
-	fs := http.FileServer(http.Dir(strings.TrimRight(dir, "/")))
+	logging.FromContext(ctx).Infof("tuf repository was created in: %s", dir)
+	serveDir := strings.TrimRight(dir, "/") + "/repository/"
+	logging.FromContext(ctx).Infof("tuf repository was created in: %s serving tuf root at %s", dir, serveDir)
+	fs := http.FileServer(http.Dir(serveDir))
 	http.Handle("/", fs)
 
 	if err := http.ListenAndServe(":8080", nil); err != nil {

@@ -128,6 +128,9 @@ module "mysql" {
   tier              = var.mysql_tier
   availability_type = var.mysql_availability_type
 
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
   network = module.network.network_self_link
 
   instance_name = var.mysql_instance_name

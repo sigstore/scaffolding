@@ -148,6 +148,18 @@ variable "mysql_availability_type" {
   default     = "REGIONAL"
 }
 
+variable "mysql_replica_zones" {
+  description = "List of zones for read replicas."
+  type        = list(any)
+  default     = []
+}
+
+variable "mysql_replica_tier" {
+  type        = string
+  description = "Machine tier for MySQL replica."
+  default     = "db-n1-standard-1"
+}
+
 variable "mysql_ipv4_enabled" {
   type        = bool
   description = "Whether to enable ipv4 for MySQL instance."

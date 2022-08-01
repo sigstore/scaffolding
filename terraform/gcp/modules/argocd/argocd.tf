@@ -24,7 +24,7 @@ resource "kubernetes_namespace_v1" "argocd" {
 
 resource "kubectl_manifest" "externalsecret_argocd_ssh" {
   yaml_body = <<YAML
-apiVersion: external-secrets.io/v1alpha1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: gcp-external-secret-argocd-ssh
@@ -52,7 +52,7 @@ YAML
 
 resource "kubectl_manifest" "externalsecret_argocd_slack" {
   yaml_body = <<YAML
-apiVersion: external-secrets.io/v1alpha1
+apiVersion: external-secrets.io/v1beta1
 kind: ExternalSecret
 metadata:
   name: slack-argocd-notification

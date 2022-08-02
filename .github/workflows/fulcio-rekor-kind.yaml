@@ -103,7 +103,7 @@ jobs:
         version: "1.2.0"
         serving-features: >
           {
-            "kubernetes.podspec-fieldref": "enabled",
+            "kubernetes.podspec-fieldref": "enabled"
           }
 
     - name: Create sample image

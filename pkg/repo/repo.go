@@ -141,7 +141,6 @@ package repo
 
 import (
 	"context"
-	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -168,7 +167,6 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 
 	// Create and commit a new TUF repo with the targets to the store.
 	logging.FromContext(ctx).Infof("Creating new repo in %q", dir)
-	//r, err := tuf.NewRepo(local)
 	r, err := tuf.NewRepoIndent(local, "", " ")
 	if err != nil {
 		logging.FromContext(ctx).Errorf("Failed to create NewRepo %s", err)
@@ -193,7 +191,8 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	}
 
 	// This is the map of targets to add to the trust root with their custom metadata.
-	//	var targets map[string]json.RawMessage
+	// Use hard-coded names that are used as fallback targets by sigstore's TUF client.
+	// TODO(asraa): Update to adding targets in usage subdirectories when sigstore/sigstore#562 is fixed.
 	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
 		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %s", err)
 		return nil, "", err
@@ -218,12 +217,6 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 		logging.FromContext(ctx).Errorf("Failed to AddTargets: %s", err)
 		return nil, "", err
 	}
-
-	// added by vaikas for debugging
-	filepath.Walk(dir, func(name string, info os.FileInfo, err error) error {
-		fmt.Println(name)
-		return nil
-	})
 
 	// Snapshot, Timestamp, and Publish the repository.
 	if err := r.SnapshotWithExpires(expires); err != nil {

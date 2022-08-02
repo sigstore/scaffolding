@@ -19,7 +19,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
-	"strings"
+	"path/filepath"
 
 	"github.com/sigstore/scaffolding/pkg/repo"
 	corev1 "k8s.io/api/core/v1"
@@ -129,7 +129,7 @@ func main() {
 	}
 	// Serve the TUF repository.
 	logging.FromContext(ctx).Infof("tuf repository was created in: %s", dir)
-	serveDir := strings.TrimRight(dir, "/") + "/repository/"
+	serveDir := filepath.Join(dir, "repository")
 	logging.FromContext(ctx).Infof("tuf repository was created in: %s serving tuf root at %s", dir, serveDir)
 	fs := http.FileServer(http.Dir(serveDir))
 	http.Handle("/", fs)

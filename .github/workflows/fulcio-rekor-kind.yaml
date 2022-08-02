@@ -100,11 +100,21 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
+<<<<<<< HEAD
         version: "1.2.0"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
           }
+||||||| parent of b5e2ea7 (Feature flag. Do not care about the tuf job yet.)
+        version: "1.1.0"
+=======
+        version: "1.2.0"
+        serving-features: >
+          {
+            "kubernetes.podspec-fieldref": "enabled",
+          }
+>>>>>>> b5e2ea7 (Feature flag. Do not care about the tuf job yet.)
 
     - name: Create sample image
       run: |

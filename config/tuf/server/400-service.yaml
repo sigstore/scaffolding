@@ -65,7 +65,6 @@ spec:
     spec:
       serviceAccountName: tuf
       containers:
-      # v0.2.0
       - image: ko://github.com/sigstore/scaffolding/cmd/tuf/server
         name: tuf
         ports:

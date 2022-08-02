@@ -112,7 +112,7 @@ jobs:
         version: "1.2.0"
         serving-features: >
           {
-            "kubernetes.podspec-fieldref": "enabled",
+            "kubernetes.podspec-fieldref": "enabled"
           }
 >>>>>>> b5e2ea7 (Feature flag. Do not care about the tuf job yet.)
 

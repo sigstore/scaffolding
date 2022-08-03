@@ -138,16 +138,6 @@ jobs:
         kubectl wait --timeout 2m -n rekor-system --for=condition=Complete jobs --all
         kubectl delete jobs -n rekor-system --all
 
-    - name: Install CTLog
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
-      run: |
-        make ko-apply-ctlog
-
-        # Make sure the CTlog jobs complete
-        kubectl wait --timeout 2m -n ctlog-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n ctlog-system --all
-
     - name: Install Fulcio
       working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 5
@@ -158,10 +148,24 @@ jobs:
         kubectl wait --timeout 2m -n fulcio-system --for=condition=Complete jobs --all
         kubectl delete jobs -n fulcio-system --all
 
+    - name: Install CTLog
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-ctlog
+
+        # Make sure the CTlog jobs complete
+        kubectl wait --timeout 2m -n ctlog-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n ctlog-system --all
+
     - name: Setup secrets for tuf
       working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 5
       run: |
+        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+        kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+        kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+
         make ko-apply-tuf
 
         # Make sure the tuf jobs complete

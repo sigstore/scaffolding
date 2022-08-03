@@ -100,7 +100,11 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.1.0"
+        version: "1.2.0"
+        serving-features: >
+          {
+            "kubernetes.podspec-fieldref": "enabled"
+          }
 
     - name: Create sample image
       run: |
@@ -128,9 +132,8 @@ jobs:
         # Note we delete the jobs after they complete because otherwise
         # the wait steps below will never complete because those pods
         # will never come ready, because they have already finished.
-        kubectl wait --timeout 10m -A --for=condition=Complete jobs --all
-
         for ns in trillian-system rekor-system ctlog-system fulcio-system; do
+          kubectl wait --timeout 10m -n ${ns} --for=condition=Complete jobs --all
           kubectl delete jobs -n ${ns} --all
         done
 

@@ -34,6 +34,31 @@ ko-apply:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -BRf ./config/
 
+.PHONY: ko-apply-ctlog
+ko-apply-ctlog:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/ctlog
+
+.PHONY: ko-apply-fulcio
+ko-apply-fulcio:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/fulcio
+
+.PHONY: ko-apply-rekor
+ko-apply-rekor:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/rekor
+
+.PHONY: ko-apply-trillian
+ko-apply-trillian:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/trillian
+
+.PHONY: ko-apply-tuf
+ko-apply-tuf:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/tuf
+
 .PHONY: ko-apply-prober
 ko-apply-prober:
 	LDFLAGS="$(LDFLAGS)" \

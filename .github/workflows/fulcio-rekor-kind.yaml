@@ -132,25 +132,60 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Install all the everythings
+    - name: Install Trillian
       working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 20
+      timeout-minutes: 5
       run: |
-        make ko-apply
+        make ko-apply-trillian
 
-        # Make sure the jobs that are required to finish do so.
-        # Note we delete the jobs after they complete because otherwise
-        # the wait steps below will never complete because those pods
-        # will never come ready, because they have already finished.
-        for ns in trillian-system rekor-system ctlog-system fulcio-system; do
-          kubectl wait --timeout 10m -n ${ns} --for=condition=Complete jobs --all
-          kubectl delete jobs -n ${ns} --all
-        done
+        # Make sure the Trillian jobs complete
+        kubectl wait --timeout 2m -n trillian-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n trillian-system --all
 
-        # Now wait for all of the rollouts to complete!
-        for ns in trillian-system rekor-system ctlog-system fulcio-system; do
-          kubectl wait --timeout 10m -n ${ns} --for=condition=Ready pod --all
-        done
+    - name: Install Rekor
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-rekor
+
+        # Make sure the Rekor jobs complete
+        kubectl wait --timeout 2m -n rekor-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n rekor-system --all
+
+    - name: Install CTLog
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-ctlog
+
+        # Make sure the CTlog jobs complete
+        kubectl wait --timeout 2m -n ctlog-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n ctlog-system --all
+
+    - name: Install Fulcio
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-fulcio
+
+        # Make sure the Fulcio jobs complete
+        kubectl wait --timeout 2m -n fulcio-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n fulcio-system --all
+
+    = name: Setup secrets for tuf
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-tuf
+
+        # Make sure the Fulcio jobs complete
+        kubectl wait --timeout 2m -n tuf-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n tuf-system --all
+
+    - name: Initialize cosign with our custom tuf root
+      run: |
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > /tmp/root.json
+        cosign initialize --mirror http://tuf.tuf-system.svc:8080/ --root /tmp/root.json
 
     - name: Run signing job in k8s using kubernetes tokens in the cluster
       working-directory: ./src/github.com/sigstore/scaffolding

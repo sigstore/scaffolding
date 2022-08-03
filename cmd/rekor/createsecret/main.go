@@ -30,7 +30,7 @@ import (
 
 var (
 	rekorURL   = flag.String("rekor_url", "http://rekor.rekor-system.svc", "Address of the Rekor server")
-	secretName = flag.String("secret", "rekor-public-key", "Secret to create the rekor public key in.")
+	secretName = flag.String("secret", "rekor-pub-key", "Secret to create the rekor public key in.")
 )
 
 func main() {

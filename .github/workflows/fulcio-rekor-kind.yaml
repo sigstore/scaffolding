@@ -178,7 +178,7 @@ jobs:
         TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
-        cosign initialize --mirror $TUF_MIRROR --root /tmp/root.json
+        cosign initialize --mirror $TUF_MIRROR --root ./root.json
 
     - name: Run signing job in k8s using kubernetes tokens in the cluster
       working-directory: ./src/github.com/sigstore/scaffolding

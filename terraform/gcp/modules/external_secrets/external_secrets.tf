@@ -47,13 +47,6 @@ resource "google_project_iam_member" "external_secrets_binding" {
   depends_on = [google_service_account.external_secrets_sa]
 }
 
-resource "google_project_iam_member" "external_secrets_binding_token" {
-  project    = var.project_id
-  role       = "roles/iam.serviceAccountTokenCreator"
-  member     = "serviceAccount:${google_service_account.external_secrets_sa.email}"
-  depends_on = [google_service_account.external_secrets_sa]
-}
-
 resource "google_service_account_iam_member" "gke_sa_iam_member_external_secrets" {
   service_account_id = google_service_account.external_secrets_sa.name
   role               = "roles/iam.workloadIdentityUser"
@@ -76,14 +69,6 @@ spec:
   provider:
       gcpsm:
         projectID: "${var.project_id}"
-        auth:
-          workloadIdentity:
-            clusterLocation: "${var.cluster_location}"
-            clusterName: "${var.cluster_name}"
-            clusterProjectID: "${var.project_id}"
-            serviceAccountRef:
-              name: local.k8s_sa
-              namespace: local.namespace
 YAML
 
   depends_on = [helm_release.external_secrets]

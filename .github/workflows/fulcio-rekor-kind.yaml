@@ -125,7 +125,7 @@ jobs:
         make ko-apply-trillian
 
         # Make sure the Trillian jobs complete
-        kubectl wait --timeout 2m -n trillian-system --for=condition=Complete jobs --all
+        kubectl wait --timeout 5m -n trillian-system --for=condition=Complete jobs --all
         kubectl delete jobs -n trillian-system --all
 
     - name: Install Rekor
@@ -135,7 +135,7 @@ jobs:
         make ko-apply-rekor
 
         # Make sure the Rekor jobs complete
-        kubectl wait --timeout 2m -n rekor-system --for=condition=Complete jobs --all
+        kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
         kubectl delete jobs -n rekor-system --all
 
     - name: Install Fulcio
@@ -145,7 +145,7 @@ jobs:
         make ko-apply-fulcio
 
         # Make sure the Fulcio jobs complete
-        kubectl wait --timeout 2m -n fulcio-system --for=condition=Complete jobs --all
+        kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
         kubectl delete jobs -n fulcio-system --all
 
     - name: Install CTLog
@@ -155,7 +155,7 @@ jobs:
         make ko-apply-ctlog
 
         # Make sure the CTlog jobs complete
-        kubectl wait --timeout 2m -n ctlog-system --for=condition=Complete jobs --all
+        kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
         kubectl delete jobs -n ctlog-system --all
 
     - name: Setup tuf and start serving it
@@ -243,6 +243,6 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main
+      uses: chainguard-dev/actions/kind-diag@main
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

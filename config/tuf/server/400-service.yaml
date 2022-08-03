@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 ---
 apiVersion: v1
 kind: ServiceAccount
@@ -41,52 +40,5 @@ spec:
             path: rekor-pubkey
           - key: fulcio-cert
             path: fulcio-cert
-          - key: ct-pubkey
-            path: ct-pubkey
-||||||| parent of c641b2f (Create a secret that's used by the tuf server.)
-=======
----
-apiVersion: v1
-kind: ServiceAccount
-metadata:
-  name: tuf
-  namespace: tuf-system
----
-apiVersion: serving.knative.dev/v1
-kind: Service
-metadata:
-  namespace: tuf-system
-  name: tuf
-spec:
-  template:
-    metadata:
-      annotations:
-        autoscaling.knative.dev/min-scale: "1"
-    spec:
-      serviceAccountName: tuf
-      containers:
-      - image: ko://github.com/sigstore/scaffolding/cmd/tuf/server
-        name: tuf
-        ports:
-        - containerPort: 8080 # tuf remote repo service
-        env:
-        - name: NAMESPACE
-          valueFrom:
-            fieldRef:
-              fieldPath: metadata.namespace
-        volumeMounts:
-        - name: tuf-secrets
-          mountPath: "/var/run/tuf-secrets"
-          readOnly: true
-      volumes:
-      - name: tuf-secrets
-        secret:
-          secretName: tuf-secrets
-          items:
-          - key: rekor-pubkey
-            path: rekor-pubkey
-          - key: fulcio-cert
-            path: fulcio-cert
-          - key: ct-pubkey
-            path: ct-pubkey
->>>>>>> c641b2f (Create a secret that's used by the tuf server.)
+          - key: ctlog-pubkey
+            path: ctlog-pubkey

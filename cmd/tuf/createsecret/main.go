@@ -31,13 +31,15 @@ import (
 )
 
 const (
-	// These are the keys held in the secrets
+	// These are the keys held in the secrets created by the ctlog/certs and
+	// fulcio/certs jobs.
 	fulcioSecretKey = "cert"
 	ctSecretKey     = "public"
 
-	// These are the fields we create in the secret
+	// These are the fields we create in the secret specified with the
+	// --secret-name flag.
 	fulcioSecretKeyOut = "fulcio-cert"
-	ctSecretKeyOut     = "ct-pubkey"
+	ctSecretKeyOut     = "ctlog-pubkey"
 	rekorSecretKeyOut  = "rekor-pubkey"
 )
 

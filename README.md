@@ -132,7 +132,7 @@ spec:
 
 ```
 
-In addition to creating a tree, we will also construct a secret holding the
+In addition to creating a tree, we will also create a secret holding the
 public key of the Rekor client that we'll need to be able to construct a proper
 tuf root later on. This is handled by a rekor createsecret job and it creates
 a `rekor-pub-key` secret in the `rekor-system` namespace holding a single

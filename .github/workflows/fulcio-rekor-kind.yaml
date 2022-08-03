@@ -158,15 +158,15 @@ jobs:
         kubectl wait --timeout 2m -n ctlog-system --for=condition=Complete jobs --all
         kubectl delete jobs -n ctlog-system --all
 
-    - name: Setup secrets for tuf
+    - name: Setup tuf and start serving it
       working-directory: ./src/github.com/sigstore/scaffolding
       timeout-minutes: 5
       run: |
+        make ko-apply-tuf
+
         kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
         kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
         kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-
-        make ko-apply-tuf
 
         # Make sure the tuf jobs complete
         kubectl wait --timeout 2m -n tuf-system --for=condition=Complete jobs --all
@@ -244,3 +244,5 @@ jobs:
     - name: Collect diagnostics
       if: ${{ failure() }}
       uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main
+      with:
+        artifact-name: logs.${{ matrix.k8s-version }}

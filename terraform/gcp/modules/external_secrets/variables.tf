@@ -37,13 +37,3 @@ variable "mysql_dbname" {
   description = "Name of MySQL database."
   default     = "trillian"
 }
-
-variable "cluster_name" {
-  type        = string
-  description = "Name of the cluster in GCP"
-}
-
-variable "cluster_location" {
-  type        = string
-  description = "Location of the cluster in GCP"
-}

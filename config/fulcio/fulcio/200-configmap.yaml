@@ -13,6 +13,11 @@ data:
           "ClientID": "sigstore",
           "Type": "kubernetes"
         },
+        "https://kubernetes.default.svc.cluster.local": {
+          "IssuerURL": "https://kubernetes.default.svc.cluster.local",
+          "ClientID": "sigstore",
+          "Type": "kubernetes"
+        },
         "https://accounts.google.com": {
           "IssuerURL": "https://accounts.google.com",
           "ClientID": "sigstore",

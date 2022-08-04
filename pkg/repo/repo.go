@@ -33,7 +33,7 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	dir := tmpDir + "tuf"
 	err := os.Mkdir(dir, os.ModePerm)
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to create tuf dir %s", err)
+		logging.FromContext(ctx).Errorf("Failed to create tuf dir %v", err)
 		return nil, "", err
 	}
 	dir = dir + "/"
@@ -44,13 +44,13 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	logging.FromContext(ctx).Infof("Creating new repo in %q", dir)
 	r, err := tuf.NewRepoIndent(local, "", " ")
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to create NewRepo %s", err)
+		logging.FromContext(ctx).Errorf("Failed to create NewRepo %v", err)
 		return nil, "", err
 	}
 
 	// Added by vaikas
 	if err := r.Init(false); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to init repo %s", err)
+		logging.FromContext(ctx).Errorf("Failed to init repo %v", err)
 		return nil, "", err
 	}
 
@@ -60,7 +60,7 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	for _, role := range []string{"root", "targets", "snapshot", "timestamp"} {
 		_, err := r.GenKeyWithExpires(role, expires)
 		if err != nil {
-			logging.FromContext(ctx).Errorf("Failed to GenKeyWithExpires %s", err)
+			logging.FromContext(ctx).Errorf("Failed to GenKeyWithExpires %v", err)
 			return nil, "", err
 		}
 	}
@@ -69,15 +69,15 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	// Use hard-coded names that are used as fallback targets by sigstore's TUF client.
 	// TODO(asraa): Update to adding targets in usage subdirectories when sigstore/sigstore#562 is fixed.
 	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %s", err)
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %v", err)
 		return nil, "", err
 	}
 	if err := writeStagedTarget(dir, "fulcio_v1.crt.pem", []byte(fulcio)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %s", err)
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %v", err)
 		return nil, "", err
 	}
 	if err := writeStagedTarget(dir, "ctfe.pub", []byte(ctlog)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %s", err)
+		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %v", err)
 		return nil, "", err
 	}
 
@@ -89,21 +89,21 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	}
 	err = r.AddTargetsWithExpires(targets, nil, expires)
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to AddTargets: %s", err)
+		logging.FromContext(ctx).Errorf("Failed to AddTargets: %v", err)
 		return nil, "", err
 	}
 
 	// Snapshot, Timestamp, and Publish the repository.
 	if err := r.SnapshotWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to SnashotWithExpires %s", err)
+		logging.FromContext(ctx).Errorf("Failed to SnashotWithExpires %v", err)
 		return nil, "", err
 	}
 	if err := r.TimestampWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to TimestampWithExpires %s", err)
+		logging.FromContext(ctx).Errorf("Failed to TimestampWithExpires %v", err)
 		return nil, "", err
 	}
 	if err := r.Commit(); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to Commit %s", err)
+		logging.FromContext(ctx).Errorf("Failed to Commit %v", err)
 		return nil, "", err
 	}
 

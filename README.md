@@ -55,9 +55,13 @@ Because we assume k8s is the environment that we run in, we make use of a
 couple of concepts provided by it that make automation easier.
 
 
-* [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) - Run to completion abstraction. Creates pods, if they fail, will recreate until it succeeds, or finally gives up.
-* [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/) - Hold arbitrary configuration information
-* [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) - Hold secrety information, but care must be taken for these to actually be secret
+* [Jobs](https://kubernetes.io/docs/concepts/workloads/controllers/job/) - Run
+to completion abstraction. Creates pods, if they fail, will recreate until it
+succeeds, or finally gives up.
+* [ConfigMaps](https://kubernetes.io/docs/concepts/configuration/configmap/) -
+Hold arbitrary configuration information
+* [Secrets](https://kubernetes.io/docs/concepts/configuration/secret/) - Hold
+secrety information, but care must be taken for these to actually be secret
 
 By utilizing the Jobs “run to completion” properties, we can construct “gates”
 in our automation, which allows us to not proceed until a Job completes
@@ -128,6 +132,11 @@ spec:
 
 ```
 
+In addition to creating a tree, we will also create a secret holding the
+public key of the Rekor client that we'll need to be able to construct a proper
+tuf root later on. This is handled by a rekor createsecret job and it creates
+a `rekor-pub-key` secret in the `rekor-system` namespace holding a single
+entry in it called `public` that holds the public key for the Rekor.
 
 
 ## [CTLog](https://github.com/google/certificate-transparency-go)
@@ -159,7 +168,8 @@ following two Secrets (names can be changed ofc):
     * private - CTLog private key
     * public - CTLog public key
     * rootca - Fulcio Root Certificate
-* ctlog-public-key - Holds the public key for CTLog so that clients calling Fulcio will able to verify the SCT that they receive from Fulcio.
+* ctlog-public-key - Holds the public key for CTLog so that clients calling
+Fulcio will able to verify the SCT that they receive from Fulcio.
 
 In addition to the Secrets above, the Job will also add a new entry into the
 ConfigMap (now that I write this, it could just as well go in the secrets above
@@ -210,7 +220,6 @@ spec:
 
 ```
 
-
 Here instead of mounting into environmental variables, we must mount to the
 filesystem given how the CTLog expects these things to be materialized.
 
@@ -235,11 +244,17 @@ Basically we need to ensure we have all the
 to start up Fulcio.
 
 This ‘**createcerts**’ job just creates the pieces mentioned above and creates
-a Secret containing the following keys:
+two Secrets, one called `fulcio-secrets` containing the following keys:
 
 * cert - Root Certificate
 * private - Private key
 * password - Password to use for decrypting the private key
+* public - Public key
+
+We also create another secert that just holds the public information called
+`pubkeysecret` that has two keys:
+
+* cert - Root Certificate
 * public - Public key
 
 And as seen already above, we modify the Deployment to not start the Pod until
@@ -286,6 +301,37 @@ spec:
             path: cert.pem
 
 ```
+
+## TUF
+
+Ok, so I lied. We also need to set up a tuf root so that cosign will trust all
+the pieces we just stood up. The tricky bit here has to do with the fact that
+sharing secrets across namespaces is not really meant to be done. We could
+create a reconciler for this, but that would give access to all the secrets
+in all the namespaces, which is not great, so we'll work around that by
+having another step where we manually copy the secrets to `tuf-system` namespace
+so that we can create a proper tuf root that `cosign` can use.
+
+There are two steps in the process, first, copy ctlog, fulcio, and rekor
+public secrets into the `tuf-system` namespace, followed by a construction
+of a tuf root from those pieces of information. In addition to that, we'll need
+to have a tuf web server that serves the root information so that tools like
+`cosign` can validate the roots of trust.
+
+For that, we need to copy the following secrets (namespace/secret) with the
+keys in the secrets into the`tuf-system` namespace so that the job there has
+enough information to construct the tuf root:
+
+* fulcio-system/fulcio-pub-key
+  - cert - Holds the Certificate for Fulcio
+  - public - Holds the public key for Fulcio
+* ctlog-system/ctlog-pub-key
+  - public - Holds the public key for CTLog
+* rekor-system/rekor-pub-key
+  - public - Holds the public key for Rekor
+
+Once we have all that information in one place, we can construct a tuf root out
+of it that can be used by tools like `cosign` and `policy-controller`.
 
 # Other rando stuff
 

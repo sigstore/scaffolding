@@ -162,7 +162,13 @@ kubectl wait --timeout=5m --for=condition=Complete jobs checktree sign-job verif
 Because all the pieces are running in the kind cluster, we need to make couple
 of things to make it usable by normal cosign tooling from your local machine.
 
-### Certificates
+### TUF root
+
+Because we host our own instance of tuf, we need to grab a root for it.
+
+```
+kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+```
 
 There are two certificates that we need, CT Log and Fulcio root certs. Note that
 if you are switching back and forth between public / your instance, you might
@@ -197,6 +203,7 @@ Add the following entries to your `/etc/hosts` file
 127.0.0.1 fulcio.fulcio-system.svc
 127.0.0.1 ctlog.ctlog-system.svc
 127.0.0.1 gettoken.default.svc
+127.0.0.1 tuf.tuf-system.svc
 ```
 
 This makes using tooling easier, for example:
@@ -226,6 +233,8 @@ URLs, let's create some up front:
 export REKOR_URL=http://rekor.rekor-system.svc:8080
 export FULCIO_URL=http://fulcio.fulcio-system.svc:8080
 export ISSUER_URL=http://gettoken.default.svc:8080
+export TUF_ROOT=http://tuf.tuf-system.svc:8080
+
 # Since we run our own Rekor, when we are verifying things, we need to fetch
 # the Rekor Public Key. This flag allows for that.
 export SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1

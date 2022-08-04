@@ -22,9 +22,7 @@ import (
 	"path/filepath"
 
 	"github.com/sigstore/scaffolding/pkg/repo"
-	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/sigstore/scaffolding/pkg/secret"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
@@ -36,7 +34,7 @@ var (
 	// Static data to include in the trust root.
 	rekorPubKey = flag.String("rekor-pubkey", "/var/run/tuf-secrets/rekor-pubkey", "Path to public key of Rekor server")
 	fulcioCert  = flag.String("fulcio-cert", "/var/run/tuf-secrets/fulcio-cert", "Path to the fulcio certificate")
-	ctPubKey    = flag.String("ct-pubkey", "/var/run/tuf-secrets/ct-pubkey", "Path to a CT Log public key")
+	ctPubKey    = flag.String("ctlog-pubkey", "/var/run/tuf-secrets/ctlog-pubkey", "Path to a CT Log public key")
 	// Name of the "secret" initial 1.root.json.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
@@ -65,23 +63,33 @@ func main() {
 	// Read the Rekor file
 	rekor, err := ioutil.ReadFile(*rekorPubKey)
 	if err != nil {
+		if os.IsNotExist(err) {
+			logging.FromContext(ctx).Panicf("Rekor pubkey file %s does not exist", *rekorPubKey)
+		}
 		logging.FromContext(ctx).Panicf("Failed to read Rekor pubkey %s: %v", *rekorPubKey, err)
 	}
 
 	fulcio, err := ioutil.ReadFile(*fulcioCert)
 	if err != nil {
+		if os.IsNotExist(err) {
+			logging.FromContext(ctx).Panicf("Fulcio cert file %s does not exist", *fulcioCert)
+		}
+
 		logging.FromContext(ctx).Panicf("Failed to read Fulcio cert %s: %v", *fulcioCert, err)
 	}
 
 	ct, err := ioutil.ReadFile(*ctPubKey)
 	if err != nil {
+		if os.IsNotExist(err) {
+			logging.FromContext(ctx).Panicf("CTLog pubkey file %s does not exist", *ctPubKey)
+		}
 		logging.FromContext(ctx).Panicf("Failed to read ctPubkey %s: %v", *ctPubKey, err)
 	}
 
 	// Create a new TUF root with the listed artifacts.
 	local, dir, err := repo.CreateRepo(ctx, fulcio, rekor, ct)
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Creating repo: %v", err)
+		logging.FromContext(ctx).Panicf("Failed to create repo: %v", err)
 	}
 	meta, err := local.GetMeta()
 	if err != nil {
@@ -96,36 +104,9 @@ func main() {
 	data := make(map[string][]byte)
 	data["root"] = rootJSON
 
-	existingSecret, err := clientset.CoreV1().Secrets(ns).Get(ctx, *secretName, metav1.GetOptions{})
-	if err != nil && !apierrs.IsNotFound(err) {
-		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *secretName, err)
-	}
-
-	if err == nil && existingSecret != nil {
-		_, rootok := existingSecret.Data["root"]
-
-		if rootok {
-			logging.FromContext(ctx).Infof("Found existing secret config with the TUF root")
-		}
-		existingSecret.Data = data
-		_, err = clientset.CoreV1().Secrets(ns).Update(ctx, existingSecret, metav1.UpdateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to update secret %s/%s: %v", ns, *secretName, err)
-		}
-		logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, *secretName)
-	} else {
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: ns,
-				Name:      *secretName,
-			},
-			Data: data,
-		}
-		_, err = clientset.CoreV1().Secrets(ns).Create(ctx, secret, metav1.CreateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to create secret %s/%s: %v", ns, *secretName, err)
-		}
-		logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
+	nsSecret := clientset.CoreV1().Secrets(ns)
+	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
 	// Serve the TUF repository.
 	logging.FromContext(ctx).Infof("tuf repository was created in: %s", dir)

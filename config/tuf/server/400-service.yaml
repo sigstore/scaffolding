@@ -40,5 +40,5 @@ spec:
             path: rekor-pubkey
           - key: fulcio-cert
             path: fulcio-cert
-          - key: ct-pubkey
-            path: ct-pubkey
+          - key: ctlog-pubkey
+            path: ctlog-pubkey

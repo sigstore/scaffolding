@@ -28,9 +28,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
-	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/sigstore/scaffolding/pkg/secret"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
@@ -44,13 +42,14 @@ const (
 )
 
 var (
-	secretName   = flag.String("secret", "fulcio-secrets", "Name of the secret to create for the certs")
-	certOrg      = flag.String("cert-organization", "Linux Foundation", "Name of the organization for certificate creation")
-	certCountry  = flag.String("cert-country", "USA", "Name of the country for certificate creation")
-	certProvince = flag.String("cert-province", "California", "Name of the province for certificate creation")
-	certLocality = flag.String("cert-locality", "San Francisco", "Name of the locality for certificate creation")
-	certAddr     = flag.String("cert-address", "548 Market St", "Name of the address for certificate creation")
-	certPostal   = flag.String("cert-postal", "57274", "Name of the postal code for certificate creation")
+	secretName       = flag.String("secret", "fulcio-secrets", "Name of the secret to create for the certs")
+	pubkeySecretName = flag.String("pubkeysecret", "fulcio-pub-key", "Name of the secret that holds the public Fulcio information like cert / public key")
+	certOrg          = flag.String("cert-organization", "Linux Foundation", "Name of the organization for certificate creation")
+	certCountry      = flag.String("cert-country", "USA", "Name of the country for certificate creation")
+	certProvince     = flag.String("cert-province", "California", "Name of the province for certificate creation")
+	certLocality     = flag.String("cert-locality", "San Francisco", "Name of the locality for certificate creation")
+	certAddr         = flag.String("cert-address", "548 Market St", "Name of the address for certificate creation")
+	certPostal       = flag.String("cert-postal", "57274", "Name of the postal code for certificate creation")
 )
 
 func main() {
@@ -78,50 +77,25 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to create keys %v", err)
 	}
-	data := make(map[string][]byte)
-	data["cert"] = certPEM
-	data["private"] = privPEM
-	data["public"] = pubPEM
-	data["password"] = []byte(pwd)
-
-	// See if there's an existing secret first
-	existingSecret, err := clientset.CoreV1().Secrets(ns).Get(ctx, *secretName, metav1.GetOptions{})
-	if err != nil && !apierrs.IsNotFound(err) {
-		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *secretName, err)
+	data := map[string][]byte{
+		"cert":     certPEM,
+		"private":  privPEM,
+		"public":   pubPEM,
+		"password": []byte(pwd),
 	}
 
-	// If we found the secret, just make sure all the fields are there.
-	if err == nil && existingSecret != nil {
-		_, certok := existingSecret.Data["cert"]
-		_, privok := existingSecret.Data["private"]
-		_, pubok := existingSecret.Data["public"]
-		_, pwdok := existingSecret.Data["password"]
-
-		if privok && pubok && pwdok && certok {
-			logging.FromContext(ctx).Infof("Found existing secret config with all the keys")
-			return
-		}
-		existingSecret.Data = data
-		_, err = clientset.CoreV1().Secrets(ns).Update(ctx, existingSecret, metav1.UpdateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to update secret %s/%s: %v", ns, *secretName, err)
-		}
-		logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, *secretName)
-		return
+	// Reconcile the "main" secret that's used by Fulcio
+	nsSecret := clientset.CoreV1().Secrets(ns)
+	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
-
-	secret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: ns,
-			Name:      *secretName,
-		},
-		Data: data,
+	pubData := map[string][]byte{
+		"cert":   certPEM,
+		"public": pubPEM,
 	}
-	_, err = clientset.CoreV1().Secrets(ns).Create(ctx, secret, metav1.CreateOptions{})
-	if err != nil {
-		logging.FromContext(ctx).Fatalf("Failed to create secret %s/%s: %v", ns, *secretName, err)
+	if err := secret.ReconcileSecret(ctx, *pubkeySecretName, ns, pubData, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *pubkeySecretName, err)
 	}
-	logging.FromContext(ctx).Infof("Created secret %s/%s", ns, *secretName)
 }
 
 // createAll creates a password protected keypair, and returns PEM encoded

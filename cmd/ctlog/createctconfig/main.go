@@ -28,12 +28,11 @@ import (
 	"github.com/google/certificate-transparency-go/trillian/ctfe/configpb"
 	"github.com/google/trillian/crypto/keyspb"
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
+	"github.com/sigstore/scaffolding/pkg/secret"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
-	corev1 "k8s.io/api/core/v1"
-	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -194,76 +193,20 @@ func main() {
 		logging.FromContext(ctx).Panicf("unable to marshal root certificate: %v", err)
 	}
 
-	data := make(map[string][]byte)
-	data["private"] = privPEM
-	data["public"] = pubPEM
-	data["rootca"] = rootCertPEM
-
-	existingSecret, err := clientset.CoreV1().Secrets(*ns).Get(ctx, *secretName, metav1.GetOptions{})
-	if err != nil && !apierrs.IsNotFound(err) {
-		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", *ns, *secretName, err)
+	data := map[string][]byte{
+		"private": privPEM,
+		"public":  pubPEM,
+		"rootca":  rootCertPEM,
 	}
 
-	if err == nil && existingSecret != nil {
-		_, privok := existingSecret.Data["private"]
-		_, pubok := existingSecret.Data["public"]
-
-		if privok && pubok {
-			logging.FromContext(ctx).Infof("Found existing secret config with keys")
-			return
-		}
-		existingSecret.Data = data
-		_, err = clientset.CoreV1().Secrets(*ns).Update(ctx, existingSecret, metav1.UpdateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to update secret %s/%s: %v", *ns, *secretName, err)
-		}
-		logging.FromContext(ctx).Infof("Updated existing secret config with keys")
-	} else {
-		secret := &corev1.Secret{
-			ObjectMeta: metav1.ObjectMeta{
-				Namespace: *ns,
-				Name:      *secretName,
-			},
-			Data: data,
-		}
-		_, err = clientset.CoreV1().Secrets(*ns).Create(ctx, secret, metav1.CreateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to create secret %s/%s: %v", *ns, *secretName, err)
-		}
+	nsSecret := clientset.CoreV1().Secrets(*ns)
+	if err := secret.ReconcileSecret(ctx, *secretName, *ns, data, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", *ns, *secretName, err)
 	}
 
-	pubData := make(map[string][]byte)
-	pubData["public"] = pubPEM
-
-	existingPubSecret, err := clientset.CoreV1().Secrets(*ns).Get(ctx, *pubKeySecretName, metav1.GetOptions{})
-	if err != nil && !apierrs.IsNotFound(err) {
-		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", *ns, *pubKeySecretName, err)
-	}
-
-	if err == nil && existingPubSecret != nil {
-		if _, pubok := existingPubSecret.Data["public"]; pubok {
-			logging.FromContext(ctx).Infof("Found existing secret config with public key")
-			return
-		}
-		existingPubSecret.Data = pubData
-		_, err = clientset.CoreV1().Secrets(*ns).Update(ctx, existingPubSecret, metav1.UpdateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to update secret %s/%s: %v", *ns, *pubKeySecretName, err)
-		}
-		logging.FromContext(ctx).Infof("Updated existing secret config with keys")
-		return
-	}
-
-	pubSecret := &corev1.Secret{
-		ObjectMeta: metav1.ObjectMeta{
-			Namespace: *ns,
-			Name:      *pubKeySecretName,
-		},
-		Data: pubData,
-	}
-	_, err = clientset.CoreV1().Secrets(*ns).Create(ctx, pubSecret, metav1.CreateOptions{})
-	if err != nil {
-		logging.FromContext(ctx).Fatalf("Failed to create public key secret %s/%s: %v", *ns, *pubKeySecretName, err)
+	pubData := map[string][]byte{"public": pubPEM}
+	if err := secret.ReconcileSecret(ctx, *pubKeySecretName, *ns, pubData, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", *ns, *secretName, err)
 	}
 }
 

@@ -43,3 +43,6 @@ kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*
 
 # Then launch the tuf server
 ko apply -BRf ./config/tuf/server
+
+# Grab the trusted root
+kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > /tmp/root.json

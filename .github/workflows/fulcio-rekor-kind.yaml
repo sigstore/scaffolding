@@ -24,13 +24,9 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.21.x
         - v1.22.x
-        # 1.23 has wierd behaviour with job backoffs, there's not exponential
-        # backoff. If you set it to say, 12, they all completed in about 30s.
-        # Once that gets sorted we can test with it. I'll dig for an upstream
-        # issue.
-        #- v1.23.x
+        - v1.23.x
+        - v1.24.x
 
         leg:
         - fulcio rekor ctlog e2e
@@ -122,25 +118,84 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Install all the everythings
+    - name: Install Trillian
       working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 20
+      timeout-minutes: 5
       run: |
-        make ko-apply
+        make ko-apply-trillian
 
-        # Make sure the jobs that are required to finish do so.
-        # Note we delete the jobs after they complete because otherwise
-        # the wait steps below will never complete because those pods
-        # will never come ready, because they have already finished.
-        for ns in trillian-system rekor-system ctlog-system fulcio-system; do
-          kubectl wait --timeout 10m -n ${ns} --for=condition=Complete jobs --all
-          kubectl delete jobs -n ${ns} --all
-        done
+        # Make sure the Trillian jobs complete
+        kubectl wait --timeout 5m -n trillian-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n trillian-system --all
 
-        # Now wait for all of the rollouts to complete!
-        for ns in trillian-system rekor-system ctlog-system fulcio-system; do
-          kubectl wait --timeout 10m -n ${ns} --for=condition=Ready pod --all
-        done
+    - name: Install Rekor
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-rekor
+
+        # Make sure the Rekor jobs complete
+        kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n rekor-system --all
+
+    - if: matrix.k8s-version == 'v1.22.x'
+      working-directory: ./src/github.com/sigstore/scaffolding
+      name: fix the oidc file for 1.22
+      run: |
+        # Backup first
+        cp config/fulcio/fulcio/200-configmap.yaml ./200-configmap.yaml
+        cat config/fulcio/fulcio/200-configmap.yaml| sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' > ./200-configmap-new.yaml
+        cp ./200-configmap-new.yaml config/fulcio/fulcio/200-configmap.yaml
+
+    - name: Install Fulcio
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-fulcio
+
+        # Make sure the Fulcio jobs complete
+        kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n fulcio-system --all
+
+    - if: matrix.k8s-version == 'v1.22.x'
+      working-directory: ./src/github.com/sigstore/scaffolding
+      name: un-fix the oidc file for 1.22
+      run: |
+        # Restore the backup
+        cp ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
+
+    - name: Install CTLog
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-ctlog
+
+        # Make sure the CTlog jobs complete
+        kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n ctlog-system --all
+
+    - name: Setup tuf and start serving it
+      working-directory: ./src/github.com/sigstore/scaffolding
+      timeout-minutes: 5
+      run: |
+        make ko-apply-tuf
+
+        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+        kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+        kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+
+        # Make sure the tuf jobs complete
+        kubectl wait --timeout 2m -n tuf-system --for=condition=Complete jobs --all
+        kubectl delete jobs -n tuf-system --all
+        kubectl wait --timeout 45s -n tuf-system --for=condition=Ready ksvc tuf
+
+    - name: Initialize cosign with our custom tuf root
+      run: |
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
+        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Then initialize cosign
+        cosign initialize --mirror $TUF_MIRROR --root ./root.json
 
     - name: Run signing job in k8s using kubernetes tokens in the cluster
       working-directory: ./src/github.com/sigstore/scaffolding
@@ -173,21 +228,20 @@ jobs:
 
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-    # TODO(vaikas): There should be a fake issuer on the cluster
     - name: Install a Knative service for fetch tokens off the cluster
       run: |
         make ko-apply-gettoken
         sleep 2
         kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
 
-    - name: Set the endpoints on the cluster and grab secrets
+    - name: Get the endpoints on the cluster
       run: |
         REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
 
         FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+
         CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
@@ -196,20 +250,16 @@ jobs:
         OIDC_TOKEN=`curl -s $ISSUER_URL`
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
-        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
-        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
-
-        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
-        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
-
     - name: Sign with cosign from the action using k8s token
       run: |
         cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1 cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@84c993eaf02da1c325854fb272a4df9184bd80fc # main
+      uses: chainguard-dev/actions/kind-diag@main
+      with:
+        artifact-name: logs.${{ matrix.k8s-version }}

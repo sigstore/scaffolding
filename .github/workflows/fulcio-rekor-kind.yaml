@@ -138,7 +138,7 @@ jobs:
         kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
         kubectl delete jobs -n rekor-system --all
 
-    - if: matrix.os == 'v1.22.x'
+    - if: matrix.k8s-version == 'v1.22.x'
       working-directory: ./src/github.com/sigstore/scaffolding
       name: fix the oidc file for 1.22
       run: |
@@ -157,7 +157,7 @@ jobs:
         kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
         kubectl delete jobs -n fulcio-system --all
 
-    - if: matrix.os == 'v1.22.x'
+    - if: matrix.k8s-version == 'v1.22.x'
       working-directory: ./src/github.com/sigstore/scaffolding
       name: un-fix the oidc file for 1.22
       run: |

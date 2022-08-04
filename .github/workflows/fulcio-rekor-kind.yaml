@@ -145,7 +145,7 @@ jobs:
         # Backup first
         cp config/fulcio/fulcio/200-configmap.yaml ./200-configmap.yaml
         cat config/fulcio/fulcio/200-configmap.yaml| sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' > ./200-configmap-new.yaml
-        cp ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
+        cp ./200-configmap-new.yaml config/fulcio/fulcio/200-configmap.yaml
 
     - name: Install Fulcio
       working-directory: ./src/github.com/sigstore/scaffolding
@@ -161,8 +161,8 @@ jobs:
       working-directory: ./src/github.com/sigstore/scaffolding
       name: un-fix the oidc file for 1.22
       run: |
-        # Backup first
-        cp config/fulcio/fulcio/200-configmap.yaml ./200-configmap.yaml
+        # Restore the backup
+        cp ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
 
     - name: Install CTLog
       working-directory: ./src/github.com/sigstore/scaffolding

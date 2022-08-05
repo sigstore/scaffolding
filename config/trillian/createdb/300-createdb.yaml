@@ -4,6 +4,8 @@ metadata:
   name: createdb
   namespace: trillian-system
 spec:
+  backoffLimit: 20
+  ttlSecondsAfterFinished: 100
   template:
     spec:
       serviceAccountName: createdb

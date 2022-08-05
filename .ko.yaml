@@ -31,9 +31,9 @@ builds:
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
 
-- id: rekor
+- id: tuf
   dir: .
-  main: ./cmd/rekor/checktree
+  main: ./cmd/tuf/createsecret
   env:
   - CGO_ENABLED=0
   flags:

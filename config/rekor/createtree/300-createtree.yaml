@@ -5,6 +5,8 @@ metadata:
   name: createtree
   namespace: rekor-system
 spec:
+  backoffLimit: 20
+  ttlSecondsAfterFinished: 100
   template:
     spec:
       serviceAccountName: createtree

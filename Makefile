@@ -4,12 +4,21 @@ LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
+# These are the subdirs under config that we'll turn into separate artifacts.
+artifacts := trillian ctlog fulcio rekor tuf
+
 .PHONY: ko-resolve
 ko-resolve:
 	# "Doing ko resolve for config"
-	# "Build a big bundle of joy, this also produces SBOMs"
-	LDFLAGS="$(LDFLAGS)" \
-	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./config --platform=all --image-refs imagerefs > release.yaml
+	$(foreach artifact, $(artifacts), $(shell export LDFLAGS="$(LDFLAGS)"; \
+	ko resolve --tags $(GIT_TAG),latest -BRf ./config/$(artifact) \
+	--platform=all \
+	--image-refs imagerefs-$(artifact) > release-$(artifact).yaml )) \
+
+	# Then collect all the imagerefs from various imageref-* produced above
+	# because otherwise they would stomp on each other above if writing to same
+	# file.
+	$(foreach artifact, $(artifacts), $(shell cat imagerefs-$(artifact) >> ./imagerefs )) \
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:

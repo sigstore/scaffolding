@@ -50,8 +50,8 @@ The following environmental variables are exported.
  * SIGSTORE_ROOT_FILE
    Alternate sigstore root file, since we are using non-standard root for
    sigstore components.
- * SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY
-   Necessary to be set to true so that we can validate against non-standard
+ * SIGSTORE_REKOR_API_PUBLIC_KEY
+   Necessary to be set with the location of the public key file, so that we can validate against non-standard
    Rekor instance that we use above.
  * ISSUER_URL
    This is the URL for fetching OIDC tokens off the cluster that you can then use as inputs to --identity-token to cosign

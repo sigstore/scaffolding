@@ -8,33 +8,52 @@ spec:
     spec:
       restartPolicy: Never
       automountServiceAccountToken: false
+      # We use an init container to run cosign initialize in the main
+      # container. Note that in order for the initialize to then "stick" for
+      # the main container, we mount an empty dir where the tuf root then
+      # gets initialized and will be used by the main container.
+      initContainers:
+      - name: cosign-initialize
+        image: gcr.io/projectsigstore/cosign@sha256:9377edd13ae515dcb97c15052e577a2cbce098f36b0361bdb2348e3bdd8fe536 # cosign v1.10.1
+        args: [
+          "initialize",
+          "--mirror", "http://tuf.tuf-system.svc",
+          "--root", "/var/run/tuf/root.json",
+        ]
+        env:
+        - name: HOME
+          value: "/var/run/sigstore"
+        volumeMounts:
+        - name: tuf-root
+          mountPath: "/var/run/tuf"
+          readOnly: true
+        - name: homedir
+          mountPath: "/var/run/sigstore"
       containers:
       - name: cosign
-        # Built from ci on 2022-03-15
-        image: gcr.io/projectsigstore/cosign/ci/cosign@sha256:8f7f1a0e7cef67c352f00acd14791d977faa8d1cd47a69f9c880a5185c44ffbb
+        image: gcr.io/projectsigstore/cosign@sha256:9377edd13ae515dcb97c15052e577a2cbce098f36b0361bdb2348e3bdd8fe536 # cosign v1.10.1
         args: [
           "verify",
           "--rekor-url", "http://rekor.rekor-system.svc",
           "--allow-insecure-registry",
-          "ko://github.com/sigstore/scaffolding/cmd/rekor/checktree",
+          "ko://github.com/sigstore/scaffolding/cmd/getoidctoken",
         ]
         env:
-        # Trust the Rekor public key that is fetched from it.
-        - name: SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY
-          value: "true"
+        - name: HOME
+          value: "/var/run/sigstore"
         - name: COSIGN_EXPERIMENTAL
           value: "true"
-        - name: SIGSTORE_ROOT_FILE
-          value: "/var/run/sigstore-fulcio/fulcio-public.pem"
         - name: COSIGN_REPOSITORY
           value: "registry.local:5000/knative"
         volumeMounts:
         - name: oidc-info
           mountPath: /var/run/sigstore/cosign
-        - name: keys
-          mountPath: "/var/run/sigstore-fulcio"
-          readOnly: true
+        - name: homedir
+          mountPath: "/var/run/sigstore"
       volumes:
+        # Create emptydir so the root from initialize is available to sign
+        - name: homedir
+          emptyDir: {}
         - name: oidc-info
           projected:
             sources:
@@ -42,9 +61,9 @@ spec:
                   path: oidc-token
                   expirationSeconds: 600 # Use as short-lived as possible.
                   audience: sigstore
-        - name: keys
+        - name: tuf-root
           secret:
-            secretName: fulcio-secret
+            secretName: tuf-root
             items:
-            - key: cert
-              path: fulcio-public.pem
+            - key: root
+              path: root.json

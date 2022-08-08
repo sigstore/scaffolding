@@ -78,8 +78,3 @@ ko-apply-verify-job:
 ko-apply-gettoken:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -f ./testdata/config/gettoken
-
-.PHONY: ko-apply-checktree
-ko-apply-checktree:
-	LDFLAGS="$(LDFLAGS)" \
-	ko apply -f ./testdata/config/checktree

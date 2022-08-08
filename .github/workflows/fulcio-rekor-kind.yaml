@@ -118,114 +118,28 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Install Trillian
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
+    - name: Install scaffolding
       run: |
-        make ko-apply-trillian
+        ./hack/setup-scaffolding.sh
 
-        # Make sure the Trillian jobs complete
-        kubectl wait --timeout 5m -n trillian-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n trillian-system --all
-
-    - name: Install Rekor
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
-      run: |
-        make ko-apply-rekor
-
-        # Make sure the Rekor jobs complete
-        kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n rekor-system --all
-
-    - if: matrix.k8s-version == 'v1.22.x'
-      working-directory: ./src/github.com/sigstore/scaffolding
-      name: fix the oidc file for 1.22
-      run: |
-        # Backup first
-        cp config/fulcio/fulcio/200-configmap.yaml ./200-configmap.yaml
-        cat config/fulcio/fulcio/200-configmap.yaml| sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' > ./200-configmap-new.yaml
-        cp ./200-configmap-new.yaml config/fulcio/fulcio/200-configmap.yaml
-
-    - name: Install Fulcio
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
-      run: |
-        make ko-apply-fulcio
-
-        # Make sure the Fulcio jobs complete
-        kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n fulcio-system --all
-
-    - if: matrix.k8s-version == 'v1.22.x'
-      working-directory: ./src/github.com/sigstore/scaffolding
-      name: un-fix the oidc file for 1.22
-      run: |
-        # Restore the backup
-        cp ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
-
-    - name: Install CTLog
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
-      run: |
-        make ko-apply-ctlog
-
-        # Make sure the CTlog jobs complete
-        kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n ctlog-system --all
-
-    - name: Setup tuf and start serving it
-      working-directory: ./src/github.com/sigstore/scaffolding
-      timeout-minutes: 5
-      run: |
-        make ko-apply-tuf
-
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-        kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-        kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-
-        # Make sure the tuf jobs complete
-        kubectl wait --timeout 2m -n tuf-system --for=condition=Complete jobs --all
-        kubectl delete jobs -n tuf-system --all
-        kubectl wait --timeout 45s -n tuf-system --for=condition=Ready ksvc tuf
-
-    - name: Initialize cosign with our custom tuf root
+    - name: Initialize cosign with our custom tuf root and make root copy
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
         TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
         cosign initialize --mirror $TUF_MIRROR --root ./root.json
+        # Make copy of the tuf root in the default namespace for tests
+        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
     - name: Run signing job in k8s using kubernetes tokens in the cluster
-      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
-        # Grab the secret from the ctlog-system namespace and make a copy
-        # in our namespace so we can get access to the CT Log public key
-        # so we can verify the SCT coming from there.
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
         make ko-apply-sign-job
-
         kubectl wait --for=condition=Complete --timeout=90s job/sign-job
 
-    - name: Check that an entry was created in Rekor
-      working-directory: ./src/github.com/sigstore/scaffolding
-      run: |
-        make ko-apply-checktree
-
-        kubectl wait --for=condition=Complete --timeout=90s job/checktree
-
     - name: Verify the image with cosign using kubernetes tokens in the cluster
-      working-directory: ./src/github.com/sigstore/scaffolding
       run: |
-        # Grab the secret from the fulcio-system namespace and make a copy
-        # in our namespace so we can get access to the Fulcio public key
-        # so we can verify against it.
-        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
         make ko-apply-verify-job
-
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
     - name: Install a Knative service for fetch tokens off the cluster

@@ -56,7 +56,7 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
 }
 
 
-# Rekor API Latency > 750ms for 5 minutes in any region
+# Rekor API Latency > 750ms for 5 minutes in all regions
 resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
   for_each = toset(var.api_endpoints_get)
   # In the absence of data, incident will auto-close in 7 days
@@ -80,18 +80,18 @@ resource "google_monitoring_alert_policy" "rekor_api_latency_alert" {
       threshold_value = "750"
 
       trigger {
-        count   = "1"
-        percent = "0"
+        count   = "0"
+        percent = "100"
       }
     }
 
-    display_name = format("Rekor API Latency > 750ms for 5 minutes in any region - %s", each.key)
+    display_name = format("Rekor API Latency > 750ms for 5 minutes in all regions - %s", each.key)
   }
 
-  display_name = format("Rekor API Latency > 750ms for 5 minutes in any region - %s", each.key)
+  display_name = format("Rekor API Latency > 750ms for 5 minutes in all regions - %s", each.key)
 
   documentation {
-    content   = "This alert triggered because Rekor API Latency is greater than 750ms for 5 minutes in any of the available regions."
+    content   = "This alert triggered because Rekor API Latency is greater than 750ms for 5 minutes in all of the available regions."
     mime_type = "text/markdown"
   }
 

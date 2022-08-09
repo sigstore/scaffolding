@@ -90,7 +90,7 @@ resource "google_monitoring_alert_policy" "ctlog_uptime_alert" {
   depends_on            = [google_monitoring_uptime_check_config.uptime_fulcio]
 }
 
-# Fulcio API Latency > 750ms for 5 minutes in any region
+# Fulcio API Latency > 750ms for 5 minutes in all regions
 resource "google_monitoring_alert_policy" "fulcio_api_latency_alert" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -113,18 +113,18 @@ resource "google_monitoring_alert_policy" "fulcio_api_latency_alert" {
       threshold_value = "750"
 
       trigger {
-        count   = "1"
-        percent = "0"
+        count   = "0"
+        percent = "100"
       }
     }
 
     display_name = "Fulcio API Latency > 750ms for 5 minutes"
   }
 
-  display_name = "Fulcio API Latency > 750ms for 5 minutes in any region"
+  display_name = "Fulcio API Latency > 750ms for 5 minutes in all regions"
 
   documentation {
-    content   = "This alert triggered because Fulcio API Latency is greater than 750ms for 5 minutes in any of the available regions."
+    content   = "This alert triggered because Fulcio API Latency is greater than 750ms for 5 minutes in all of the available regions."
     mime_type = "text/markdown"
   }
 

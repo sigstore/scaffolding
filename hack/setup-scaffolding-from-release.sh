@@ -84,7 +84,6 @@ echo '::endgroup::'
 echo '::group:: Install TUF'
 kubectl apply -f ${TUF}
 
-
 # Then copy the secrets (even though it's all public stuff, certs, public keys)
 # to the tuf-system namespace so that we can construct a tuf root out of it.
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
@@ -103,3 +102,13 @@ kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d
 
 echo "tuf root installed into ./root.json"
 
+# Get the endpoints for various services and expose them
+# as env vars.
+REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+export REKOR_URL
+FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+export FULCIO_URL
+CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+export CTLOG_URL
+TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+export TUF_MIRROR

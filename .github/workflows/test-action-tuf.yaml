@@ -1,0 +1,96 @@
+name: Test github action with TUF
+
+on:
+  pull_request:
+    branches: [ main ]
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./
+
+concurrency:
+  group: test-github-action-with-tuf${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-github-action:
+    name: Test github action with TUF
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        k8s-version:
+        - v1.22.x
+        - v1.23.x
+        - v1.24.x
+
+        release-version:
+        - "latest-release" # Test explicitly with latest
+        - "v0.4.1" # Test version with TUF
+
+        go-version:
+        - 1.18
+
+        leg:
+        - test github action
+    env:
+      KO_DOCKER_REPO: registry.local:5000/knative
+      COSIGN_EXPERIMENTAL: "true"
+
+    steps:
+    - name: Checkout the current action
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+    - name: Test running the action
+      uses: ./actions/setup
+      with:
+        k8s-version: ${{ matrix.k8s-version }}
+        version: ${{ matrix.release-version }}
+
+    # Install cosign
+    - name: Install cosign
+      uses: sigstore/cosign-installer@09a077b27eb1310dcfb21981bee195b30ce09de0 # v2.3.0
+
+    - name: Set up Go
+      uses: actions/setup-go@84cbf8094393cdc5fe1fe1671ff2647332956b1a # v3.2.0
+      with:
+        go-version: ${{ matrix.go-version }}
+        check-latest: true
+
+    # Setup ko
+    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+      with:
+        version: tip
+
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo-action-with-tuf
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo-action-with-tuf`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
+    - name: Initialize cosign with TUF root
+      run: |
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+
+    - name: Sign with cosign from the action using k8s token
+      run: |
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+
+    - name: Verify with cosign from the action using k8s token
+      run: |
+        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: chainguard-dev/actions/kind-diag@main

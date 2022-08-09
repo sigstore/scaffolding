@@ -21,7 +21,9 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
+        - v1.21.x
         - v1.22.x
+        # 1.23 missing nb: https://github.com/sigstore/scaffolding/issues/81
         release-version:
         - "v0.3.0" # Test version without TUF
         leg:
@@ -35,4 +37,6 @@ jobs:
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
-
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: chainguard-dev/actions/kind-diag@main

@@ -19,13 +19,13 @@ branding:
   color: green
 inputs:
   version:
-    description: 'Version of scaffolding to install (v0.2.2, v0.2.3 latest-release.)'
+    description: 'Version of scaffolding to install (v0.4.0, latest-release.)'
     required: true
     default: 'latest-release'
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
-    default: '1.1.0'
+    default: '1.5.0'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true
@@ -41,7 +41,7 @@ inputs:
   k8s-version:
     description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.22.x'
     required: true
-    default: 'v1.22.x'
+    default: 'v1.23.x'
 runs:
   using: "composite"
   steps:
@@ -75,60 +75,64 @@ runs:
           --k8s-version ${{ inputs.k8s-version }} \
           --knative-version ${{ inputs.knative-version }}
 
+      # At release v0.4.0 we added support for TUF, and rejiggered
+      # the install process, so check to see if we are running >=4
+      MINOR=$(echo $tag | cut -d '.' -f 2)
+      INSTALL_TUF="false"
+      if [ ${MINOR} -ge 4 ]; then
+        INSTALL_TUF="true"
+      fi
+
       echo "Installing sigstore scaffolding @ ${tag}"
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-trillian.yaml
-      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
+      if [ $INSTALL_TUF == "false" ]; then
+        echo "This version does not have support for TUF. This is deprecated"
+        kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release.yaml
 
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-rekor.yaml
-      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
+        # Wait for all the scaffolding pieces to be up.
+        echo "waiting for all the knative services to be up and running"
+        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
 
+        # Grab the secret from the ctlog-system namespace and make a copy
+        # in our namespace so we can get access to the CT Log public key
+        # so we can verify the SCT coming from there.
+        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-tuf.yaml
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-ctlog.yaml
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-fulcio.yaml
-      kubectl wait --timeout 5m -A --for=condition=Ready ksvc --all
+        # Also grab the secret from the fulcio-system namespace and make a copy
+        # in our namespace so we can get access to the Fulcio public key
+        # so we can verify against it.
+        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
+        echo "Installing and running scaffolding tests to be up and running"
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
 
+        kubectl wait --for=condition=Complete --timeout=180s job/sign-job
+        kubectl wait --for=condition=Complete --timeout=180s job/checktree
+        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-      # Wait for all the scaffolding pieces to be up.
-      echo "waiting for all the knative services to be up and running"
-      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
+        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
 
-      # Grab the secret from the ctlog-system namespace and make a copy
-      # in our namespace so we can get access to the CT Log public key
-      # so we can verify the SCT coming from there.
-      kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
-      # Also grab the secret from the fulcio-system namespace and make a copy
-      # in our namespace so we can get access to the Fulcio public key
-      # so we can verify against it.
-      kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
-      echo "Installing and running scaffolding tests to be up and running"
-      curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
-      kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-      kubectl wait --for=condition=Complete --timeout=180s job/checktree
-      kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+        echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
 
-      REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
-      echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-      curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
-
-      FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
-      echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
-      CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
-      echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
-
-      kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
-      echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
-
-      kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
-      echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
-
-      echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
-
-      ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
-      echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
-      OIDC_TOKEN=`curl -s $ISSUER_URL`
-      echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+      else
+        echo "This version does have support for TUF"
+        curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        chmod u+x /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh
+      fi

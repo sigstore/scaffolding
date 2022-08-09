@@ -31,7 +31,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.3.0/setup-kind.sh
+curl -Lo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.0/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -62,27 +62,22 @@ docker rm -f b1e3f3238f7a
 
 # Install sigstore-scaffolding pieces
 
-## From the release (TODO:vaikas Update this before next release for tuf, works now)
+## From the release
 ```shell
-curl -L https://github.com/sigstore/scaffolding/releases/download/v0.3.0/release.yaml | kubectl apply -f -
+curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.0/setup-scaffolding-from-release.sh
+chmod u+x /tmp/setup-scaffolding-from-release.sh
+/tmp/setup-scaffolding-from-release.sh
 ```
 
-```shell
-kubectl wait --timeout=15m -A --for=condition=Complete jobs --all
-```
+## From checked out repo
 
-## Then wait for the jobs that setup dependencies to finish
-
-Obviously if you have other jobs running, you might have to tune this, for deets
-see [below](#outputs) what gets deployed and where. See below for how to
-test / use the local instance. If you're deploying to kind cluster created
-above, tell `ko` where it is, or change to where you're deploying your images.
+If you're deploying to kind cluster created above, tell `ko` where it is, or
+change to where you're deploying your images.
 
 ```shell
 export KO_DOCKER_REPO=registry.local:5000/sigstore
 ```
 
-## From checked out repo
 ```shell
 ./hack/setup-scaffolding.sh
 ```
@@ -197,12 +192,7 @@ that runs on the cluster and issues OIDC tokens.
 ko apply -BRf ./testdata/config/gettoken
 ```
 
-## Testing Your new Sigstore Kind Cluster (From the release)
-
-Because we're moving to TUF, the instructions for the older way have been
-[archived](https://github.com/sigstore/scaffolding/blob/4512ee2f0dfe6355775dc5efb6105ab52d27d678/getting-started.md)
-
-## Testing Your new Sigstore Kind Cluster (With TUF)
+## Testing Your new Sigstore Kind Cluster
 
 Let's first run a quick smoke test that does a cosign sign followed by making
 sure that the rekor entry is created for it.

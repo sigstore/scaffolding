@@ -27,7 +27,7 @@ jobs:
 
         release-version:
         - "latest-release" # Test explicitly with latest
-        - "v0.4.1" # Test version with TUF
+        - "v0.4.2" # Test version with TUF
 
         go-version:
         - 1.18
@@ -79,9 +79,7 @@ jobs:
         popd
 
     - name: Initialize cosign with TUF root
-      run: |
-        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
-        cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

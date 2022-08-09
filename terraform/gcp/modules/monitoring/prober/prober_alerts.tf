@@ -51,7 +51,7 @@ resource "google_monitoring_alert_policy" "prober_rekor_endpoint_latency" {
     mime_type = "text/markdown"
   }
 
-  enabled               = "false"
+  enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
 }

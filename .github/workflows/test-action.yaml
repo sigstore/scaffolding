@@ -1,4 +1,4 @@
-name: Test github reusable action
+name: Test github action
 
 on:
   pull_request:
@@ -21,9 +21,9 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.21.x
         - v1.22.x
-
+        release-version:
+        - "v0.3.0" # Test version without TUF
         leg:
         - test github action
 
@@ -34,3 +34,5 @@ jobs:
       uses: ./actions/setup
       with:
         k8s-version: ${{ matrix.k8s-version }}
+        version: ${{ matrix.release-version }}
+

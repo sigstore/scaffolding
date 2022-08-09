@@ -74,16 +74,7 @@ jobs:
       with:
         version: tip
 
-    - name: Check out cosign repo so we get the head of the main cosign
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      with:
-        repository: sigstore/cosign
-        path: ./src/github.com/sigstore/cosign
-
-    - name: Install cosign
-      working-directory: ./src/github.com/sigstore/cosign
-      run: |
-        go install ./cmd/cosign
+    - uses: sigstore/cosign-installer@09a077b27eb1310dcfb21981bee195b30ce09de0 # v2.3.0
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@main

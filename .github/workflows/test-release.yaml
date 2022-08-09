@@ -30,7 +30,7 @@ jobs:
         - 1.18
 
     env:
-      RELEASE_VERSION: "v0.4.0"
+      RELEASE_VERSION: "v0.4.1"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
       COSIGN_EXPERIMENTAL: "true"
@@ -62,32 +62,33 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.5.0"
+        version: "1.2.0"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
           }
 
-    # Remove after we cut the release that has setup-scaffolding-from-release.sh
-    - name: Check out our repo
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-
     - name: Install scaffolding
       timeout-minutes: 10
       run: |
-        #curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-scaffolding-from-release.sh
-        #chmod u+x /tmp/setup-scaffolding-from-release.sh
-        #/tmp/setup-scaffolding-from-release.sh
-        # TODO(vaikas): Once we release this, use the curl above.
-        ./hack/setup-scaffolding-from-release.sh
+        curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-scaffolding-from-release.sh
+        chmod u+x /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh
 
-    - name: Initialize cosign with our custom tuf root and make root copy
-      run: |
-        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
-        TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
+        # TODO(vaikas): Remove these after 0.4.2 once these get set by script.
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+
+        # Set the endopints
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
-        # Then initialize cosign
+
         cosign initialize --mirror $TUF_MIRROR --root ./root.json
+
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
@@ -109,24 +110,15 @@ jobs:
 
     - name: Run test jobs on the cluster
       run: |
-        curl -L https://github.com/sigstore/scaffolding/releases/download/v0.4.0/testrelease.yaml | kubectl apply -f -
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/testrelease.yaml | kubectl apply -f -
         kubectl wait --for=condition=Complete --timeout=240s job/sign-job
         kubectl wait --for=condition=Complete --timeout=240s job/verify-job
 
-    - name: Get the endpoints on the cluster
+    - name: Get the issuer url endpoint on the cluster
       run: |
-        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
-        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-
-        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
-        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
-
-        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
-        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
-
-        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
         echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
-        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        OIDC_TOKEN=$(curl -s $ISSUER_URL)
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
     - name: Sign with cosign from the action using k8s token

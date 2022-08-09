@@ -25,7 +25,7 @@ inputs:
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
-    default: '1.5.0'
+    default: '1.2.0'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true
@@ -39,9 +39,9 @@ inputs:
     required: true
     default: 'cluster.local'
   k8s-version:
-    description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.22.x'
+    description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.24.x'
     required: true
-    default: 'v1.23.x'
+    default: 'v1.24.x'
 runs:
   using: "composite"
   steps:
@@ -109,15 +109,6 @@ runs:
         kubectl wait --for=condition=Complete --timeout=180s job/checktree
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
-        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
-
-        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
-        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
-        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
-        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
-
         kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
         echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
@@ -125,14 +116,53 @@ runs:
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
         echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
-
-        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
-        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
-        OIDC_TOKEN=`curl -s $ISSUER_URL`
-        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
       else
         echo "This version does have support for TUF"
-        curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh
+        # We set this here because the other leg doesn't have it.
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+
+        # Make copy of the tuf root in the default namespace for tests
+        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
+
+        echo "Installing and running scaffolding tests to be up and running"
+        curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+
+        kubectl wait --for=condition=Complete --timeout=180s job/sign-job
+        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+
+        # For backward compatibility, add in the old env variables
+        # TODO(vaikas): Remove the rest of this block.
+        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+
+        # Also grab the secret from the fulcio-system namespace and make a copy
+        # in our namespace so we can get access to the Fulcio public key
+        # so we can verify against it.
+        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+
+        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
+
+        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
+        echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
       fi
+
+      REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+      FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+      CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+      ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
+
+      # Grab an OIDC token too.
+      OIDC_TOKEN=$(curl -s $ISSUER_URL)
+      echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+      # And set the env variables for Github action visibility
+      echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+      echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+      echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+      echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+

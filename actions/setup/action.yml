@@ -77,14 +77,22 @@ runs:
 
       echo "Installing sigstore scaffolding @ ${tag}"
       kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-trillian.yaml
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-fulcio.yaml
+      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
+
       kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-rekor.yaml
-      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-ctlog.yaml
+      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
+
+
       kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-tuf.yaml
+      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-ctlog.yaml
+      kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release-fulcio.yaml
+      kubectl wait --timeout 5m -A --for=condition=Ready ksvc --all
+
+
 
       # Wait for all the scaffolding pieces to be up.
       echo "waiting for all the knative services to be up and running"
-      kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
+      kubectl wait --timeout 2m -A --for=condition=Ready ksvc --all
 
       # Grab the secret from the ctlog-system namespace and make a copy
       # in our namespace so we can get access to the CT Log public key

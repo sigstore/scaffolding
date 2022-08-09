@@ -17,6 +17,7 @@ jobs:
   test-github-action:
     name: Test github action
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:

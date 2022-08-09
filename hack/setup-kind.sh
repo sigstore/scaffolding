@@ -82,6 +82,10 @@ case ${K8S_VERSION} in
     KIND_IMAGE_SHA="sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
+  v1.24.x)
+    KIND_IMAGE_SHA="sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e"
+    echo "KIND_IMAGE=kindest/node:v1.24.0@${KIND_IMAGE_SHA}" >> $GITHUB_ENV
+    ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;
 esac
 

@@ -27,3 +27,4 @@ release:
     - glob: "./testrelease.yaml"
     - glob: "./hack/setup-kind.sh"
     - glob: "./hack/setup-scaffolding.sh"
+    - glob: "./hack/setup-scaffolding-from-release.sh"

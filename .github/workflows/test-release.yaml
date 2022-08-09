@@ -21,19 +21,21 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.21.x
         - v1.22.x
-
+        - v1.23.x
+        - v1.24.x
         leg:
         - fulcio rekor ctlog e2e
 
     env:
-      RELEASE_VERSION: "v0.3.0"
+      RELEASE_VERSION: "v0.4.0"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
 
     steps:
     - uses: chainguard-dev/actions/setup-mirror@main
+
+    - uses: sigstore/cosign-installer@09a077b27eb1310dcfb21981bee195b30ce09de0 # v2.3.0
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@main
@@ -46,44 +48,76 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.1.0"
+        version: "1.5.0"
 
-    - name: Install all the everythings
+    # Remove after we cut the release that has setup-scaffolding-from-release.sh
+    - name: Check out our repo
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+
+    - name: Install scaffolding
       timeout-minutes: 10
       run: |
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/release.yaml | kubectl apply -f -
+        #curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-scaffolding-from-release.sh
+        #chmod u+x /tmp/setup-scaffolding-from-release.sh
+        #/tmp/setup-scaffolding-from-release.sh
+        # TODO(vaikas): Once we release this, use the curl above.
+        ./hack/setup-scaffolding-from-release.sh
 
-        # Wait for all the ksvc to be up.
-        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
-
-    - name: Set the endpoints on the cluster
+    - name: Initialize cosign with our custom tuf root and make root copy
       run: |
-        kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
+        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Then initialize cosign
+        cosign initialize --mirror $TUF_MIRROR --root ./root.json
+        # Make copy of the tuf root in the default namespace for tests
+        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
+
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo-with-release`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
+    - name: Run test jobs on the cluster
+      run: |
+        curl -L https://github.com/sigstore/scaffolding/releases/download/v0.4.0/testrelease.yaml | kubectl apply -f -
+        kubectl wait --for=condition=Complete --timeout=240s job/sign-job
+        kubectl wait --for=condition=Complete --timeout=240s job/verify-job
+
+    - name: Get the endpoints on the cluster
+      run: |
         REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
 
-    - name: Run curl against Rekor
+        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+
+        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+
+        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+    - name: Sign with cosign from the action using k8s token
       run: |
-        echo ${{ env.REKOR_URL }}
-        curl ${{ env.REKOR_URL }}/api/v1/log
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
-    - name: Run Tests
+    - name: Verify with cosign from the action using k8s token
       run: |
-        # Grab the secret from the ctlog-system namespace and make a copy
-        # in our namespace so we can get access to the CT Log public key
-        # so we can verify the SCT coming from there.
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
-        # Also grab the secret from the fulcio-system namespace and make a copy
-        # in our namespace so we can get access to the Fulcio public key
-        # so we can verify against it.
-        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/testrelease.yaml | kubectl create -f -
-
-        kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-        kubectl wait --for=condition=Complete --timeout=180s job/checktree
-        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect diagnostics
       if: ${{ failure() }}

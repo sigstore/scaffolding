@@ -71,8 +71,16 @@ resource "google_project_iam_member" "db_admin_member_trillian" {
 }
 
 resource "google_service_account_iam_member" "gke_sa_iam_member_trillian_logserver" {
+  # // Give trillian logserver permission to export metrics to Stackdriver
+  for_each = toset([
+    "roles/iam.workloadIdentityUser",
+    "roles/logging.logWriter",
+    "roles/monitoring.metricWriter",
+    "roles/stackdriver.resourceMetadata.writer",
+    "roles/cloudtrace.agent"
+  ])
   service_account_id = google_service_account.dbuser_trillian.name
-  role               = "roles/iam.workloadIdentityUser"
+  role               = each.key
   member             = "serviceAccount:${var.project_id}.svc.id.goog[trillian-system/trillian-logserver]"
   depends_on         = [google_service_account.dbuser_trillian]
 }

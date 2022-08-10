@@ -60,5 +60,5 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 
 	fmt.Println("Observing ", method, host+endpoint)
 	fmt.Println("Status code: ", statusCode)
-	fmt.Println("Latency: ", latency)
+	fmt.Printf("Latency for %s %s: %d\n", method, host+endpoint, latency)
 }

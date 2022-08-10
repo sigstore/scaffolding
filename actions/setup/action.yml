@@ -30,6 +30,10 @@ inputs:
     description: 'Name of the registry to install (registry.local)'
     required: true
     default: 'registry.local'
+  legacy-variables:
+    description: 'When set, will install legacy variables.'
+    required: true
+    default: 'true'
   registry-port:
     description: 'Port to run registry on, default 5000'
     required: true
@@ -134,24 +138,26 @@ runs:
         kubectl wait --for=condition=Complete --timeout=180s job/sign-job
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-        # For backward compatibility, add in the old env variables
-        # TODO(vaikas): Remove the rest of this block.
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+        if [ ${{ inputs.legacy-variables }} == "true" ]; then
+          echo "Installing legacy env variables"
+          # For backward compatibility, add in the old env variables
+          kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
-        # Also grab the secret from the fulcio-system namespace and make a copy
-        # in our namespace so we can get access to the Fulcio public key
-        # so we can verify against it.
-        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+          # Also grab the secret from the fulcio-system namespace and make a copy
+          # in our namespace so we can get access to the Fulcio public key
+          # so we can verify against it.
+          kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
-        # And also grab the rekor pub key.
-        kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ./rekor-public.pem
-        echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
+          # And also grab the rekor pub key.
+          kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ./rekor-public.pem
+          echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
 
-        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
-        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
+          kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+          echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
-        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
-        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
+          kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+          echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
+        fi
       fi
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')

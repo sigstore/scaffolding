@@ -50,3 +50,13 @@ The following environmental variables are exported.
    not run longer than 10 minutes, which is how long this token is
    valid for. If your tests run longer than this is valid, you can use
    `ISSUER_URL` above to fetch a new token.
+ * TUF_MIRROR
+   This is the TUF mirror installed on to the cluster. You have to then
+   initialize cosign like so:
+   ```shell
+   cosign initialize --mirror $TUF_MIRROR --root ./root.json
+   ```
+
+## TUF Root file
+The action also creates a ./root.json that contains the TUF root that you use
+to initialize cosign with.

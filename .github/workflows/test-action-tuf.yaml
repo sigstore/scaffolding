@@ -43,6 +43,7 @@ jobs:
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
+        legacy-variables: "false"
 
     # Install cosign
     - name: Install cosign
@@ -75,16 +76,8 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Empty legacy variables
-      run: |
-        echo "SIGSTORE_REKOR_PUBLIC_KEY=" >> $GITHUB_ENV
-        echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=" >> $GITHUB_ENV
-        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=" >> $GITHUB_ENV
-        echo "SIGSTORE_ROOT_FILE=" >> $GITHUB_ENV
-
-    # TODO(vaikas): Check that this fails
-    #    - name: Initialize cosign with TUF root
-    #      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+     #- name: Initialize cosign with TUF root
+     #  run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

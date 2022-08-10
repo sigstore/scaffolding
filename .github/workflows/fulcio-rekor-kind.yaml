@@ -116,7 +116,7 @@ jobs:
     - name: Initialize cosign with our custom tuf root and make root copy
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
-        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url})
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
         cosign initialize --mirror $TUF_MIRROR --root ./root.json

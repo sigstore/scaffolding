@@ -75,6 +75,12 @@ jobs:
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh
 
+        # TODO(vaikas): Figure out how these could be exposed by above.
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+
         # Set the endopints
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV

@@ -25,9 +25,16 @@ jobs:
         - v1.22.x
         # 1.23 missing nb: https://github.com/sigstore/scaffolding/issues/81
         release-version:
-        - "v0.3.0" # Test version without TUF
+        - "v0.3.0" # Old version without TUF
+        - "v0.4.2" # New version with TUF, but test without TUF
         leg:
         - test github action
+    env:
+      KO_DOCKER_REPO: registry.local:5000/knative
+      COSIGN_EXPERIMENTAL: "true"
+      # Trust the custom Rekor API endpoint for fetching the Public Key from it.
+      # TODO(vaikas): Remove after #276 lands and use that instead
+      SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY: "true"
 
     steps:
     - name: Checkout the current action
@@ -37,6 +44,44 @@ jobs:
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
+    - name: Install cosign
+      uses: sigstore/cosign-installer@09a077b27eb1310dcfb21981bee195b30ce09de0 # v2.3.0
+
+    - name: Set up Go
+      uses: actions/setup-go@84cbf8094393cdc5fe1fe1671ff2647332956b1a # v3.2.0
+      with:
+        go-version: ${{ matrix.go-version }}
+        check-latest: true
+
+    # Setup ko
+    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+      with:
+        version: tip
+
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo-action-no-tuf
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo-action-no-tuf`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
+    - name: Sign demoimage with cosign
+      run: |
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+
+    - name: Verify with cosign
+      run: |
+        ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
     - name: Collect diagnostics
       if: ${{ failure() }}
       uses: chainguard-dev/actions/kind-diag@main

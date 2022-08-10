@@ -143,12 +143,15 @@ runs:
         # so we can verify against it.
         kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
+        # And also grab the rekor pub key.
+        kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ./rekor-public.pem
+        echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
+
         kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
         echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
         kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
-        echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=1" >> $GITHUB_ENV
       fi
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')

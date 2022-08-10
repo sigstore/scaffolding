@@ -76,8 +76,8 @@ jobs:
         echo Created image $demoimage
         popd
 
-     #- name: Initialize cosign with TUF root
-     #  run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+    - name: Initialize cosign with TUF root
+      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

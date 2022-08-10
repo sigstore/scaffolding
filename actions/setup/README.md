@@ -3,16 +3,26 @@
 This action installs sigstore components and wires them together for test
 purposes on an existing cluster. Also verifies they are up and running by
 doing a cosign sign/verify.
+
+**Deprecated**
 Will also set up the environment variables so that calling
-cosign can be used for keyless signing / verification against the cluster.
+cosign can be used for keyless signing / verification against the cluster. But because Scaffolding now supports TUF, that is the best way to exercise the
+cluster. The legacy way with environment variables will be removed in the
+future, not only from Scaffolding but maybe from Cosign.
+
+The action sets up the TUF root on the cluster and there you have to initialize
+`cosign` explicity for it after running the action.
+```shell
+cosign initialize --mirror $TUF_MIRROR --root ./root.json
+```
 
 ## Usage
 
 ```yaml
 - uses: sigstore/scaffolding/actions/setup@main
   with:
-    # Scaffolding version. v0.2.3 by default.
-    scaffolding-version: v0.2.3
+    # Scaffolding version. 'latest-release' by default.
+    scaffolding-version: "v0.4.2"
 ```
 
 ## Scenarios

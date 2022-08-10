@@ -24,16 +24,13 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
-
         release-version:
         - "latest-release" # Test explicitly with latest
-        - "v0.4.1" # Test version with TUF
-
+        - "v0.4.2" # Test version with TUF
         go-version:
         - 1.18
-
         leg:
-        - test github action
+        - test github action with TUF
     env:
       KO_DOCKER_REPO: registry.local:5000/knative
       COSIGN_EXPERIMENTAL: "true"
@@ -46,6 +43,7 @@ jobs:
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
+        legacy-variables: "false"
 
     # Install cosign
     - name: Install cosign
@@ -73,15 +71,13 @@ jobs:
           fmt.Println("hello world")
         }
         EOF
-        demoimage=`ko publish -B example.com/demo-action-with-tuf`
+        demoimage=$(ko publish -B example.com/demo-action-with-tuf)
         echo "demoimage=$demoimage" >> $GITHUB_ENV
         echo Created image $demoimage
         popd
 
     - name: Initialize cosign with TUF root
-      run: |
-        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
-        cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

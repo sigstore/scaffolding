@@ -87,7 +87,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.2.0"
+        version: "1.6.0"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -116,7 +116,7 @@ jobs:
     - name: Initialize cosign with our custom tuf root and make root copy
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
-        TUF_MIRROR=`kubectl -n tuf-system get --no-headers ksvc tuf | cut -d ' ' -f 4`
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
         cosign initialize --mirror $TUF_MIRROR --root ./root.json
@@ -141,16 +141,16 @@ jobs:
 
     - name: Get the endpoints on the cluster
       run: |
-        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
 
-        FULCIO_URL=`kubectl -n fulcio-system get --no-headers ksvc fulcio | cut -d ' ' -f 4`
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
 
-        CTLOG_URL=`kubectl -n ctlog-system get --no-headers ksvc ctlog | cut -d ' ' -f 4`
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
-        ISSUER_URL=`kubectl get --no-headers ksvc gettoken | cut -d ' ' -f 4`
+        ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
         echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
         OIDC_TOKEN=`curl -s $ISSUER_URL`
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV

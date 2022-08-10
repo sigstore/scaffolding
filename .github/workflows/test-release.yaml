@@ -30,7 +30,7 @@ jobs:
         - 1.18
 
     env:
-      RELEASE_VERSION: "v0.4.1"
+      RELEASE_VERSION: "v0.4.2"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
       COSIGN_EXPERIMENTAL: "true"
@@ -62,7 +62,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.2.0"
+        version: "1.6.0"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -75,7 +75,7 @@ jobs:
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh
 
-        # TODO(vaikas): Remove these after 0.4.2 once these get set by script.
+        # TODO(vaikas): Figure out how these could be exposed by above.
         REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
@@ -86,8 +86,6 @@ jobs:
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
-
-        cosign initialize --mirror $TUF_MIRROR --root ./root.json
 
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
@@ -120,6 +118,9 @@ jobs:
         echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
         OIDC_TOKEN=$(curl -s $ISSUER_URL)
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+    - name: Initialize cosign with our TUF root
+      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

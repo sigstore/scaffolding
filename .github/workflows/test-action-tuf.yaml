@@ -24,16 +24,13 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
-
         release-version:
         - "latest-release" # Test explicitly with latest
         - "v0.4.2" # Test version with TUF
-
         go-version:
         - 1.18
-
         leg:
-        - test github action
+        - test github action with TUF
     env:
       KO_DOCKER_REPO: registry.local:5000/knative
       COSIGN_EXPERIMENTAL: "true"
@@ -73,13 +70,21 @@ jobs:
           fmt.Println("hello world")
         }
         EOF
-        demoimage=`ko publish -B example.com/demo-action-with-tuf`
+        demoimage=$(ko publish -B example.com/demo-action-with-tuf)
         echo "demoimage=$demoimage" >> $GITHUB_ENV
         echo Created image $demoimage
         popd
 
-    - name: Initialize cosign with TUF root
-      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+    - name: Empty legacy variables
+      run: |
+        echo "SIGSTORE_REKOR_PUBLIC_KEY=" >> $GITHUB_ENV
+        echo "SIGSTORE_TRUST_REKOR_API_PUBLIC_KEY=" >> $GITHUB_ENV
+        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=" >> $GITHUB_ENV
+        echo "SIGSTORE_ROOT_FILE=" >> $GITHUB_ENV
+
+    # TODO(vaikas): Check that this fails
+    #    - name: Initialize cosign with TUF root
+    #      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
 
     - name: Sign with cosign from the action using k8s token
       run: |

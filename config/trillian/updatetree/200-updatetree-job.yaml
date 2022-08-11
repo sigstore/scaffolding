@@ -4,7 +4,7 @@ metadata:
   name: inactive-tree
   namespace: trillian-system
 spec:
-  ttlSecondsAfterFinished: 100
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       restartPolicy: Never

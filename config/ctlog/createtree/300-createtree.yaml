@@ -5,8 +5,8 @@ metadata:
   name: createtree
   namespace: ctlog-system
 spec:
-  backoffLimit: 20
-  ttlSecondsAfterFinished: 100
+  backoffLimit: 30
+  ttlSecondsAfterFinished: 600
   template:
     spec:
       serviceAccountName: createtree

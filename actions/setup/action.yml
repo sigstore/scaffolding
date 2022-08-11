@@ -22,6 +22,10 @@ inputs:
     description: 'Version of scaffolding to install (v0.4.0, latest-release.)'
     required: true
     default: 'latest-release'
+  sigstore-only:
+    description: 'If set to "true" will not install kind cluster, only Sigstore'
+    required: true
+    default: 'false'
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
@@ -53,12 +57,6 @@ runs:
     run: |
       set -ex
 
-      # Configure DockerHub mirror
-      tmp=$(mktemp)
-      jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
-      sudo mv "$tmp" /etc/docker/daemon.json
-      sudo service docker restart
-
       # Determine which version to install
       # - if version is "latest-release", look up latest release.
       # - otherwise, install the specified version.
@@ -70,21 +68,29 @@ runs:
         tag="${{ inputs.version }}"
       esac
 
-      echo "Installing kind and knative using release"
-      curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
-        chmod u+x ./setup-kind.sh
-        ./setup-kind.sh \
-          --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
-          --cluster-suffix ${{ inputs.cluster-suffix }} \
-          --k8s-version ${{ inputs.k8s-version }} \
-          --knative-version ${{ inputs.knative-version }}
-
       # At release v0.4.0 we added support for TUF, and rejiggered
       # the install process, so check to see if we are running >=4
       MINOR=$(echo $tag | cut -d '.' -f 2)
       INSTALL_TUF="false"
       if [ ${MINOR} -ge 4 ]; then
         INSTALL_TUF="true"
+      fi
+
+      if [ ${{ inputs.sigstore-only }} == "false" ]; then
+        # Configure DockerHub mirror
+        tmp=$(mktemp)
+        jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
+        sudo mv "$tmp" /etc/docker/daemon.json
+        sudo service docker restart
+
+        echo "Installing kind and knative using release"
+        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+        chmod u+x ./setup-kind.sh
+        ./setup-kind.sh \
+          --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
+          --cluster-suffix ${{ inputs.cluster-suffix }} \
+          --k8s-version ${{ inputs.k8s-version }} \
+          --knative-version ${{ inputs.knative-version }}
       fi
 
       echo "Installing sigstore scaffolding @ ${tag}"
@@ -124,7 +130,6 @@ runs:
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
         curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
         echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
-
       else
         echo "This version does have support for TUF"
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh

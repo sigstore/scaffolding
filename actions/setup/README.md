@@ -26,7 +26,7 @@ likely from Cosign.
 - uses: sigstore/scaffolding/actions/setup@main
   with:
     # Scaffolding version. 'latest-release' by default.
-    scaffolding-version: "v0.4.2"
+    scaffolding-version: "v0.4.3"
     # Do not set the deprecated environment variables, use TUF instead
     legacy-variables: "false"
 ```

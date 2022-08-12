@@ -84,7 +84,7 @@ runs:
         sudo service docker restart
 
         echo "Installing kind and knative using release"
-        curl -Lo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+        curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
         chmod u+x ./setup-kind.sh
         ./setup-kind.sh \
           --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
@@ -113,7 +113,7 @@ runs:
         kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
         echo "Installing and running scaffolding tests to be up and running"
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+        curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
 
         kubectl wait --for=condition=Complete --timeout=180s job/sign-job
         kubectl wait --for=condition=Complete --timeout=180s job/checktree
@@ -132,9 +132,9 @@ runs:
         echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
       else
         echo "This version does have support for TUF"
-        curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
-        /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
         # We set this here because the other leg doesn't have it.
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
@@ -143,7 +143,7 @@ runs:
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
         echo "Installing and running scaffolding tests to be up and running"
-        curl -L https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+        curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
 
         kubectl wait --for=condition=Complete --timeout=180s job/sign-job
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job

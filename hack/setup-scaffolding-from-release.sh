@@ -17,8 +17,22 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# TODO(vaikas): Make this configurable.
-RELEASE_VERSION=v0.4.2
+# Default
+RELEASE_VERSION="v0.4.3"
+
+while [[ $# -ne 0 ]]; do
+  parameter="$1"
+  case "${parameter}" in
+    --release-version)
+      shift
+      RELEASE_VERSION="$1"
+      ;;
+    *) echo "unknown option ${parameter}"; exit 1 ;;
+  esac
+  shift
+done
+
+echo "Installing release version: $RELEASE_VERSION"
 TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
 REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
 FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml

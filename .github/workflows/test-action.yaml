@@ -25,7 +25,7 @@ jobs:
         # 1.23 missing nb: https://github.com/sigstore/scaffolding/issues/81
         release-version:
         - "v0.3.0" # Old version without TUF
-        - "v0.4.2" # New version with TUF, but test without TUF
+        - "v0.4.3" # New version with TUF, but test without TUF
         go-version:
         - 1.18
         leg:

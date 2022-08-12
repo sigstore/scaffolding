@@ -17,8 +17,22 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
-# TODO(vaikas): Make this configurable.
-RELEASE_VERSION=v0.4.2
+# Default
+RELEASE_VERSION="v0.4.3"
+
+while [[ $# -ne 0 ]]; do
+  parameter="$1"
+  case "${parameter}" in
+    --release-version)
+      shift
+      RELEASE_VERSION="$1"
+      ;;
+    *) echo "unknown option ${parameter}"; exit 1 ;;
+  esac
+  shift
+done
+
+echo "Installing release version: $RELEASE_VERSION"
 TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
 REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
 FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
@@ -37,7 +51,7 @@ fi
 
 # Install Trillian and wait for it to come up
 echo '::group:: Install Trillian'
-kubectl apply -f ${TRILLIAN}
+kubectl apply -f "${TRILLIAN}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
@@ -48,7 +62,7 @@ echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
 echo '::group:: Install Rekor'
-kubectl apply -f ${REKOR}
+kubectl apply -f "${REKOR}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
@@ -60,9 +74,9 @@ echo '::endgroup::'
 echo '::group:: Install Fulcio'
 if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
-  curl -Ls ${FULCIO} | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
+  curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
 else
-  kubectl apply -f ${FULCIO}
+  kubectl apply -f "${FULCIO}"
 fi
 
 echo '::group:: Wait for Fulcio ready'
@@ -72,7 +86,7 @@ echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
 echo '::group:: Install CTLog'
-kubectl apply -f ${CTLOG}
+kubectl apply -f "${CTLOG}"
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
@@ -82,7 +96,7 @@ echo '::endgroup::'
 
 # Install tuf
 echo '::group:: Install TUF'
-kubectl apply -f ${TUF}
+kubectl apply -f "${TUF}"
 
 # Then copy the secrets (even though it's all public stuff, certs, public keys)
 # to the tuf-system namespace so that we can construct a tuf root out of it.

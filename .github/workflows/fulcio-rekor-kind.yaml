@@ -117,7 +117,7 @@ jobs:
     # We do this by screwing around with the existing config files for now
     # instead of creating a whole set of parallel files for these.
     - name: Configure CTLog config storage
-      if: ${{ matrix.ctlog-in-secret == "true" }}
+      if: ${{ matrix.ctlog-in-secret == 'true' }}
       run: |
         echo "Fixing CTLog config to use secrets"
         # First patch in the flag that creates the ctlog config in the secret.
@@ -139,7 +139,7 @@ jobs:
         ./hack/setup-scaffolding.sh
 
     - name: Restore CTLog config storage
-      if: ${{ matrix.ctlog-in-secret == "true" }}
+      if: ${{ matrix.ctlog-in-secret == 'true' }}
       run: |
         echo "Restore CTLog config to not use secrets"
         mv ./300-createconfig.yaml config/ctlog/certs/300-createconfig.yaml

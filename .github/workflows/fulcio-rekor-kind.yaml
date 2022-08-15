@@ -127,15 +127,19 @@ jobs:
         sed 's@"--secret=ctlog-secret"@"--secret=ctlog-secret","--config-in-secret"@' config/ctlog/certs/300-createconfig.yaml > ./300-createconfig-new.yaml
         mv ./300-createconfig-new.yaml config/ctlog/certs/300-createconfig.yaml
 
+        cat config/ctlog/certs/300-createconfig.yaml
+
         # Then patch in the ctlog to mount the secret instead of the configmap.
         cp config/ctlog/ctlog/300-ctlog.yaml ./300-ctlog.yaml
         # The sed works differently in mac and other places, so just shuffle
         # files around for now.
         sed 's@configMap:@secret:@' config/ctlog/ctlog/300-ctlog.yaml > ./300-ctlog-tmp.yaml
 
-        sed 's@name: ctlog-config@secretName: ctlog-config@' 300-ctlog-tmp.yaml > ./300-ctlog-new.yaml
+        sed 's@name: ctlog-config@secretName: ctlog-secret@' 300-ctlog-tmp.yaml > ./300-ctlog-new.yaml
         rm 300-ctlog-tmp.yaml
         mv ./300-ctlog-new.yaml config/ctlog/ctlog/300-ctlog.yaml
+
+        cat config/ctlog/ctlog/300-ctlog.yaml
 
     - name: Install scaffolding
       run: |

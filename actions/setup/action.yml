@@ -26,6 +26,10 @@ inputs:
     description: 'If set to "true" will not install kind cluster, only Sigstore'
     required: true
     default: 'false'
+  working-directory:
+    description: 'Where to copy the files to, default "."'
+    required: true
+    default: "."
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
@@ -119,16 +123,16 @@ runs:
         kubectl wait --for=condition=Complete --timeout=180s job/checktree
         kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
-        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/ctlog-public.pem
         echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
-        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ${{ inputs.working-directory }}/fulcio-root.pem
         echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
 
         # And also grab the rekor pub key.
-        REKOR_URL=`kubectl -n rekor-system get --no-headers ksvc rekor | cut -d ' ' -f 4`
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-        curl -s $REKOR_URL/api/v1/log/publicKey > ./rekor-public.pem
+        curl -s $REKOR_URL/api/v1/log/publicKey > ${{ inputs.working-directory }}/rekor-public.pem
         echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
       else
         echo "This version does have support for TUF"
@@ -138,6 +142,8 @@ runs:
         # We set this here because the other leg doesn't have it.
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Grab the trusted root
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${{ inputs.working-directory }}/root.json
 
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
@@ -159,13 +165,13 @@ runs:
           kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
 
           # And also grab the rekor pub key.
-          kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ./rekor-public.pem
+          kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/rekor-public.pem
           echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
 
-          kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ./ctlog-public.pem
+          kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/ctlog-public.pem
           echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
 
-          kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ./fulcio-root.pem
+          kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ${{ inputs.working-directory }}/fulcio-root.pem
           echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
         fi
       fi

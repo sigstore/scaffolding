@@ -26,7 +26,7 @@ inputs:
     description: 'If set to "true" will not install kind cluster, only Sigstore'
     required: true
     default: 'false'
-  working-dir:
+  working-directory:
     description: 'Where to copy the files to, default "."'
     required: true
     default: "."
@@ -142,6 +142,8 @@ runs:
         # We set this here because the other leg doesn't have it.
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Grab the trusted root
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${{ inputs.working-directory }}/root.json
 
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -

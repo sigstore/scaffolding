@@ -26,6 +26,7 @@ jobs:
         release-version:
         - "v0.3.0" # Old version without TUF
         - "v0.4.3" # New version with TUF, but test without TUF
+        - "v0.4.4" # New version with TUF, but test without TUF
         go-version:
         - 1.18
         leg:

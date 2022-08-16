@@ -27,6 +27,8 @@ jobs:
         release-version:
         - "latest-release" # Test explicitly with latest
         - "v0.4.2" # Test version with TUF
+        - "v0.4.3" # Test version with TUF
+        - "v0.4.4" # Test version with TUF
         go-version:
         - 1.18
         leg:

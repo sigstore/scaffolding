@@ -56,8 +56,8 @@ echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
 kubectl wait --timeout 5m -n trillian-system --for=condition=Complete jobs --all
-kubectl wait --timeout 45s -n trillian-system --for=condition=Ready ksvc log-server
-kubectl wait --timeout 45s -n trillian-system --for=condition=Ready ksvc log-signer
+kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-server
+kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-signer
 echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
@@ -67,7 +67,7 @@ echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
 kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
-kubectl wait --timeout 45s -n rekor-system --for=condition=Ready ksvc rekor
+kubectl wait --timeout 2m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
@@ -81,7 +81,7 @@ fi
 
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
-kubectl wait --timeout 45s -n fulcio-system --for=condition=Ready ksvc fulcio
+kubectl wait --timeout 2m -n fulcio-system --for=condition=Ready ksvc fulcio
 echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
@@ -91,7 +91,7 @@ echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
 kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
-kubectl wait --timeout 45s -n ctlog-system --for=condition=Ready ksvc ctlog
+kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 
 # Install tuf
@@ -108,7 +108,7 @@ echo '::endgroup::'
 # Make sure the tuf jobs complete
 echo '::group:: Wait for TUF ready'
 kubectl wait --timeout 4m -n tuf-system --for=condition=Complete jobs --all
-kubectl wait --timeout 45s -n tuf-system --for=condition=Ready ksvc tuf
+kubectl wait --timeout 2m -n tuf-system --for=condition=Ready ksvc tuf
 echo '::endgroup::'
 
 # Grab the trusted root

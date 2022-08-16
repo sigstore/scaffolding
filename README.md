@@ -1,4 +1,4 @@
-# scaffolding
+# scaffolding test
 
 This repository contains scaffolding to make standing up a full sigstore stack
 easier and automatable. Our focus is on running on Kubernetes and rely on

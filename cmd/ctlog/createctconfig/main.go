@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -51,6 +52,7 @@ const (
 var (
 	ns                 = flag.String("namespace", "ctlog-system", "Namespace where to get the configmap containing treeid")
 	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
+	configInSecret     = flag.Bool("config-in-secret", false, "If set to true, create the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'")
 	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
 	pubKeySecretName   = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
@@ -114,44 +116,48 @@ func main() {
 		panic(err)
 	}
 
-	if _, ok := cm.Data[configKey]; !ok {
-		privKeyProto := mustMarshalAny(&keyspb.PEMKeyFile{Path: "/ctfe-keys/privkey.pem", Password: *keyPassword})
+	var marshalledConfig []byte
 
-		keyDER, err := x509.MarshalPKIXPublicKey(key.Public())
-		if err != nil {
-			logging.FromContext(ctx).Panicf("Failed to marshal the public key: %v", err)
-		}
-		proto := configpb.LogConfig{
-			LogId:          treeIDInt,
-			Prefix:         *ctlogPrefix,
-			RootsPemFile:   []string{"/ctfe-keys/roots.pem"},
-			PrivateKey:     privKeyProto,
-			PublicKey:      &keyspb.PublicKey{Der: keyDER},
-			LogBackendName: "trillian",
-			ExtKeyUsages:   []string{"CodeSigning"},
-		}
+	privKeyProto := mustMarshalAny(&keyspb.PEMKeyFile{Path: "/ctfe-keys/privkey.pem", Password: *keyPassword})
 
-		multiConfig := configpb.LogMultiConfig{
-			LogConfigs: &configpb.LogConfigSet{
-				Config: []*configpb.LogConfig{&proto},
-			},
-			Backends: &configpb.LogBackendSet{
-				Backend: []*configpb.LogBackend{{
-					Name:        "trillian",
-					BackendSpec: *trillianServerAddr,
-				}},
-			},
-		}
-		marshalled, err := prototext.Marshal(&multiConfig)
-		if err != nil {
-			logging.FromContext(ctx).Panicf("Failed to marshal config proto: %v", err)
-		}
+	keyDER, err := x509.MarshalPKIXPublicKey(key.Public())
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Failed to marshal the public key: %v", err)
+	}
+	proto := configpb.LogConfig{
+		LogId:          treeIDInt,
+		Prefix:         *ctlogPrefix,
+		RootsPemFile:   []string{"/ctfe-keys/roots.pem"},
+		PrivateKey:     privKeyProto,
+		PublicKey:      &keyspb.PublicKey{Der: keyDER},
+		LogBackendName: "trillian",
+		ExtKeyUsages:   []string{"CodeSigning"},
+	}
+
+	multiConfig := configpb.LogMultiConfig{
+		LogConfigs: &configpb.LogConfigSet{
+			Config: []*configpb.LogConfig{&proto},
+		},
+		Backends: &configpb.LogBackendSet{
+			Backend: []*configpb.LogBackend{{
+				Name:        "trillian",
+				BackendSpec: *trillianServerAddr,
+			}},
+		},
+	}
+	marshalledConfig, err = prototext.Marshal(&multiConfig)
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Failed to marshal config proto: %v", err)
+	}
+
+	// If ctlog config is not supposed to be put into a secret, and config
+	// doesn't exist, or is out of date, update ConfigMap.
+	if !*configInSecret && (cm.BinaryData == nil || bytes.Compare(marshalledConfig, cm.BinaryData[configKey]) != 0) {
 		logging.FromContext(ctx).Infof("Updating config with treeid: %s", treeID)
 		if cm.BinaryData == nil {
 			cm.BinaryData = make(map[string][]byte)
 		}
-
-		cm.BinaryData[configKey] = marshalled
+		cm.BinaryData[configKey] = marshalledConfig
 		_, err = clientset.CoreV1().ConfigMaps(*ns).Update(ctx, cm, metav1.UpdateOptions{})
 		if err != nil {
 			logging.FromContext(ctx).Panicf("Failed to update the configmap %s/%s: %v", *ns, *cmname, err)
@@ -197,6 +203,11 @@ func main() {
 		"private": privPEM,
 		"public":  pubPEM,
 		"rootca":  rootCertPEM,
+	}
+
+	// If the config is supposed to be written into a secret, make it so.
+	if *configInSecret {
+		data[configKey] = marshalledConfig
 	}
 
 	nsSecret := clientset.CoreV1().Secrets(*ns)

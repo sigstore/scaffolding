@@ -21,13 +21,13 @@ import (
 	"crypto/x509/pkix"
 	"encoding/pem"
 	"flag"
+	"fmt"
 	"math"
 	"math/big"
 	"os"
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/pkg/errors"
 	"github.com/sigstore/scaffolding/pkg/secret"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -104,14 +104,14 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	// Generate RSA key.
 	key, err := rsa.GenerateKey(rand.Reader, bitSize)
 	if err != nil {
-		return nil, nil, nil, "", errors.Wrap(err, "GenerateKey failed")
+		return nil, nil, nil, "", fmt.Errorf("GenerateKey failed: %w", err)
 	}
 	// Extract public component.
 	pub := key.Public()
 
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
-		return nil, nil, nil, "", errors.Wrap(err, "failed to generate serial Number")
+		return nil, nil, nil, "", fmt.Errorf("failed to generate serial Number: %w", err)
 	}
 	rootCA := &x509.Certificate{
 		SerialNumber: serialNumber,
@@ -132,7 +132,7 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	}
 	derBytes, err := x509.CreateCertificate(rand.Reader, rootCA, rootCA, pub, key)
 	if err != nil {
-		return nil, nil, nil, "", errors.Wrap(err, "failed to create certificate")
+		return nil, nil, nil, "", fmt.Errorf("failed to create certificate: %w", err)
 	}
 	certPEM := pem.EncodeToMemory(
 		&pem.Block{Type: "CERTIFICATE", Bytes: derBytes},
@@ -151,12 +151,12 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	// Encrypt the pem
 	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(pwd), x509.PEMCipherAES256) // nolint
 	if err != nil {
-		return nil, nil, nil, "", errors.Wrap(err, "EncryptPEMBlock failed")
+		return nil, nil, nil, "", fmt.Errorf("EncryptPEMBlock failed: %w", err)
 	}
 
 	privPEM := pem.EncodeToMemory(block)
 	if privPEM == nil {
-		return nil, nil, nil, "", errors.New("EncodeToMemory private key failed")
+		return nil, nil, nil, "", fmt.Errorf("EncodeToMemory private key failed: %w", err)
 	}
 	// Encode public key to PKCS#1 ASN.1 PEM.
 	pubPEM := pem.EncodeToMemory(
@@ -166,7 +166,7 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 		},
 	)
 	if pubPEM == nil {
-		return nil, nil, nil, "", errors.New("EncodeToMemory public key failed")
+		return nil, nil, nil, "", fmt.Errorf("EncodeToMemory public key failed: %w", err)
 	}
 	return certPEM, pubPEM, privPEM, pwd, nil
 }

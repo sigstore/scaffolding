@@ -31,15 +31,13 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
-
-	"github.com/pkg/errors"
 
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
 
@@ -63,11 +61,11 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	}
 	tok, err := providers.Provide(ctx, "sigstore")
 	if err != nil {
-		return errors.Wrap(err, "getting provider")
+		return fmt.Errorf("getting provider: %w", err)
 	}
 	b, err := certificateRequest(ctx, tok)
 	if err != nil {
-		return errors.Wrap(err, "certificate response")
+		return fmt.Errorf("certificate response: %w", err)
 	}
 
 	// Construct the API endpoint for this handler
@@ -76,7 +74,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 
 	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
-		return errors.Wrap(err, "new request")
+		return fmt.Errorf("new request: %w", err)
 	}
 	// Set the authorization header to our OIDC bearer token.
 	req.Header.Set("Authorization", "Bearer "+tok)
@@ -87,7 +85,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
-		fmt.Println("error requesting cert: ", err)
+		fmt.Printf("error requesting cert: %v\n", err.Error())
 	}
 
 	// Export data to prometheus
@@ -103,11 +101,11 @@ func rekorWriteEndpoint(ctx context.Context) error {
 
 	body, err := rekorEntryRequest()
 	if err != nil {
-		return errors.Wrap(err, "rekor entry")
+		return fmt.Errorf("rekor entry: %w", err)
 	}
 	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
 	if err != nil {
-		return errors.Wrap(err, "new request")
+		return fmt.Errorf("new request: %w", err)
 	}
 	// Set the content-type to reflect we're sending JSON.
 	req.Header.Set("Content-Type", "application/json")
@@ -116,7 +114,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
-		fmt.Println("error adding entry: ", err)
+		fmt.Printf("error adding entry: %v\n", err.Error())
 	}
 
 	// Export data to prometheus
@@ -135,19 +133,19 @@ func rekorEntryRequest() ([]byte, error) {
 	}
 	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
 	if err != nil {
-		return nil, errors.Wrap(err, "loading signer verifier")
+		return nil, fmt.Errorf("loading signer verifier: %w", err)
 	}
 	pub, err := signer.PublicKey()
 	if err != nil {
-		return nil, errors.Wrap(err, "public key")
+		return nil, fmt.Errorf("public key: %w", err)
 	}
 	pubKey, err := cryptoutils.MarshalPublicKeyToPEM(pub)
 	if err != nil {
-		return nil, errors.Wrap(err, "marshal public key")
+		return nil, fmt.Errorf("marshal public key: %w", err)
 	}
 	sig, err := signer.SignMessage(bytes.NewReader(payload))
 	if err != nil {
-		return nil, errors.Wrap(err, "sign message")
+		return nil, fmt.Errorf("sign message: %w", err)
 	}
 
 	h := sha256.Sum256(payload)
@@ -177,7 +175,7 @@ func rekorEntryRequest() ([]byte, error) {
 func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {
 	priv, err := cosign.GeneratePrivateKey()
 	if err != nil {
-		return nil, errors.Wrap(err, "generating cert")
+		return nil, fmt.Errorf("generating cert: %w", err)
 	}
 	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
 	if err != nil {

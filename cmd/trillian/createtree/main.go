@@ -23,7 +23,6 @@ import (
 	"github.com/google/trillian"
 	"github.com/google/trillian/client"
 	"github.com/google/trillian/client/rpcflags"
-	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/durationpb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -99,12 +98,12 @@ func createTree(ctx context.Context) (*trillian.Tree, error) {
 
 	dialOpts, err := rpcflags.NewClientDialOptionsFromFlags()
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to determine dial options")
+		return nil, fmt.Errorf("failed to determine dial options: %w", err)
 	}
 
 	conn, err := grpc.Dial(*adminServerAddr, dialOpts...)
 	if err != nil {
-		return nil, errors.Wrap(err, "failed to dial")
+		return nil, fmt.Errorf("failed to dial: %w", err)
 	}
 	defer conn.Close()
 

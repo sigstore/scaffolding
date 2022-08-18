@@ -81,7 +81,7 @@ fi
 
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
-kubectl wait --timeout 2m -n fulcio-system --for=condition=Ready ksvc fulcio
+kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 echo '::endgroup::'
 
 # Install CTlog and wait for it to come up

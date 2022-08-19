@@ -65,24 +65,25 @@ while [[ $# -ne 0 ]]; do
 done
 
 # The version map correlated with this version of KinD
-KIND_VERSION="v0.12.0"
+KIND_VERSION="v0.14.0"
 case ${K8S_VERSION} in
   v1.21.x)
-    K8S_VERSION="1.21.10"
-    KIND_IMAGE_SHA="sha256:84709f09756ba4f863769bdcabe5edafc2ada72d3c8c44d6515fc581b66b029c"
+    K8S_VERSION="1.21.12"
+    KIND_IMAGE_SHA="sha256:f316b33dd88f8196379f38feb80545ef3ed44d9197dca1bfd48bcb1583210207"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.22.x)
-    K8S_VERSION="1.22.7"
-    KIND_IMAGE_SHA="sha256:1dfd72d193bf7da64765fd2f2898f78663b9ba366c2aa74be1fd7498a1873166"
+    K8S_VERSION="1.22.9"
+    KIND_IMAGE_SHA="sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.23.x)
-    K8S_VERSION="1.23.4"
-    KIND_IMAGE_SHA="sha256:0e34f0d0fd448aa2f2819cfd74e99fe5793a6e4938b328f657c8e3f81ee0dfb9"
+    K8S_VERSION="1.23.6"
+    KIND_IMAGE_SHA="sha256:b1fa224cc6c7ff32455e0b1fd9cbfd3d3bc87ecaa8fcb06961ed1afb3db0f9ae"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.24.x)
+    K8S_VERSION="1.24.0"
     KIND_IMAGE_SHA="sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;

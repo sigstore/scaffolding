@@ -78,7 +78,7 @@ jobs:
       with:
         version: tip
 
-    - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2.3.0
+    - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@main

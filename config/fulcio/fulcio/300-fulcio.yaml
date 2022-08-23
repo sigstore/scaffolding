@@ -20,8 +20,7 @@ spec:
       # This doesn't actually use Kubernetes credentials, so don't mount them in.
       automountServiceAccountToken: false
       containers:
-      # v0.5.2
-      - image: gcr.io/projectsigstore/fulcio:v0.5.2
+      - image: gcr.io/projectsigstore/fulcio@sha256:61081295a8f75ed7537b5d1f8c7320e078dc00e4562c0bf605fbefa062c690de # v0.5.3
         name: fulcio
         ports:
         - containerPort: 5555
@@ -42,6 +41,9 @@ spec:
             secretKeyRef:
               name: fulcio-secret
               key: password
+        # Force a native go address resolution.
+        - name: GODEBUG
+          value: "netdns=go"
         volumeMounts:
         - name: fulcio-config
           mountPath: /etc/fulcio-config

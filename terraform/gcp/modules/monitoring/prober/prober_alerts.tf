@@ -140,6 +140,8 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
   project               = var.project_id
 }
 
+// This alert will fire if a non-200 error code is seen over the past 60s (alignment_period)
+// AND if this sustains for 5 minutes (duration)
 resource "google_monitoring_alert_policy" "prober_error_codes" {
   alert_strategy {
     auto_close = "604800s"
@@ -150,14 +152,14 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "300s"
+        alignment_period     = "60s"
         cross_series_reducer = "REDUCE_MAX"
         group_by_fields      = ["metric.label.endpoint"]
         per_series_aligner   = "ALIGN_RATE"
       }
 
       comparison      = "COMPARISON_GT"
-      duration        = "0s"
+      duration        = "300s"
       filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != \"200\""
       threshold_value = "0"
 

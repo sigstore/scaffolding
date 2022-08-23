@@ -55,7 +55,6 @@ kubectl apply -f "${TRILLIAN}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
-kubectl wait --timeout 5m -n trillian-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-server
 kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-signer
 echo '::endgroup::'

@@ -43,7 +43,6 @@ pieces from scratch is given in Luke Hinds’
 “[Sigstore the hard way](https://github.com/lukehinds/sigstore-the-hard-way)”
 
 
-
 # Overview
 
 This document is meant to describe what pieces have been built and why. The

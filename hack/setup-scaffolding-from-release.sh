@@ -18,7 +18,7 @@ set -o nounset
 set -o pipefail
 
 # Default
-RELEASE_VERSION="v0.4.4"
+RELEASE_VERSION="v0.4.6"
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"

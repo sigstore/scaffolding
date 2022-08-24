@@ -31,7 +31,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -fLo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.4/setup-kind.sh
+curl -fLo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -64,7 +64,7 @@ docker rm -f b1e3f3238f7a
 
 ## From the release
 ```shell
-curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.4/setup-scaffolding-from-release.sh
+curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-scaffolding-from-release.sh
 chmod u+x /tmp/setup-scaffolding-from-release.sh
 /tmp/setup-scaffolding-from-release.sh
 ```

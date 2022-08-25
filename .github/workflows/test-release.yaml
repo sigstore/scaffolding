@@ -30,7 +30,7 @@ jobs:
         - 1.18
 
     env:
-      RELEASE_VERSION: "v0.4.4"
+      RELEASE_VERSION: "v0.4.6"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
       COSIGN_EXPERIMENTAL: "true"

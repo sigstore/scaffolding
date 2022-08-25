@@ -93,7 +93,7 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
     mime_type = "text/markdown"
   }
 
-  enabled               = "true"
+  enabled               = "false"
   notification_channels = local.notification_channels
   project               = var.project_id
 }

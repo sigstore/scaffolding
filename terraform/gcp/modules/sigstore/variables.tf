@@ -207,3 +207,9 @@ variable "rekor_key_name" {
   description = "Name of Rekor key."
   default     = "rekor-key"
 }
+
+variable "iam_members_to_roles" {
+  description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
+  type        = map(set(string))
+  default     = {}
+}

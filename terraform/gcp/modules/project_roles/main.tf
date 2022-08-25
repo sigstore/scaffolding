@@ -35,11 +35,29 @@ resource "google_project_service" "service" {
   disable_on_destroy = false
 }
 
+locals {
+  // Flatten the member to roles map to a list so we can use
+  // for_each expansion for each role binding.
+  iam_member_role_list = flatten([
+    for member, role_list in var.iam_members_to_roles : [
+      for role in role_list : {
+        member = member
+        role   = role
+      }
+    ]
+  ])
+}
+
 resource "google_project_iam_member" "membership" {
   project = var.project_id
-  member  = "group:${var.member}@${var.domain}"
+  // Use the "<member> <role>" as the unique key for each binding. Neither members
+  // nor roles can contain whitespace so this is guaranteed to be unique.
+  for_each = {
+    for member_role_binding in local.iam_member_role_list :
+    "${member_role_binding.member} ${member_role_binding.role}" => member_role_binding
+  }
+  member = each.value.member
 
-  for_each   = toset(var.roles)
-  role       = each.value
+  role       = each.value.role
   depends_on = [google_project_service.service]
 }

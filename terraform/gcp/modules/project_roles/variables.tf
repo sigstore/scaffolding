@@ -12,22 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-
 variable "project_id" {
-  description = "project id where iam permissions will be set"
+  description = "Project ID we will be working on"
   type        = string
 }
 
-variable "domain" {
-  description = "domain name to apply to each group"
-}
-
-variable "member" {
-  description = "group to be assigned to the role"
-  type        = string
-}
-
-variable "roles" {
-  description = "list of roles to assign to the group"
-  type        = list(string)
+variable "iam_members_to_roles" {
+  description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
+  type        = map(set(string))
 }

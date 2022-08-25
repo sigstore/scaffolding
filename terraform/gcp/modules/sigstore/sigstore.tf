@@ -218,3 +218,10 @@ module "audit" {
   source     = "../audit"
   project_id = var.project_id
 }
+
+// IAM project roles
+module "project_roles" {
+  source               = "../project_roles"
+  project_id           = var.project_id
+  iam_members_to_roles = var.iam_members_to_roles
+}

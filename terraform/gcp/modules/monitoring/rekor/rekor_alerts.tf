@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-# Alert for Rekor uptime: GET
+// Alert if we see a failure every minute for 5 consecutive minutes
 resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
   for_each = toset(var.api_endpoints_get)
 
@@ -27,14 +27,14 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "300s"
+        alignment_period     = "60s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
       }
 
       comparison = "COMPARISON_GT"
-      duration   = "60s"
+      duration   = "300s"
       filter     = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.rekor_uptime_alerts_get[format("%s", each.key)].uptime_check_id)
 
       threshold_value = "1"

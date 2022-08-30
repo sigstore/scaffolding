@@ -40,7 +40,7 @@ resource "google_monitoring_uptime_check_config" "uptime_dex" {
   timeout = "10s"
 }
 
-# Alert for Dex uptime
+// Alert if we see a failure every minute for 5 consecutive minutes
 resource "google_monitoring_alert_policy" "dex_uptime_alert" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -51,14 +51,14 @@ resource "google_monitoring_alert_policy" "dex_uptime_alert" {
   conditions {
     condition_threshold {
       aggregations {
-        alignment_period     = "300s"
+        alignment_period     = "60s"
         cross_series_reducer = "REDUCE_COUNT_FALSE"
         group_by_fields      = ["resource.*"]
         per_series_aligner   = "ALIGN_NEXT_OLDER"
       }
 
       comparison      = "COMPARISON_GT"
-      duration        = "60s"
+      duration        = "300s"
       filter          = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_dex.uptime_check_id)
       threshold_value = "1"
 

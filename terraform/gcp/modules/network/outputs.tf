@@ -33,3 +33,7 @@ output "secondary_ip_range" {
 output "external_ip_name" {
   value = google_compute_global_address.default.name
 }
+
+output "external_ip_address" {
+  value = google_compute_global_address.default.address
+}

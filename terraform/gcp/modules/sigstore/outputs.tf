@@ -92,6 +92,11 @@ output "bastion_kubectl" {
 }
 
 output "external_ip_name" {
-  description = "External IP of the cluster"
+  description = "Name of the external IP for services on the cluster"
   value       = module.network.external_ip_name
+}
+
+output "external_ip_address" {
+  description = "External IP Address for services on the cluster"
+  value       = module.network.external_ip_address
 }

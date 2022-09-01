@@ -225,3 +225,29 @@ module "project_roles" {
   project_id           = var.project_id
   iam_members_to_roles = var.iam_members_to_roles
 }
+
+// OSLogin configuration
+module "oslogin" {
+  source     = "../oslogin"
+  project_id = var.project_id
+
+  // Disable module entirely if oslogin is disabled
+  count = var.oslogin.enabled ? 1 : 0
+
+  // Grant OSLogin access to the bastion instance to the GHA
+  // SA for terraform access and to tunnel accessors.
+  instance_os_login_members = {
+    bastion = {
+      instance_name = module.bastion.name
+      zone          = module.bastion.zone
+      members = [
+        var.tunnel_accessor_sa,
+        module.policy_bindings.gha_serviceaccount_member
+      ]
+    }
+  }
+  depends_on = [
+    module.bastion,
+    module.policy_bindings
+  ]
+}

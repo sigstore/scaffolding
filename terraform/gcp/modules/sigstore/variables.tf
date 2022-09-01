@@ -213,3 +213,15 @@ variable "iam_members_to_roles" {
   type        = map(set(string))
   default     = {}
 }
+
+variable "oslogin" {
+  type = object({
+    enabled          = bool
+    enabled_with_2fa = bool
+  })
+  default = {
+    enabled          = false
+    enabled_with_2fa = false
+  }
+  description = "oslogin settings for access to VMs"
+}

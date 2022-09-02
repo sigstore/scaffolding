@@ -188,6 +188,7 @@ module "rekor" {
 
   dns_zone_name   = var.dns_zone_name
   dns_domain_name = var.dns_domain_name
+  load_balancer_ip = module.network.external_ip_address
 
   depends_on = [
     module.network,

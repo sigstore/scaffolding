@@ -18,6 +18,7 @@
 resource "google_compute_security_policy" "fulcio" {
   name    = "fulcio-service-security-policy"
   project = var.project_id
+  type    = "CLOUD_ARMOR"
 
   rule {
     action   = "throttle"
@@ -52,19 +53,17 @@ resource "google_compute_security_policy" "fulcio" {
     description = "default rule"
   }
 
-  advanced_options_config {
-    adaptive_protection_config {
-      layer_7_ddos_defense_config {
-        enable = true
-      }
+  adaptive_protection_config {
+    layer_7_ddos_defense_config {
+      enable = true
     }
-    type = "CLOUD_ARMOR"
   }
 }
 
 resource "google_compute_security_policy" "ctlog" {
   name    = "ctlog-service-security-policy"
   project = var.project_id
+  type    = "CLOUD_ARMOR"
 
   rule {
     action   = "throttle"
@@ -99,19 +98,17 @@ resource "google_compute_security_policy" "ctlog" {
     description = "default rule"
   }
 
-  advanced_options_config {
-    adaptive_protection_config {
-      layer_7_ddos_defense_config {
-        enable = true
-      }
+  adaptive_protection_config {
+    layer_7_ddos_defense_config {
+      enable = true
     }
-    type = "CLOUD_ARMOR"
   }
 }
 
 resource "google_compute_security_policy" "dex" {
   name    = "dex-service-security-policy"
   project = var.project_id
+  type    = "CLOUD_ARMOR"
 
   rule {
     action   = "throttle"
@@ -146,12 +143,9 @@ resource "google_compute_security_policy" "dex" {
     description = "default rule"
   }
 
-  advanced_options_config {
-    adaptive_protection_config {
-      layer_7_ddos_defense_config {
-        enable = true
-      }
+  adaptive_protection_config {
+    layer_7_ddos_defense_config {
+      enable = true
     }
-    type = "CLOUD_ARMOR"
   }
 }

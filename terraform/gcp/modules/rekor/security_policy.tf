@@ -18,6 +18,7 @@
 resource "google_compute_security_policy" "rekor" {
   name    = "rekor-service-security-policy"
   project = var.project_id
+  type    = "CLOUD_ARMOR"
 
   rule {
     action   = "deny(502)"
@@ -64,12 +65,9 @@ resource "google_compute_security_policy" "rekor" {
     description = "default rule"
   }
 
-  advanced_options_config {
-    adaptive_protection_config {
-      layer_7_ddos_defense_config {
-        enable = true
-      }
+  adaptive_protection_config {
+    layer_7_ddos_defense_config {
+      enable = true
     }
-    type = "CLOUD_ARMOR"
   }
 }

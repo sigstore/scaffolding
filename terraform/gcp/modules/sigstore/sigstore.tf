@@ -186,8 +186,8 @@ module "rekor" {
   attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
   storage_class      = var.attestation_storage_class
 
-  dns_zone_name   = var.dns_zone_name
-  dns_domain_name = var.dns_domain_name
+  dns_zone_name    = var.dns_zone_name
+  dns_domain_name  = var.dns_domain_name
   load_balancer_ip = module.network.external_ip_address
 
   depends_on = [

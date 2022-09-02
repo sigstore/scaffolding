@@ -20,8 +20,20 @@ resource "google_compute_security_policy" "rekor" {
   project = var.project_id
 
   rule {
-    action   = "rate_based_ban"
+    action   = "deny(502)"
     priority = "1"
+
+    match {
+      expr {
+        expression = "int(request.headers['content-length']) > 134217728"
+      }
+    }
+    description = "Block all incoming requests > 128MB"
+  }
+
+  rule {
+    action   = "throttle"
+    priority = "2"
     match {
       versioned_expr = "SRC_IPS_V1"
       config {
@@ -30,10 +42,11 @@ resource "google_compute_security_policy" "rekor" {
     }
     rate_limit_options {
       enforce_on_key = "IP"
+      conform_action = "allow"
       exceed_action = "deny(429)"
       rate_limit_threshold {
         count        = "15"
-        interval_sec = "1"
+        interval_sec = "60"
       }
     }
     description = "Rate limit all traffic"

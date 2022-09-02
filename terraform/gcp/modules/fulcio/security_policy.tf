@@ -20,7 +20,7 @@ resource "google_compute_security_policy" "fulcio" {
   project = var.project_id
 
   rule {
-    action   = "rate_based_ban"
+    action   = "throttle"
     priority = "1"
     match {
       versioned_expr = "SRC_IPS_V1"
@@ -30,13 +30,14 @@ resource "google_compute_security_policy" "fulcio" {
     }
     rate_limit_options {
       enforce_on_key = "IP"
+      conform_action = "allow"
       exceed_action = "deny(429)"
       rate_limit_threshold {
         count        = "15"
-        interval_sec = "1"
+        interval_sec = "60"
       }
     }
-    description = "Rate limit all traffic"
+    description = "Rate limit all traffic by client IP"
   }
 
   rule {
@@ -66,7 +67,7 @@ resource "google_compute_security_policy" "ctlog" {
   project = var.project_id
 
   rule {
-    action   = "rate_based_ban"
+    action   = "throttle"
     priority = "1"
     match {
       versioned_expr = "SRC_IPS_V1"
@@ -76,10 +77,11 @@ resource "google_compute_security_policy" "ctlog" {
     }
     rate_limit_options {
       enforce_on_key = "IP"
+      conform_action = "allow"
       exceed_action = "deny(429)"
       rate_limit_threshold {
-        count        = "5"
-        interval_sec = "1"
+        count        = "15"
+        interval_sec = "60"
       }
     }
     description = "Rate limit all traffic"
@@ -112,7 +114,7 @@ resource "google_compute_security_policy" "dex" {
   project = var.project_id
 
   rule {
-    action   = "rate_based_ban"
+    action   = "throttle"
     priority = "1"
     match {
       versioned_expr = "SRC_IPS_V1"
@@ -122,10 +124,11 @@ resource "google_compute_security_policy" "dex" {
     }
     rate_limit_options {
       enforce_on_key = "IP"
+      conform_action = "allow"
       exceed_action = "deny(429)"
       rate_limit_threshold {
-        count        = "5"
-        interval_sec = "1"
+        count        = "15"
+        interval_sec = "60"
       }
     }
     description = "Rate limit all traffic"

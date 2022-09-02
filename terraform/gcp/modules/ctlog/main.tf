@@ -17,9 +17,7 @@
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([
-    "dns.googleapis.com",      // For configuring DNS records
-    "storage.googleapis.com",  // For GCS bucket. roles/storage.admin
-    "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
+    "dns.googleapis.com", // For configuring DNS records
   ])
   project = var.project_id
   service = each.key
@@ -30,20 +28,8 @@ resource "google_project_service" "service" {
   disable_on_destroy = false
 }
 
-// Redis for Rekor.
-module "redis" {
-  source = "../redis"
-
-  region     = var.region
-  project_id = var.project_id
-
-  cluster_name = var.cluster_name
-
-  network = var.network
-}
-
-resource "google_dns_record_set" "A_rekor" {
-  name = "rekor.${var.dns_domain_name}"
+resource "google_dns_record_set" "A_ctfe" {
+  name = "ctfe.${var.dns_domain_name}"
   type = "A"
   ttl  = 60
 
@@ -51,16 +37,4 @@ resource "google_dns_record_set" "A_rekor" {
   managed_zone = var.dns_zone_name
 
   rrdatas = [var.load_balancer_ip]
-}
-
-// api.$dns_domain_name was a previous reference for rekor early on, and may be used by some clients
-resource "google_dns_record_set" "CNAME_api_sigstore_dev" {
-  name = "api.${var.dns_domain_name}"
-  type = "CNAME"
-  ttl  = 3600
-
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-
-  rrdatas = ["rekor.${var.dns_domain_name}"]
 }

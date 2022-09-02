@@ -28,13 +28,9 @@ type ReadProberCheck struct {
 
 var RekorEndpoints = []ReadProberCheck{
 	{
-		endpoint: "/api/v1/version",
-		method:   GET,
-	}, {
 		endpoint: "/api/v1/log/publicKey",
 		method:   GET,
-	},
-	{
+	}, {
 		endpoint: "/api/v1/log",
 		method:   GET,
 	}, {

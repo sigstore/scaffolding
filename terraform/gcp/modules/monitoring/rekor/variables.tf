@@ -39,7 +39,6 @@ variable "api_endpoints_get" {
   type = list(string)
   default = [
     "/",
-    "/api/v1/version",
     "/api/v1/log",
     "/api/v1/log/publicKey",
   ]

@@ -16,7 +16,7 @@
 
 // Enable required services for this module
 resource "google_compute_security_policy" "fulcio" {
-  name = "fulcio-service-security-policy"
+  name    = "fulcio-service-security-policy"
   project = var.project_id
 
   rule {
@@ -31,7 +31,7 @@ resource "google_compute_security_policy" "fulcio" {
     rate_limit_options {
       enforce_on_key = "IP"
       conform_action = "allow"
-      exceed_action = "deny(429)"
+      exceed_action  = "deny(429)"
       rate_limit_threshold {
         count        = "15"
         interval_sec = "60"
@@ -63,7 +63,7 @@ resource "google_compute_security_policy" "fulcio" {
 }
 
 resource "google_compute_security_policy" "ctlog" {
-  name = "ctlog-service-security-policy"
+  name    = "ctlog-service-security-policy"
   project = var.project_id
 
   rule {
@@ -78,7 +78,7 @@ resource "google_compute_security_policy" "ctlog" {
     rate_limit_options {
       enforce_on_key = "IP"
       conform_action = "allow"
-      exceed_action = "deny(429)"
+      exceed_action  = "deny(429)"
       rate_limit_threshold {
         count        = "15"
         interval_sec = "60"
@@ -110,7 +110,7 @@ resource "google_compute_security_policy" "ctlog" {
 }
 
 resource "google_compute_security_policy" "dex" {
-  name = "dex-service-security-policy"
+  name    = "dex-service-security-policy"
   project = var.project_id
 
   rule {
@@ -125,7 +125,7 @@ resource "google_compute_security_policy" "dex" {
     rate_limit_options {
       enforce_on_key = "IP"
       conform_action = "allow"
-      exceed_action = "deny(429)"
+      exceed_action  = "deny(429)"
       rate_limit_threshold {
         count        = "15"
         interval_sec = "60"

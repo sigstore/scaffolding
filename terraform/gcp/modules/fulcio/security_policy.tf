@@ -53,6 +53,10 @@ resource "google_compute_security_policy" "fulcio" {
     description = "default rule"
   }
 
+  advanced_options_config {
+    json_parsing = "STANDARD"
+  }
+
   adaptive_protection_config {
     layer_7_ddos_defense_config {
       enable = true
@@ -98,6 +102,10 @@ resource "google_compute_security_policy" "ctlog" {
     description = "default rule"
   }
 
+  advanced_options_config {
+    json_parsing = "STANDARD"
+  }
+
   adaptive_protection_config {
     layer_7_ddos_defense_config {
       enable = true
@@ -141,6 +149,10 @@ resource "google_compute_security_policy" "dex" {
       }
     }
     description = "default rule"
+  }
+
+  advanced_options_config {
+    json_parsing = "STANDARD"
   }
 
   adaptive_protection_config {

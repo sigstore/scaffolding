@@ -65,6 +65,10 @@ resource "google_compute_security_policy" "rekor" {
     description = "default rule"
   }
 
+  advanced_options_config {
+    json_parsing = "STANDARD"
+  }
+
   adaptive_protection_config {
     layer_7_ddos_defense_config {
       enable = true

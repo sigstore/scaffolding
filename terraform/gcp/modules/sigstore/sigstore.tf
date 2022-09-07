@@ -30,6 +30,7 @@ module "bastion" {
 
   project_id         = var.project_id
   region             = var.region
+  zone               = var.bastion_zone
   network            = module.network.network_name
   subnetwork         = module.network.subnetwork_self_link
   tunnel_accessor_sa = var.tunnel_accessor_sa

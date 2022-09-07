@@ -27,6 +27,12 @@ variable "region" {
   type        = string
 }
 
+variable "bastion_zone" {
+  description = "Bastion zone"
+  type        = string
+  default     = ""
+}
+
 variable "tuf_region" {
   description = "The region in which to create the TUF bucket"
   type        = string

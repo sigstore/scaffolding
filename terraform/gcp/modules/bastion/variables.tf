@@ -29,6 +29,12 @@ variable "region" {
   default     = "us-west1"
 }
 
+variable "zone" {
+  type        = string
+  description = "Zone (a random zone will be selected for the bastion if one is not set)"
+  default     = ""
+}
+
 variable "network" {
   type        = string
   description = "VPC network to deploy bastion into"

@@ -106,8 +106,9 @@ resource "random_shuffle" "bastion_az" {
 resource "google_compute_instance" "bastion" {
   name         = "bastion-${random_id.suffix.hex}"
   machine_type = "g1-small"
-  zone         = random_shuffle.bastion_az.result[0]
-  tags         = ["bastion"]
+  // coalesce function will choose whichever value isn't an empty string first
+  zone = coalesce(var.zone, random_shuffle.bastion_az.result[0])
+  tags = ["bastion"]
 
   boot_disk {
     kms_key_self_link = google_kms_crypto_key.disk-key.id

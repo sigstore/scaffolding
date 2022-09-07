@@ -109,3 +109,9 @@ variable "database_version" {
   description = "MySQL database version."
   default     = "MYSQL_5_7"
 }
+
+variable "deletion_protection" {
+  type        = bool
+  description = "Deletion protection for MYSQL database. Must be set to false for `terraform apply` or `terraform destroy` to delete the db."
+  default     = true
+}

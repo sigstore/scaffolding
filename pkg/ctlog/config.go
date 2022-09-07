@@ -22,8 +22,8 @@ package ctlog
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
@@ -65,9 +65,9 @@ const (
 // technically they are not part of the config, however because we create a
 // secret/CM that we then mount, they need to be synced.
 type CTLogConfig struct {
-	PrivKey         *rsa.PrivateKey
+	PrivKey         *ecdsa.PrivateKey
 	PrivKeyPassword string
-	PubKey          *rsa.PublicKey
+	PubKey          *ecdsa.PublicKey
 	LogID           int64
 	LogPrefix       string
 
@@ -76,7 +76,8 @@ type CTLogConfig struct {
 
 	// FulcioCerts contains one or more Root certificates for Fulcio.
 	// It may contain more than one if Fulcio key is rotated for example, so
-	// there will be a period of time when we allow both.
+	// there will be a period of time when we allow both. It might also contain
+	// multiple Root Certificates, if we choose to support admitting certificates from fulcio instances run by others
 	FulcioCerts [][]byte
 }
 
@@ -113,6 +114,15 @@ func (c *CTLogConfig) String() string {
 	sb.WriteString(fmt.Sprintf("TrillianServerAddr: %s\n", c.TrillianServerAddr))
 	for _, fulcioCert := range c.FulcioCerts {
 		sb.WriteString(fmt.Sprintf("fulciocert:\n%s\n", string(fulcioCert)))
+	}
+	if marshaledPub, err := x509.MarshalPKIXPublicKey(c.PrivKey.Public()); err == nil {
+		pubPEM := pem.EncodeToMemory(
+			&pem.Block{
+				Type:  "PUBLIC KEY",
+				Bytes: marshaledPub,
+			},
+		)
+		sb.WriteString(fmt.Sprintf("PublicKey:\n%s\n", pubPEM))
 	}
 	return sb.String()
 }
@@ -163,11 +173,13 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 	if pubPEM == nil {
 		return nil, fmt.Errorf("did not find valid public PEM data")
 	}
-	pubKey, err := x509.ParsePKCS1PublicKey(pubPEM.Bytes)
+	pubKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse public key from PEM data: %w", err)
 	}
-	ret.PubKey = pubKey
+	if ret.PubKey, ok = pubKey.(*ecdsa.PublicKey); !ok {
+		return nil, fmt.Errorf("Not an ecdsa PublicKey")
+	}
 	privPEM, _ := pem.Decode(private)
 	if privPEM == nil {
 		return nil, fmt.Errorf("did not find valid private PEM data")
@@ -187,14 +199,13 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 		return nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
 	}
 	ret.PrivKeyPassword = pb.Password
-	privKey, err := x509.ParsePKCS1PrivateKey(privatePEMBlock)
+	privKey, err := x509.ParsePKCS8PrivateKey(privatePEMBlock)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse private key PEM: %w", err)
 	}
-	if err := privKey.Validate(); err != nil {
-		return nil, fmt.Errorf("private key is not valid: %w", err)
+	if ret.PrivKey, ok = privKey.(*ecdsa.PrivateKey); !ok {
+		return nil, fmt.Errorf("Not an ecdsa PrivateKey")
 	}
-	ret.PrivKey = privKey
 
 	// If there's legacy rootCA entry, check it first.
 	if legacyRoot, ok := in[LegacyRootCAKey]; ok {
@@ -270,26 +281,34 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 // fulcio-%d - For each fulcioCerts, contains one entry so we can support
 // multiple.
 func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
-	// Encode private key to PKCS#1 ASN.1 PEM.
+	// Encode private key to PKCS #8 ASN.1 PEM.
+	marshalledPrivKey, err := x509.MarshalPKCS8PrivateKey(c.PrivKey)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal private key: %w", err)
+	}
 	block := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(c.PrivKey),
+		Type:  "PRIVATE KEY",
+		Bytes: marshalledPrivKey,
 	}
 	// Encrypt the pem
-	block, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256) // nolint
+	encryptedBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256) // nolint
 	if err != nil {
 		return nil, fmt.Errorf("failed to encrypt private key: %w", err)
 	}
 
-	privPEM := pem.EncodeToMemory(block)
+	privPEM := pem.EncodeToMemory(encryptedBlock)
 	if privPEM == nil {
 		return nil, fmt.Errorf("failed to encode encrypted private key")
 	}
-	// Encode public key to PKCS#1 ASN.1 PEM.
+	// Encode public key to PKIX ASN.1 PEM.
+	marshalledPubKey, err := x509.MarshalPKIXPublicKey(c.PrivKey.Public())
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal public key: %w", err)
+	}
 	pubPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(c.PrivKey.Public().(*rsa.PublicKey)),
+			Type:  "PUBLIC KEY",
+			Bytes: marshalledPubKey,
 		},
 	)
 	data := map[string][]byte{
@@ -300,8 +319,6 @@ func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
 		fulcioKey := fmt.Sprintf("fulcio-%d", i)
 
 		// Fetch only root certificate from the chain
-		// TODO(Hayden): Is this what we should be adding, or the intermediates,
-		// or??
 		certs, err := cryptoutils.UnmarshalCertificatesFromPEM(cert)
 		if err != nil {
 			return nil, fmt.Errorf("unable to unmarshal certficate chain: %w", err)

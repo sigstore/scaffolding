@@ -23,12 +23,6 @@ variable "project_id" {
   }
 }
 
-variable "region" {
-  type        = string
-  description = "GCP region"
-  default     = "us-west1"
-}
-
 variable "dns_zone_name" {
   description = "Name of DNS Zone object in Google Cloud DNS"
   type        = string

@@ -267,7 +267,6 @@ module "oslogin" {
 module "ctlog" {
   source = "../ctlog"
 
-  region     = var.region
   project_id = var.project_id
 
   dns_zone_name    = var.dns_zone_name
@@ -284,7 +283,6 @@ module "ctlog" {
 module "dex" {
   source = "../dex"
 
-  region     = var.region
   project_id = var.project_id
 
   dns_zone_name    = var.dns_zone_name

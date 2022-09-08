@@ -115,6 +115,9 @@ func (c *CTLogConfig) String() string {
 	for _, fulcioCert := range c.FulcioCerts {
 		sb.WriteString(fmt.Sprintf("fulciocert:\n%s\n", string(fulcioCert)))
 	}
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
 	if signer, ok := c.PrivKey.(crypto.Signer); ok {
 		if marshaledPub, err := x509.MarshalPKIXPublicKey(signer.Public()); err == nil {
 			pubPEM := pem.EncodeToMemory(
@@ -176,19 +179,6 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal public key: %w", err)
 	}
-	/*
-		pubPEM, _ := pem.Decode(public)
-		if pubPEM == nil {
-			return nil, fmt.Errorf("did not find valid public PEM data")
-		}
-		pubKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse public key from PEM data: %w", err)
-		}
-		if ret.PubKey, ok = pubKey.(*ecdsa.PublicKey); !ok {
-			return nil, fmt.Errorf("Not an ecdsa PublicKey")
-		}
-	*/
 
 	privProto, err := logConfig.PrivateKey.UnmarshalNew()
 	if err != nil {
@@ -250,6 +240,9 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 	}
 	var pubkey crypto.Signer
 	var ok bool
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
 	if pubkey, ok = c.PrivKey.(crypto.Signer); !ok {
 		logging.FromContext(ctx).Fatalf("Failed to convert private key to crypto.Signer")
 	}
@@ -318,6 +311,10 @@ func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
 	// Encode public key to PKIX ASN.1 PEM.
 	var pubkey crypto.Signer
 	var ok bool
+
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
 	if pubkey, ok = c.PrivKey.(crypto.Signer); !ok {
 		return nil, fmt.Errorf("failed to convert private key to crypto.Signer")
 	}

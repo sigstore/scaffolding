@@ -117,7 +117,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
 
       duration = "300s"
-      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", each.key)
+      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\"", each.key)
 
       trigger {
         count   = "1"
@@ -142,6 +142,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
 
 // This alert will fire if a non-200 error code is seen over the past 60s (alignment_period)
 // AND if this sustains for 5 minutes (duration)
+// NOTE: The Rekor endpoint for `/api/v1/index/retrieve` is ignored as it is experimental and will not alert
 resource "google_monitoring_alert_policy" "prober_error_codes" {
   alert_strategy {
     auto_close = "604800s"
@@ -160,7 +161,7 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != \"200\""
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != \"200\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\""
       threshold_value = "0"
 
       trigger {

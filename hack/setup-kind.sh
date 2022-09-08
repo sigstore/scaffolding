@@ -68,23 +68,28 @@ done
 KIND_VERSION="v0.14.0"
 case ${K8S_VERSION} in
   v1.21.x)
-    K8S_VERSION="1.21.12"
-    KIND_IMAGE_SHA="sha256:f316b33dd88f8196379f38feb80545ef3ed44d9197dca1bfd48bcb1583210207"
+    K8S_VERSION="1.21.14"
+    KIND_IMAGE_SHA="sha256:f9b4d3d1112f24a7254d2ee296f177f628f9b4c1b32f0006567af11b91c1f301"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.22.x)
-    K8S_VERSION="1.22.9"
-    KIND_IMAGE_SHA="sha256:8135260b959dfe320206eb36b3aeda9cffcb262f4b44cda6b33f7bb73f453105"
+    K8S_VERSION="1.22.13"
+    KIND_IMAGE_SHA="sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.23.x)
-    K8S_VERSION="1.23.6"
-    KIND_IMAGE_SHA="sha256:b1fa224cc6c7ff32455e0b1fd9cbfd3d3bc87ecaa8fcb06961ed1afb3db0f9ae"
+    K8S_VERSION="1.23.10"
+    KIND_IMAGE_SHA="sha256:f047448af6a656fae7bc909e2fab360c18c487ef3edc93f06d78cdfd864b2d12"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.24.x)
-    K8S_VERSION="1.24.0"
-    KIND_IMAGE_SHA="sha256:0866296e693efe1fed79d5e6c7af8df71fc73ae45e3679af05342239cdc5bc8e"
+    K8S_VERSION="1.24.4"
+    KIND_IMAGE_SHA="sha256:adfaebada924a26c2c9308edd53c6e33b3d4e453782c0063dc0028bdebaddf98"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
+  v1.25.x)
+    K8S_VERSION="1.25.0"
+    KIND_IMAGE_SHA="sha256:428aaa17ec82ccde0131cb2d1ca6547d13cf5fdabcc0bbecf749baa935387cbf"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;

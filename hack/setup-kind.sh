@@ -65,7 +65,7 @@ while [[ $# -ne 0 ]]; do
 done
 
 # The version map correlated with this version of KinD
-KIND_VERSION="v0.14.0"
+KIND_VERSION="v0.15.0"
 case ${K8S_VERSION} in
   v1.21.x)
     K8S_VERSION="1.21.14"

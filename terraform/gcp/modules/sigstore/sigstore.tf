@@ -225,3 +225,15 @@ module "project_roles" {
   project_id           = var.project_id
   iam_members_to_roles = var.iam_members_to_roles
 }
+
+// ctlog
+module "ctlog" {
+  source     = "../ctlog"
+  project_id = var.project_id
+}
+
+// dex
+module "dex" {
+  source     = "../dex"
+  project_id = var.project_id
+}

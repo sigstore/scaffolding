@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-// Enable required services for this module
-resource "google_compute_security_policy" "fulcio" {
-  name    = "fulcio-service-security-policy"
+resource "google_compute_security_policy" "dex" {
+  name    = "dex-service-security-policy"
   project = var.project_id
   type    = "CLOUD_ARMOR"
 
@@ -38,7 +37,7 @@ resource "google_compute_security_policy" "fulcio" {
         interval_sec = "60"
       }
     }
-    description = "Rate limit all traffic by client IP"
+    description = "Rate limit all traffic"
   }
 
   rule {

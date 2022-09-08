@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-resource "google_compute_ssl_policy" "fulcio" {
-  name            = "fulcio-ingress-ssl-policy"
+resource "google_compute_ssl_policy" "ctlog" {
+  name            = "ctlog-ingress-ssl-policy"
   profile         = "MODERN"
   min_tls_version = "TLS_1_2"
 }

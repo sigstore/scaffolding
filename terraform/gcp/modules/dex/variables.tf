@@ -14,9 +14,12 @@
  * limitations under the License.
  */
 
-resource "google_compute_ssl_policy" "fulcio" {
-  name            = "fulcio-ingress-ssl-policy"
-  profile         = "MODERN"
-  min_tls_version = "TLS_1_2"
+variable "project_id" {
+  type    = string
+  default = ""
+  validation {
+    condition     = length(var.project_id) > 0
+    error_message = "Must specify project_id variable."
+  }
 }
 

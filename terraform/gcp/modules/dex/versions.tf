@@ -14,9 +14,21 @@
  * limitations under the License.
  */
 
-resource "google_compute_ssl_policy" "fulcio" {
-  name            = "fulcio-ingress-ssl-policy"
-  profile         = "MODERN"
-  min_tls_version = "TLS_1_2"
-}
+terraform {
+  required_version = ">= 1.1.3, < 1.3.0"
 
+  required_providers {
+    google = {
+      version = ">= 4.11.0, < 4.26.0"
+      source  = "hashicorp/google-beta"
+    }
+    google-beta = {
+      version = ">= 4.11.0, < 4.26.0"
+      source  = "hashicorp/google-beta"
+    }
+    random = {
+      version = ">= 3.1.0, < 3.2.0"
+      source  = "hashicorp/random"
+    }
+  }
+}

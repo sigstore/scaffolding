@@ -46,10 +46,9 @@ jobs:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    # Setup ko
-    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+    - uses: imjasonh/setup-ko@v0.6
       with:
-        version: tip
+        version: v0.12.0
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@7d1eb557f464d97e5fe5177807a9226141eb9308

@@ -25,9 +25,8 @@ jobs:
         go-version: 1.18
         check-latest: true
 
-    # will use the latest release available for ko
     - name: Install ko
-      uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+      uses: imjasonh/setup-ko@v0.6
 
     - name: Install cosign
       uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2

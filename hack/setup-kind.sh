@@ -209,23 +209,33 @@ echo '::endgroup::'
 #############################################################
 echo '::group:: Setup metallb'
 
-https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
+
+# Wait for Metallb to be ready (or webhook will reject CRDs)
+for x in $(kubectl get deploy --namespace metallb-system -oname); do
+  kubectl rollout status --timeout 5m --namespace metallb-system "$x"
+done
+
+# And allow for few seconds for things to settle just to make sure things are up
+sleep 5
 
 network=$(docker network inspect kind -f "{{(index .IPAM.Config 0).Subnet}}" | cut -d '.' -f1,2)
 cat <<EOF | kubectl apply -f -
-apiVersion: v1
-kind: ConfigMap
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
 metadata:
-  namespace: metallb-system
   name: config
-data:
-  config: |
-    address-pools:
-    - name: default
-      protocol: layer2
-      addresses:
-      - $network.255.1-$network.255.250
+  namespace: metallb-system
+spec:
+  addresses:
+  - $network.255.1-$network.255.250
+---
+apiVersion: metallb.io/v1beta1
+kind: L2Advertisement
+metadata:
+  name: empty
+  namespace: metallb-system
 EOF
 
 echo '::endgroup::'

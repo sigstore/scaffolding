@@ -81,7 +81,7 @@ jobs:
     - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@7d1eb557f464d97e5fe5177807a9226141eb9308
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}

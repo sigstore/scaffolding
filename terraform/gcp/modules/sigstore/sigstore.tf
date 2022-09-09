@@ -235,6 +235,8 @@ module "oslogin" {
   // Disable module entirely if oslogin is disabled
   count = var.oslogin.enabled ? 1 : 0
 
+  oslogin = var.oslogin
+
   // Grant OSLogin access to the bastion instance to the GHA
   // SA for terraform access and to tunnel accessors.
   instance_os_login_members = {

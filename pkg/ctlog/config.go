@@ -22,7 +22,7 @@ package ctlog
 import (
 	"bytes"
 	"context"
-	"crypto/ecdsa"
+	"crypto"
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
@@ -65,9 +65,9 @@ const (
 // technically they are not part of the config, however because we create a
 // secret/CM that we then mount, they need to be synced.
 type CTLogConfig struct {
-	PrivKey         *ecdsa.PrivateKey
+	PrivKey         crypto.PrivateKey
 	PrivKeyPassword string
-	PubKey          *ecdsa.PublicKey
+	PubKey          crypto.PublicKey
 	LogID           int64
 	LogPrefix       string
 
@@ -115,14 +115,19 @@ func (c *CTLogConfig) String() string {
 	for _, fulcioCert := range c.FulcioCerts {
 		sb.WriteString(fmt.Sprintf("fulciocert:\n%s\n", string(fulcioCert)))
 	}
-	if marshaledPub, err := x509.MarshalPKIXPublicKey(c.PrivKey.Public()); err == nil {
-		pubPEM := pem.EncodeToMemory(
-			&pem.Block{
-				Type:  "PUBLIC KEY",
-				Bytes: marshaledPub,
-			},
-		)
-		sb.WriteString(fmt.Sprintf("PublicKey:\n%s\n", pubPEM))
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
+	if signer, ok := c.PrivKey.(crypto.Signer); ok {
+		if marshaledPub, err := x509.MarshalPKIXPublicKey(signer.Public()); err == nil {
+			pubPEM := pem.EncodeToMemory(
+				&pem.Block{
+					Type:  "PUBLIC KEY",
+					Bytes: marshaledPub,
+				},
+			)
+			sb.WriteString(fmt.Sprintf("PublicKey:\n%s\n", pubPEM))
+		}
 	}
 	return sb.String()
 }
@@ -169,20 +174,10 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 	ret.TrillianServerAddr = multiConfig.Backends.GetBackend()[0].GetBackendSpec()
 
 	// Then we need to decode public key
-	pubPEM, _ := pem.Decode(public)
-	if pubPEM == nil {
-		return nil, fmt.Errorf("did not find valid public PEM data")
-	}
-	pubKey, err := x509.ParsePKIXPublicKey(pubPEM.Bytes)
+	var err error
+	ret.PubKey, err = cryptoutils.UnmarshalPEMToPublicKey(public)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse public key from PEM data: %w", err)
-	}
-	if ret.PubKey, ok = pubKey.(*ecdsa.PublicKey); !ok {
-		return nil, fmt.Errorf("Not an ecdsa PublicKey")
-	}
-	privPEM, _ := pem.Decode(private)
-	if privPEM == nil {
-		return nil, fmt.Errorf("did not find valid private PEM data")
+		return nil, fmt.Errorf("failed to unmarshal public key: %w", err)
 	}
 
 	privProto, err := logConfig.PrivateKey.UnmarshalNew()
@@ -194,17 +189,22 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 		return nil, fmt.Errorf("Not a valid PEMKeyFile in proto")
 	}
 
+	privPEM, _ := pem.Decode(private)
+	if privPEM == nil {
+		return nil, fmt.Errorf("did not find valid private PEM data")
+	}
+	ret.PrivKeyPassword = pb.Password
+
 	privatePEMBlock, err := x509.DecryptPEMBlock(privPEM, []byte(pb.Password))
 	if err != nil {
 		return nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
 	}
-	ret.PrivKeyPassword = pb.Password
-	privKey, err := x509.ParsePKCS8PrivateKey(privatePEMBlock)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse private key PEM: %w", err)
-	}
-	if ret.PrivKey, ok = privKey.(*ecdsa.PrivateKey); !ok {
-		return nil, fmt.Errorf("Not an ecdsa PrivateKey")
+
+	if ret.PrivKey, err = x509.ParsePKCS8PrivateKey(privatePEMBlock); err != nil {
+		// Try it as RSA
+		if ret.PrivKey, err = x509.ParsePKCS1PrivateKey(privatePEMBlock); err != nil {
+			return nil, fmt.Errorf("failed to parse private key PEM: %w", err)
+		}
 	}
 
 	// If there's legacy rootCA entry, check it first.
@@ -238,7 +238,15 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 	for i := range c.FulcioCerts {
 		rootPems = append(rootPems, fmt.Sprintf("%sfulcio-%d", rootsPemFileDir, i))
 	}
-	keyDER, err := x509.MarshalPKIXPublicKey(c.PrivKey.Public())
+	var pubkey crypto.Signer
+	var ok bool
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
+	if pubkey, ok = c.PrivKey.(crypto.Signer); !ok {
+		logging.FromContext(ctx).Fatalf("Failed to convert private key to crypto.Signer")
+	}
+	keyDER, err := x509.MarshalPKIXPublicKey(pubkey.Public())
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to marshal the public key: %v", err)
 	}
@@ -301,7 +309,17 @@ func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
 		return nil, fmt.Errorf("failed to encode encrypted private key")
 	}
 	// Encode public key to PKIX ASN.1 PEM.
-	marshalledPubKey, err := x509.MarshalPKIXPublicKey(c.PrivKey.Public())
+	var pubkey crypto.Signer
+	var ok bool
+
+	// Note this goofy cast to crypto.Signer since the any interface has no
+	// methods so cast here so that we get the Public method which all core
+	// keys support.
+	if pubkey, ok = c.PrivKey.(crypto.Signer); !ok {
+		return nil, fmt.Errorf("failed to convert private key to crypto.Signer")
+	}
+
+	marshalledPubKey, err := x509.MarshalPKIXPublicKey(pubkey.Public())
 	if err != nil {
 		return nil, fmt.Errorf("failed to marshal public key: %w", err)
 	}

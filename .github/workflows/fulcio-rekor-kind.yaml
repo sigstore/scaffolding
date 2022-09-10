@@ -92,7 +92,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.6.0"
+        version: "latest"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

@@ -221,7 +221,7 @@ done
 sleep 5
 
 network=$(docker network inspect kind -f "{{(index .IPAM.Config 0).Subnet}}" | cut -d '.' -f1,2)
-cat <<EOF | kubectl apply -f -
+cat <<EOF >>./metallb-crds.yaml
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool
 metadata:
@@ -237,6 +237,20 @@ metadata:
   name: empty
   namespace: metallb-system
 EOF
+
+for i in {1..10}
+do
+  if kubectl apply -f ./metallb-crds.yaml ; then
+    echo successfully applied metallb crds
+    break
+  fi
+  if [ $i == 10 ]; then
+    echo failed to apply metallb crds. exiting
+    exit 1
+  fi
+  echo failed to apply metallb crds. Attempt numer $i, retrying
+  sleep 2
+done
 
 echo '::endgroup::'
 
@@ -275,8 +289,19 @@ echo '::group:: Install Knative Serving'
 function resource_blaster() {
   local REPO="${1}"
   local FILE="${2}"
+  local REAL_KNATIVE_VERSION=${KNATIVE_VERSION}
 
-  curl -L -s "https://github.com/knative/${REPO}/releases/download/knative-v${KNATIVE_VERSION}/${FILE}" \
+  # If latest specified, fetch that instead. Note that this can vary
+  # between versions, so have to fetch for each component.
+  if [ ${KNATIVE_VERSION} == "latest" ]; then
+    REAL_KNATIVE_VERSION=$(curl -L -s https://api.github.com/repos/knative/${REPO}/releases/latest | jq -r '.tag_name')
+  else
+    REAL_KNATIVE_VERSION="knative-v${KNATIVE_VERSION}"
+  fi
+
+  url="https://github.com/knative/${REPO}/releases/download/${REAL_KNATIVE_VERSION}/${FILE}"
+
+  curl -L -s ${url} \
     | yq e 'del(.spec.template.spec.containers[]?.resources)' - \
     `# Filter out empty objects that come out as {} b/c kubectl barfs` \
     | grep -v '^{}$'

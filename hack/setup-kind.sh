@@ -244,11 +244,11 @@ do
     echo successfully applied metallb crds
     break
   fi
-  if [ $i == 10 ]; then
+  if [ "$i" == 10 ]; then
     echo failed to apply metallb crds. exiting
     exit 1
   fi
-  echo failed to apply metallb crds. Attempt numer $i, retrying
+  echo failed to apply metallb crds. Attempt numer "$i", retrying
   sleep 2
 done
 
@@ -293,15 +293,15 @@ function resource_blaster() {
 
   # If latest specified, fetch that instead. Note that this can vary
   # between versions, so have to fetch for each component.
-  if [ ${KNATIVE_VERSION} == "latest" ]; then
-    REAL_KNATIVE_VERSION=$(curl -L -s https://api.github.com/repos/knative/${REPO}/releases/latest | jq -r '.tag_name')
+  if [ "${KNATIVE_VERSION}" == "latest" ]; then
+    REAL_KNATIVE_VERSION=$(curl -L -s "https://api.github.com/repos/knative/${REPO}/releases/latest" | jq -r '.tag_name')
   else
     REAL_KNATIVE_VERSION="knative-v${KNATIVE_VERSION}"
   fi
 
   url="https://github.com/knative/${REPO}/releases/download/${REAL_KNATIVE_VERSION}/${FILE}"
 
-  curl -L -s ${url} \
+  curl -L -s "${url}" \
     | yq e 'del(.spec.template.spec.containers[]?.resources)' - \
     `# Filter out empty objects that come out as {} b/c kubectl barfs` \
     | grep -v '^{}$'

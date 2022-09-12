@@ -27,6 +27,7 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
+        - v1.25.x
 
         leg:
         - fulcio rekor ctlog e2e
@@ -74,14 +75,14 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+    - uses: imjasonh/setup-ko@v0.6
       with:
-        version: tip
+        version: v0.12.0
 
     - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@7d1eb557f464d97e5fe5177807a9226141eb9308
+      uses: chainguard-dev/actions/setup-kind@main
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -91,7 +92,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.6.0"
+        version: "latest"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

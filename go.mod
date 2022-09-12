@@ -8,7 +8,7 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/golang/glog v1.0.0
 	github.com/google/certificate-transparency-go v1.1.3
-	github.com/google/go-cmp v0.5.8
+	github.com/google/go-cmp v0.5.9
 	github.com/google/trillian v1.5.0
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/hcl v1.0.0

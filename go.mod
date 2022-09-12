@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sigstore/cosign v1.11.1
 	github.com/sigstore/fulcio v0.5.3
-	github.com/sigstore/rekor v0.11.0
+	github.com/sigstore/rekor v0.12.0
 	github.com/sigstore/sigstore v1.4.1-0.20220908184735-abe183b160e9
 	github.com/theupdateframework/go-tuf v0.5.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
@@ -189,7 +189,8 @@ require (
 	go.opentelemetry.io/proto/otlp v0.16.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
-	go.uber.org/zap v1.22.0 // indirect
+	go.uber.org/zap v1.23.0 // indirect
+	golang.org/x/exp v0.0.0-20220823124025-807a23277127 // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220419223038-86c51ed26bb4 // indirect
 	golang.org/x/net v0.0.0-20220826154423-83b083e8dc8b // indirect
 	golang.org/x/oauth2 v0.0.0-20220822191816-0ebed06d0094 // indirect

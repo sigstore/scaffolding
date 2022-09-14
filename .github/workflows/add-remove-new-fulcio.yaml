@@ -1,0 +1,189 @@
+name: Key rotation for Fulcio E2E Tests
+
+on:
+  pull_request:
+    branches: [ main ]
+
+permissions: read-all
+
+defaults:
+  run:
+    shell: bash
+    working-directory: ./src/github.com/sigstore/scaffolding
+
+concurrency:
+  group: fulcio-key-rotation-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  fulcio-key-rotation:
+    name: e2e tests for fulcio key rotation
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false # Keep running if one leg fails.
+      matrix:
+        k8s-version:
+        - v1.25.x
+
+        leg:
+        - fulcio-key-rotation
+
+        go-version:
+        - 1.18
+
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: on
+      GOFLAGS: -ldflags=-s -ldflags=-w
+      KO_DOCKER_REPO: registry.local:5000/knative
+      KOCACHE: ~/ko
+      COSIGN_EXPERIMENTAL: true
+
+    steps:
+    - uses: chainguard-dev/actions/setup-mirror@main
+    # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
+
+    - name: Set up Go
+      uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+      with:
+        go-version: ${{ matrix.go-version }}
+        check-latest: true
+
+    - name: Check out our repo
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      with:
+        path: ./src/github.com/sigstore/scaffolding
+
+    - uses: actions/cache@v3
+      with:
+        # In order:
+        # * Module download cache
+        # * Build cache (Linux)
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ${{ env.KOCACHE }}
+        key: ${{ runner.os }}-go-${{ matrix.go-version }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-${{ matrix.go-version }}-
+
+    - uses: imjasonh/setup-ko@v0.6
+      with:
+        version: v0.12.0
+
+    - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
+
+    - name: Setup Cluster
+      uses: chainguard-dev/actions/setup-kind@main
+      id: kind
+      with:
+        k8s-version: ${{ matrix.k8s-version }}
+        registry-authority: registry.local:5000
+        cluster-suffix: cluster.local
+
+    - name: Setup Knative
+      uses: chainguard-dev/actions/setup-knative@main
+      with:
+        version: "latest"
+        serving-features: >
+          {
+            "kubernetes.podspec-fieldref": "enabled"
+          }
+
+    - name: Create sample image
+      run: |
+        pushd $(mktemp -d)
+        go mod init example.com/demo
+        cat <<EOF > main.go
+        package main
+        import "fmt"
+        func main() {
+          fmt.Println("hello world")
+        }
+        EOF
+        demoimage=`ko publish -B example.com/demo`
+        echo "demoimage=$demoimage" >> $GITHUB_ENV
+        echo Created image $demoimage
+        popd
+
+    - name: Install scaffolding
+      run: |
+        ./hack/setup-scaffolding.sh
+
+    - name: Initialize cosign with our custom tuf root and make root copy
+      run: |
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Then initialize cosign
+        cosign initialize --mirror $TUF_MIRROR --root ./root.json
+        # Make copy of the tuf root in the default namespace for tests
+        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
+
+    - name: Run signing job in k8s using kubernetes tokens in the cluster
+      run: |
+        make ko-apply-sign-job
+        kubectl wait --for=condition=Complete --timeout=90s job/sign-job
+
+    - name: Verify the image with cosign using kubernetes tokens in the cluster
+      run: |
+        make ko-apply-verify-job
+        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+
+    - name: Install a Knative service for fetch tokens off the cluster
+      run: |
+        make ko-apply-gettoken
+        sleep 2
+        kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
+
+    - name: Get the endpoints on the cluster
+      run: |
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+
+        ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=`curl -s $ISSUER_URL`
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+    - name: Sign with cosign from the action using k8s token
+      run: |
+        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+
+    - name: Verify with cosign from the action using k8s token
+      run: |
+        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Spin up a new Fulcio with new keys
+      run: |
+        ko apply -BRf ./testdata/config/new-fulcio
+        kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-new
+
+    - name: Add new Fulcio to ctlog as trusted Fulcio
+      run: |
+        ko apply -BRf ./testdata/config/add-new-fulcio
+        sleep 2
+        kubectl -n ctlog-system wait --for=condition=Complete --timeout=180s job/add-fulcio
+
+    - name: Restart ctlog pod
+      run: |
+        kubectl -n ctlog-system get pods -oname | xargs kubectl -n ctlog-system delete
+        sleep 10
+
+    # TODO: Verify these properly, add the new Fulcio to TUF root, sign & verify
+    - name: Dump the trusted certs
+      run: |
+        curl ${{ env.CTLOG_URL }}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+
+    - name: Collect diagnostics
+      if: ${{ failure() }}
+      uses: chainguard-dev/actions/kind-diag@main
+      with:
+        artifact-name: logs.${{ matrix.k8s-version }}

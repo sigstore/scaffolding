@@ -17,6 +17,7 @@ package secret
 import (
 	"bytes"
 	"context"
+	"fmt"
 
 	corev1 "k8s.io/api/core/v1"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
@@ -34,8 +35,7 @@ import (
 func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byte, nsSecret v1.SecretInterface) error {
 	existingSecret, err := nsSecret.Get(ctx, name, metav1.GetOptions{})
 	if err != nil && !apierrs.IsNotFound(err) {
-		logging.FromContext(ctx).Errorf("Failed to get secret %s/%s: %v", ns, name, err)
-		return err
+		return fmt.Errorf("failed to get secret %s/%s: %v", ns, name, err)
 	}
 
 	// If we found the secret, just make sure all the fields are there.
@@ -51,7 +51,7 @@ func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byt
 			existingSecret.Data = data
 			_, err = nsSecret.Update(ctx, existingSecret, metav1.UpdateOptions{})
 			if err != nil {
-				logging.FromContext(ctx).Errorf("Failed to update secret %s/%s: %v", ns, name, err)
+				return fmt.Errorf("failed to udpate secret %s/%s: %w", ns, name, err)
 			}
 			logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, name)
 		}
@@ -65,8 +65,7 @@ func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byt
 		}
 		_, err = nsSecret.Create(ctx, secret, metav1.CreateOptions{})
 		if err != nil {
-			logging.FromContext(ctx).Errorf("Failed to create secret %s/%s: %v", ns, name, err)
-			return err
+			return fmt.Errorf("failed to create secret %s/%s: %w", ns, name, err)
 		}
 		logging.FromContext(ctx).Infof("Created secret %s/%s", ns, name)
 	}

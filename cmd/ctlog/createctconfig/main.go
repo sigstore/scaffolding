@@ -15,23 +15,24 @@
 package main
 
 import (
-	"bytes"
+	"context"
+	"crypto"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/x509"
-	"encoding/pem"
 	"flag"
 	"fmt"
+	"log"
 	"net/url"
 	"os"
 	"strconv"
 
-	"github.com/google/certificate-transparency-go/trillian/ctfe/configpb"
-	"github.com/google/trillian/crypto/keyspb"
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
+	"github.com/sigstore/scaffolding/pkg/ctlog"
 	"github.com/sigstore/scaffolding/pkg/secret"
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
-	"google.golang.org/protobuf/encoding/prototext"
+	apierrs "k8s.io/apimachinery/pkg/api/errors"
+
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -44,9 +45,11 @@ import (
 
 const (
 	// Key in the configmap holding the value of the tree.
-	treeKey   = "treeID"
-	configKey = "config"
-	bitSize   = 4096
+	treeKey    = "treeID"
+	configKey  = "config"
+	privateKey = "private"
+	publicKey  = "public"
+	bitSize    = 4096
 )
 
 var (
@@ -57,6 +60,7 @@ var (
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
 	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
+	keyType            = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa")
 	keyPassword        = flag.String("key-password", "test", "Password for encrypting the PEM key")
 )
 
@@ -65,6 +69,10 @@ func main() {
 	ns := os.Getenv("NAMESPACE")
 	if ns == "" {
 		panic("env variable NAMESPACE must be set")
+	}
+
+	if *keyType != "rsa" && *keyType != "ecdsa" {
+		panic(fmt.Sprintf("invalid keytype specified: %s, support for [rsa,ecdsa]", *keyType))
 	}
 
 	ctx := signals.NewContext()
@@ -111,113 +119,81 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to fetch fulcio Root cert: %w", err)
 	}
 
-	// Generate RSA key. We do it here in case we need to update the config
-	// with it.
-	key, err := rsa.GenerateKey(rand.Reader, bitSize)
-	if err != nil {
-		panic(err)
+	// See if there's an existing configuration already in the ConfigMap
+	var existingCMConfig []byte
+	if cm.BinaryData != nil && cm.BinaryData[configKey] != nil {
+		logging.FromContext(ctx).Infof("Found existing ctlog config in ConfigMap")
+		existingCMConfig = cm.BinaryData[configKey]
 	}
 
-	var marshalledConfig []byte
-
-	privKeyProto := mustMarshalAny(&keyspb.PEMKeyFile{Path: "/ctfe-keys/privkey.pem", Password: *keyPassword})
-
-	keyDER, err := x509.MarshalPKIXPublicKey(key.Public())
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to marshal the public key: %v", err)
-	}
-	proto := configpb.LogConfig{
-		LogId:          treeIDInt,
-		Prefix:         *ctlogPrefix,
-		RootsPemFile:   []string{"/ctfe-keys/roots.pem"},
-		PrivateKey:     privKeyProto,
-		PublicKey:      &keyspb.PublicKey{Der: keyDER},
-		LogBackendName: "trillian",
-		ExtKeyUsages:   []string{"CodeSigning"},
-	}
-
-	multiConfig := configpb.LogMultiConfig{
-		LogConfigs: &configpb.LogConfigSet{
-			Config: []*configpb.LogConfig{&proto},
-		},
-		Backends: &configpb.LogBackendSet{
-			Backend: []*configpb.LogBackend{{
-				Name:        "trillian",
-				BackendSpec: *trillianServerAddr,
-			}},
-		},
-	}
-	marshalledConfig, err = prototext.Marshal(&multiConfig)
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to marshal config proto: %v", err)
-	}
-
-	// If ctlog config is not supposed to be put into a secret, and config
-	// doesn't exist, or is out of date, update ConfigMap.
-	if !*configInSecret && (cm.BinaryData == nil || bytes.Compare(marshalledConfig, cm.BinaryData[configKey]) != 0) {
-		logging.FromContext(ctx).Infof("Updating config with treeid: %s", treeID)
-		if cm.BinaryData == nil {
-			cm.BinaryData = make(map[string][]byte)
-		}
-		cm.BinaryData[configKey] = marshalledConfig
-		_, err = clientset.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Panicf("Failed to update the configmap %s/%s: %v", ns, *cmname, err)
-		}
-	}
-	// Extract public component.
-	pub := key.Public()
-
-	// Encode private key to PKCS#1 ASN.1 PEM.
-	block := &pem.Block{
-		Type:  "RSA PRIVATE KEY",
-		Bytes: x509.MarshalPKCS1PrivateKey(key),
-	}
-	// Encrypt the pem
-	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(*keyPassword), x509.PEMCipherAES256) // nolint
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to encrypt private key: %v", err)
-	}
-
-	privPEM, err := pem.EncodeToMemory(block), nil
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to encode encrypted private key: %v", err)
-	}
-	// Encode public key to PKCS#1 ASN.1 PEM.
-	pubPEM := pem.EncodeToMemory(
-		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey)),
-		},
-	)
-
-	// Fetch only root certificate from the chain
-	certs, err := cryptoutils.UnmarshalCertificatesFromPEM(root.ChainPEM)
-	if err != nil {
-		logging.FromContext(ctx).Panicf("unable to unmarshal certficate chain: %v", err)
-	}
-	rootCertPEM, err := cryptoutils.MarshalCertificateToPEM(certs[len(certs)-1])
-	if err != nil {
-		logging.FromContext(ctx).Panicf("unable to marshal root certificate: %v", err)
-	}
-
-	data := map[string][]byte{
-		"private": privPEM,
-		"public":  pubPEM,
-		"rootca":  rootCertPEM,
-	}
-
-	// If the config is supposed to be written into a secret, make it so.
-	if *configInSecret {
-		data[configKey] = marshalledConfig
-	}
-
+	// See if there's existing secret with the keys we want
 	nsSecret := clientset.CoreV1().Secrets(ns)
-	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
+	existingSecret, err := nsSecret.Get(ctx, *secretName, metav1.GetOptions{})
+	if err != nil && !apierrs.IsNotFound(err) {
+		logging.FromContext(ctx).Fatalf("Failed to get secret %s/%s: %v", ns, *secretName, err)
+	}
+
+	// If any of the private, public or config either from secret or configmap
+	// is not there, create a new configuration.
+	if existingSecret.Data[privateKey] == nil ||
+		existingSecret.Data[publicKey] == nil ||
+		(existingSecret.Data[configKey] == nil && existingCMConfig == nil) {
+		ctlogConfig, err := createConfigWithKeys(ctx, *keyType)
+		if err != nil {
+			logging.FromContext(ctx).Fatalf("Failed to generate keys: %v", err)
+		}
+		ctlogConfig.PrivKeyPassword = *keyPassword
+		ctlogConfig.LogID = treeIDInt
+		ctlogConfig.LogPrefix = *ctlogPrefix
+		ctlogConfig.TrillianServerAddr = *trillianServerAddr
+		ctlogConfig.AddFulcioRoot(ctx, root.ChainPEM)
+		configMap, err := ctlogConfig.MarshalConfig(ctx)
+		if err != nil {
+			logging.FromContext(ctx).Fatalf("Failed to marshal ctlog config: %v", err)
+		}
+
+		if err := secret.ReconcileSecret(ctx, *secretName, ns, configMap, nsSecret); err != nil {
+			logging.FromContext(ctx).Fatalf("Failed to reconcile secret: %v", err)
+		}
+
+		pubData := map[string][]byte{publicKey: configMap[publicKey]}
+		if err := secret.ReconcileSecret(ctx, *pubKeySecretName, ns, pubData, nsSecret); err != nil {
+			logging.FromContext(ctx).Panicf("Failed to reconcile public key secret %s/%s: %v", ns, *secretName, err)
+		}
+
+		logging.FromContext(ctx).Infof("Created CTLog configuration")
+		os.Exit(0)
+	}
+
+	// Prefer the secret config if it exists, but if it doesn't use
+	// configmap for backwards compatibility / migration.
+	if existingSecret.Data[configKey] != nil {
+		logging.FromContext(ctx).Infof("Found existing config in the secret, using that %s/%s", ns, *secretName)
+	} else {
+		existingSecret.Data[configKey] = existingCMConfig
+	}
+
+	existingConfig, err := ctlog.Unmarshal(ctx, existingSecret.Data)
+	if err != nil {
+		log.Fatalf("Failed to unmarshal existing configuration: %v", err)
+	}
+
+	// Finally add Fulcio to it, marshal and write out.
+	existingConfig.AddFulcioRoot(ctx, root.ChainPEM)
+	marshaled, err := existingConfig.MarshalConfig(ctx)
+	if err != nil {
+		log.Fatalf("Failed to marshal new configuration: %v", err)
+	}
+	// Take out the public / private key from the secret since we didn't mess
+	// with those. ReconcileSecret will not touch fields that are not here, so
+	// just remove them from the map.
+	delete(marshaled, privateKey)
+	delete(marshaled, publicKey)
+	if err := secret.ReconcileSecret(ctx, *secretName, ns, marshaled, nsSecret); err != nil {
 		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
 
-	pubData := map[string][]byte{"public": pubPEM}
+	pubData := map[string][]byte{publicKey: existingSecret.Data[publicKey]}
 	if err := secret.ReconcileSecret(ctx, *pubKeySecretName, ns, pubData, nsSecret); err != nil {
 		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
@@ -229,4 +205,34 @@ func mustMarshalAny(pb proto.Message) *anypb.Any {
 		panic(fmt.Sprintf("MarshalAny failed: %v", err))
 	}
 	return ret
+}
+
+// createConfigWithKeys creates otherwise empty CTLogCOnfig but fills
+// in PrivKey, and PubKey. Can not be used as is, but use it to construct
+// the base to build upon
+func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.CTLogConfig, error) {
+	var privKey crypto.PrivateKey
+	var err error
+	if *keyType == "rsa" {
+		privKey, err = rsa.GenerateKey(rand.Reader, bitSize)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to generate Private RSA Key: %w", err)
+		}
+	} else {
+		privKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if err != nil {
+			return nil, fmt.Errorf("Failed to generate Private ECDSA Key: %w", err)
+
+		}
+	}
+
+	var ok bool
+	var signer crypto.Signer
+	if signer, ok = privKey.(crypto.Signer); !ok {
+		logging.FromContext(ctx).Fatalf("failed to convert to Signer")
+	}
+	return &ctlog.CTLogConfig{
+		PrivKey: privKey,
+		PubKey:  signer.Public(),
+	}, nil
 }

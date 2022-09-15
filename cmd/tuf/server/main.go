@@ -62,6 +62,9 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("failed to read dir %s: %v", *dir, err)
 	}
+	for _, file := range tufFiles {
+		logging.FromContext(ctx).Infof("Have file %s", file.Name())
+	}
 	trimDir := strings.TrimSuffix(*dir, "/")
 	files := map[string][]byte{}
 	for _, file := range tufFiles {

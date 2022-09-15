@@ -62,14 +62,17 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("failed to read dir %s: %v", *dir, err)
 	}
-	for _, file := range tufFiles {
-		logging.FromContext(ctx).Infof("Have file %s", file.Name())
-	}
 	trimDir := strings.TrimSuffix(*dir, "/")
 	files := map[string][]byte{}
 	for _, file := range tufFiles {
 		if !file.IsDir() {
 			logging.FromContext(ctx).Infof("Got file %s", file.Name())
+			// Kubernetes adds some extra files here that are prefixed with
+			// .., for example '..data' so skip those.
+			if strings.HasPrefix(file.Name(), "..") {
+				logging.FromContext(ctx).Infof("Skipping .. file %s", file.Name())
+				continue
+			}
 			fileName := fmt.Sprintf("%s/%s", trimDir, file.Name())
 			fileBytes, err := os.ReadFile(fileName)
 			if err != nil {

@@ -16,6 +16,7 @@ package repo
 
 import (
 	"context"
+	"os"
 	"testing"
 )
 
@@ -56,10 +57,16 @@ N6mY2prOeaBRV2dnsJzC94hOxkM5pSp9nbAK1TBOI45fOOPsH2rSR++HrA==
 )
 
 func TestCreateRepo(t *testing.T) {
-	repo, _, err := CreateRepo(context.Background(), []byte(fulcioRootCert), []byte(rekorPublicKey), []byte(ctlogPublicKey))
+	files := map[string][]byte{
+		"fulcio_v1.crt.pem": []byte(fulcioRootCert),
+		"ctfe.pub":          []byte(ctlogPublicKey),
+		"rekor.pub":         []byte(rekorPublicKey),
+	}
+	repo, dir, err := CreateRepo(context.Background(), files)
 	if err != nil {
 		t.Fatalf("Failed to CreateRepo: %s", err)
 	}
+	defer os.RemoveAll(dir)
 	meta, err := repo.GetMeta()
 	if err != nil {
 		t.Errorf("Failed to GetMeta: %s", err)

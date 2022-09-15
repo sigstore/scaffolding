@@ -16,10 +16,11 @@ package main
 
 import (
 	"flag"
-	"io/ioutil"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/sigstore/scaffolding/pkg/repo"
 	"github.com/sigstore/scaffolding/pkg/secret"
@@ -31,10 +32,7 @@ import (
 )
 
 var (
-	// Static data to include in the trust root.
-	rekorPubKey = flag.String("rekor-pubkey", "/var/run/tuf-secrets/rekor-pubkey", "Path to public key of Rekor server")
-	fulcioCert  = flag.String("fulcio-cert", "/var/run/tuf-secrets/fulcio-cert", "Path to the fulcio certificate")
-	ctPubKey    = flag.String("ctlog-pubkey", "/var/run/tuf-secrets/ctlog-pubkey", "Path to a CT Log public key")
+	dir = flag.String("file-dir", "/var/run/tuf-secrets", "Directory where all the files that need to be added to TUF root live. File names are used to as targets.")
 	// Name of the "secret" initial 1.root.json.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
@@ -60,34 +58,26 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
 	}
 
-	// Read the Rekor file
-	rekor, err := ioutil.ReadFile(*rekorPubKey)
+	tufFiles, err := os.ReadDir(*dir)
 	if err != nil {
-		if os.IsNotExist(err) {
-			logging.FromContext(ctx).Panicf("Rekor pubkey file %s does not exist", *rekorPubKey)
-		}
-		logging.FromContext(ctx).Panicf("Failed to read Rekor pubkey %s: %v", *rekorPubKey, err)
+		logging.FromContext(ctx).Fatalf("failed to read dir %s: %v", *dir, err)
 	}
-
-	fulcio, err := ioutil.ReadFile(*fulcioCert)
-	if err != nil {
-		if os.IsNotExist(err) {
-			logging.FromContext(ctx).Panicf("Fulcio cert file %s does not exist", *fulcioCert)
+	trimDir := strings.TrimSuffix(*dir, "/")
+	files := map[string][]byte{}
+	for _, file := range tufFiles {
+		if !file.IsDir() {
+			logging.FromContext(ctx).Infof("Got file %s", file.Name())
+			fileName := fmt.Sprintf("%s/%s", trimDir, file.Name())
+			fileBytes, err := os.ReadFile(fileName)
+			if err != nil {
+				logging.FromContext(ctx).Fatalf("failed to read file %s/%s: %v", fileName, err)
+			}
+			files[file.Name()] = fileBytes
 		}
-
-		logging.FromContext(ctx).Panicf("Failed to read Fulcio cert %s: %v", *fulcioCert, err)
-	}
-
-	ct, err := ioutil.ReadFile(*ctPubKey)
-	if err != nil {
-		if os.IsNotExist(err) {
-			logging.FromContext(ctx).Panicf("CTLog pubkey file %s does not exist", *ctPubKey)
-		}
-		logging.FromContext(ctx).Panicf("Failed to read ctPubkey %s: %v", *ctPubKey, err)
 	}
 
 	// Create a new TUF root with the listed artifacts.
-	local, dir, err := repo.CreateRepo(ctx, fulcio, rekor, ct)
+	local, dir, err := repo.CreateRepo(ctx, files)
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to create repo: %v", err)
 	}

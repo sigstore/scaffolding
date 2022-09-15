@@ -36,9 +36,12 @@ const (
 
 	// These are the fields we create in the secret specified with the
 	// --secret-name flag.
-	fulcioSecretKeyOut = "fulcio-cert"
-	ctSecretKeyOut     = "ctlog-pubkey"
-	rekorSecretKeyOut  = "rekor-pubkey"
+	// These are the target names that are created, so the field names
+	// are the names of the files that then get mounted onto the container, so
+	// we can then just slurp them in and create TUF root out of.
+	fulcioSecretKeyOut = "fulcio_v1.crt.pem"
+	ctSecretKeyOut     = "ctfe.pub"
+	rekorSecretKeyOut  = "rekor.pub"
 )
 
 var (
@@ -59,7 +62,7 @@ func main() {
 	ctx := signals.NewContext()
 
 	versionInfo := version.GetVersionInfo()
-	logging.FromContext(ctx).Infof("running create_secrets Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+	logging.FromContext(ctx).Infof("running createsecret Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {

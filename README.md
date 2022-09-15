@@ -90,7 +90,7 @@ we will cover each of these components in detail, starting from the “bottom up
 ## [Trillian](https://github.com/google/trillian)
 
 Trillian requires a database to work, so we create one using Trillian CI
-[container](gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359)
+[container](https://gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359)
 that has the mysql running, and Trillian
 [schema](https://github.com/google/trillian/blob/master/storage/mysql/schema/storage.sql) on it.
 

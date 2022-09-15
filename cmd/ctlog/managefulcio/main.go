@@ -137,7 +137,6 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to unmarshal: %s", err)
 	}
-	logging.FromContext(ctx).Infof("Current Config:\n%s", conf.String())
 	if op == Add {
 		conf.AddFulcioRoot(ctx, root.ChainPEM)
 	} else {

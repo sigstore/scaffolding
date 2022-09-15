@@ -165,6 +165,8 @@ jobs:
       run: |
         ko apply -BRf ./testdata/config/new-fulcio
         kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-new
+        NEW_FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio-new -ojsonpath='{.status.url}')
+        echo "NEW_FULCIO_URL=$NEW_FULCIO_URL" >> $GITHUB_ENV
 
     - name: Add new Fulcio to ctlog as trusted Fulcio
       run: |
@@ -177,11 +179,41 @@ jobs:
         kubectl -n ctlog-system get pods -oname | xargs kubectl -n ctlog-system delete
         sleep 10
 
-    # TODO: Verify these properly, add the new Fulcio to TUF root, sign & verify
     - name: Dump the trusted certs
       run: |
         curl ${{ env.CTLOG_URL }}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
 
+    - name: Verify both Fulcio certs are there
+      run: |
+        go run ./cmd/ctlog/verifyfulcio/main.go \
+        --ctlog-url ${{ env.CTLOG_URL }} \
+        --log-prefix sigstorescaffolding \
+        --fulcio-url ${{ env.FULCIO_URL }} \
+        --fulcio-url ${{ env.NEW_FULCIO_URL }}
+
+    - name: Remove old Fulcio from ctlog as trusted Fulcio
+      run: |
+        ko apply -BRf ./testdata/config/remove-old-fulcio
+        sleep 2
+        kubectl -n ctlog-system wait --for=condition=Complete --timeout=180s job/remove-fulcio
+
+    - name: Restart ctlog pod again to pick up the changes
+      run: |
+        kubectl -n ctlog-system get pods -oname | xargs kubectl -n ctlog-system delete
+        sleep 10
+
+    - name: Dump the trusted certs
+      run: |
+        curl ${{ env.CTLOG_URL }}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+
+    - name: Verify that only new Fulcio cert is there
+      run: |
+        go run ./cmd/ctlog/verifyfulcio/main.go \
+        --ctlog-url ${{ env.CTLOG_URL }} \
+        --log-prefix sigstorescaffolding \
+        --fulcio-url ${{ env.NEW_FULCIO_URL }}
+
+    # TODO: Add the new Fulcio to TUF root, sign & verify.
     - name: Collect diagnostics
       if: ${{ failure() }}
       uses: chainguard-dev/actions/kind-diag@main

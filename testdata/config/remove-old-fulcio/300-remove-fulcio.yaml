@@ -2,7 +2,7 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: createctconfig
+  name: remove-fulcio
   namespace: ctlog-system
 spec:
   # This number looks crazy, but on k8s 1.23 there does not seem to be
@@ -18,11 +18,14 @@ spec:
       restartPolicy: Never
       automountServiceAccountToken: true
       containers:
-      - name: createctconfig
+      - name: managefulcio
         image: ko://github.com/sigstore/scaffolding/cmd/ctlog/managefulcio
         args: [
           "--configmap=ctlog-config",
-          "--secret=ctlog-secret"
+          "--secret=ctlog-secret",
+          "--fulcio-url=http://fulcio.fulcio-system.svc",
+          "--operation=remove",
+          "--config-in-secret=true"
         ]
         env:
           - name: NAMESPACE

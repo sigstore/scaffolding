@@ -120,6 +120,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	// Export data to prometheus
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
+	defer resp.Body.Close()
 	body, _ = io.ReadAll(resp.Body)
 	fmt.Println(string(body))
 	return nil

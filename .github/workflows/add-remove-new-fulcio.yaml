@@ -188,8 +188,8 @@ jobs:
         go run ./cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${{ env.CTLOG_URL }} \
         --log-prefix sigstorescaffolding \
-        --fulcio-url ${{ env.FULCIO_URL }} \
-        --fulcio-url ${{ env.NEW_FULCIO_URL }}
+        --fulcio ${{ env.FULCIO_URL }} \
+        --fulcio ${{ env.NEW_FULCIO_URL }}
 
     - name: Remove old Fulcio from ctlog as trusted Fulcio
       run: |
@@ -211,7 +211,7 @@ jobs:
         go run ./cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${{ env.CTLOG_URL }} \
         --log-prefix sigstorescaffolding \
-        --fulcio-url ${{ env.NEW_FULCIO_URL }}
+        --fulcio ${{ env.NEW_FULCIO_URL }}
 
     # TODO: Add the new Fulcio to TUF root, sign & verify.
     - name: Collect diagnostics

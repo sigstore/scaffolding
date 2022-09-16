@@ -37,7 +37,7 @@ spec:
           "--trillian_log_server.tlog_id=$(TREE_ID)",
           "--log_type=prod",
           "--rekor_server.signer=/var/run/rekor-secrets/signing-secret",
-          "--rekor_server.signer-pwd=$(SECRET_SIGNING_PWD)",
+          "--rekor_server.signer-passwd=$(SECRET_SIGNING_PWD)",
           "--enable_attestation_storage=true",
           "--attestation_storage_bucket=file:///tmp/",
 #          "--rekor_server.timestamp_chain=$(TIMESTAMP_CHAIN)"

@@ -15,7 +15,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20220723181115-27de4befb95e
 	github.com/prometheus/client_golang v1.13.0
-	github.com/sigstore/cosign v1.11.1
+	github.com/sigstore/cosign v1.12.0
 	github.com/sigstore/fulcio v0.5.3
 	github.com/sigstore/rekor v0.12.1-0.20220915152154-4bb6f441c1b2
 	github.com/sigstore/sigstore v1.4.1

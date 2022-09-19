@@ -60,7 +60,7 @@ var (
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
 	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
-	keyType            = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa")
+	keyType            = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
 	keyPassword        = flag.String("key-password", "test", "Password for encrypting the PEM key")
 )
 

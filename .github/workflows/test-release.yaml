@@ -52,7 +52,7 @@ jobs:
         version: v0.12.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@7d1eb557f464d97e5fe5177807a9226141eb9308
+      uses: chainguard-dev/actions/setup-kind@9a093941a956fd587ee7a4ecc74edbcbe656a517
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -62,7 +62,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.6.0"
+        version: "latest"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

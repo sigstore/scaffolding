@@ -38,7 +38,7 @@ jobs:
     steps:
     - uses: chainguard-dev/actions/setup-mirror@main
 
-    - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
+    - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
 
     - name: Set up Go
       uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
@@ -46,13 +46,12 @@ jobs:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    # Setup ko
-    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+    - uses: imjasonh/setup-ko@v0.6
       with:
-        version: tip
+        version: v0.12.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@7d1eb557f464d97e5fe5177807a9226141eb9308
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}

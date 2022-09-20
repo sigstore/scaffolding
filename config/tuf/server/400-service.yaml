@@ -20,6 +20,9 @@ spec:
       containers:
       - image: ko://github.com/sigstore/scaffolding/cmd/tuf/server
         name: tuf
+        args: [
+          "--file-dir=/var/run/tuf-secrets",
+        ]
         ports:
         - containerPort: 8080 # tuf remote repo service
         env:
@@ -35,10 +38,3 @@ spec:
       - name: tuf-secrets
         secret:
           secretName: tuf-secrets
-          items:
-          - key: rekor-pubkey
-            path: rekor-pubkey
-          - key: fulcio-cert
-            path: fulcio-cert
-          - key: ctlog-pubkey
-            path: ctlog-pubkey

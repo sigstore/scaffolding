@@ -30,6 +30,7 @@ module "bastion" {
 
   project_id         = var.project_id
   region             = var.region
+  zone               = var.bastion_zone
   network            = module.network.network_name
   subnetwork         = module.network.subnetwork_self_link
   tunnel_accessor_sa = var.tunnel_accessor_sa
@@ -226,6 +227,34 @@ module "project_roles" {
   iam_members_to_roles = var.iam_members_to_roles
 }
 
+// OSLogin configuration
+module "oslogin" {
+  source     = "../oslogin"
+  project_id = var.project_id
+
+  // Disable module entirely if oslogin is disabled
+  count = var.oslogin.enabled ? 1 : 0
+
+  oslogin = var.oslogin
+
+  // Grant OSLogin access to the bastion instance to the GHA
+  // SA for terraform access and to tunnel accessors.
+  instance_os_login_members = {
+    bastion = {
+      instance_name = module.bastion.name
+      zone          = module.bastion.zone
+      members = [
+        var.tunnel_accessor_sa,
+        module.policy_bindings.gha_serviceaccount_member
+      ]
+    }
+  }
+  depends_on = [
+    module.bastion,
+    module.policy_bindings
+  ]
+}
+
 // ctlog
 module "ctlog" {
   source     = "../ctlog"
@@ -237,3 +266,4 @@ module "dex" {
   source     = "../dex"
   project_id = var.project_id
 }
+

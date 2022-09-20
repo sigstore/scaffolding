@@ -27,21 +27,19 @@ stack on GCP using Terraform, we also got you [covered there](./terraform/).
 
 # Background
 
-Currently in various e2e tests we (the community) do not exercise all the
-components of the Sigstore when running tests. This results in us skipping
-some validation tests (for example, but not limited to, –insecure-skip-verify
-flag), or using public instances for some of the tests. Part of the reason is
-that there are currently some manual steps or some assumptions baked in some
-places that make this trickier than is strictly necessary. This repository is
-meant to make it easier to test projects that utilize sigstore by making it easy
-to spin up a whole sigstore stack in a k8s cluster so that you can do proper
-integration testing.
+This repository is meant to make it easier to test projects that utilize
+sigstore by making it easy to spin up a whole sigstore stack in a k8s cluster so
+that you can do proper integration testing. With the provided `action` it's easy
+also to add this capability to your GitHub Action testing.
 
 If you are interested in figuring out the nitty/gritty manual way of standing
 up a sigstore stack, a wonderful very detailed document for standing all the
 pieces from scratch is given in Luke Hinds’
 “[Sigstore the hard way](https://github.com/lukehinds/sigstore-the-hard-way)”
 
+If you are interested in standing up a stack on your local machine, a great
+documentation for all of them are provided by Thomas Strömberg
+"[sigstore-the-local-way](https://github.com/tstromberg/sigstore-the-local-way)"
 
 # Overview
 
@@ -90,7 +88,7 @@ we will cover each of these components in detail, starting from the “bottom up
 ## [Trillian](https://github.com/google/trillian)
 
 Trillian requires a database to work, so we create one using Trillian CI
-[container](gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359)
+[container](https://gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359)
 that has the mysql running, and Trillian
 [schema](https://github.com/google/trillian/blob/master/storage/mysql/schema/storage.sql) on it.
 
@@ -107,6 +105,22 @@ rekor-system and the ConfigMap that is created by ‘**createtree**’ Job, we c
 have the following (some stuff omitted for readability) in our Rekor Deployment
 to ensure that Rekor will not start prior to TreeID having been properly
 provisioned.
+Rekor also needs a Signing Key that it will use, and we create one with
+[CreateSecret](./cmd/rekor/createsecret/main.go). It will create two secrets,
+one holding the Private Signing key as well as the password used to encrypt it
+with. By default the secret is named `rekor-signing-secret` and contains two
+keys:
+
+ * signing-secret - Holds the encrypted private key for signing
+ * signing-secret-password - Holds the password used to encrypt the key above.
+
+That secret then gets mounted / used by Rekor as demonstrated below.
+
+ Also a secret holding the Rekor public key is created, which by default is
+ named `rekor-pub-key` and contains one key that we need to construct a proper
+ tuf root later on.
+
+  * public - Rekor public key
 
 
 ```
@@ -128,15 +142,23 @@ spec:
             configMapKeyRef:
               name: rekor-config
               key: treeID
-
+          - name: SECRET_SIGNING_PWD
+            valueFrom:
+              secretKeyRef:
+                name: rekor-secrets
+                key: signing-secret-password
+        volumeMounts:
+        - name: rekor-secrets
+          mountPath: "/var/run/rekor-secrets"
+          readOnly: true
+      volumes:
+      - name: rekor-secrets
+        secret:
+          secretName: rekor-signing-secret
+          items:
+          - key: signing-secret
+            path: signing-secret
 ```
-
-In addition to creating a tree, we will also create a secret holding the
-public key of the Rekor client that we'll need to be able to construct a proper
-tuf root later on. This is handled by a rekor createsecret job and it creates
-a `rekor-pub-key` secret in the `rekor-system` namespace holding a single
-entry in it called `public` that holds the public key for the Rekor.
-
 
 ## [CTLog](https://github.com/google/certificate-transparency-go)
 

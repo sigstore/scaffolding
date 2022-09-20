@@ -10,10 +10,11 @@ kind: Service
 metadata:
   namespace: ctlog-system
   name: ctlog
-  labels:
-    networking.knative.dev/visibility: cluster-local
 spec:
   template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
     spec:
       serviceAccountName: ctlog
       containers:

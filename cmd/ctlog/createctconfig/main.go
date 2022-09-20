@@ -50,7 +50,6 @@ const (
 )
 
 var (
-	ns                 = flag.String("namespace", "ctlog-system", "Namespace where to get the configmap containing treeid")
 	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
 	configInSecret     = flag.Bool("config-in-secret", false, "If set to true, create the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'")
 	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
@@ -58,12 +57,15 @@ var (
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
 	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
-	keyPassword        = flag.String("key-password", "test", "Password for the PEM key")
-	pemPassword        = flag.String("pem-password", "test", "Password for encrypting PEM")
+	keyPassword        = flag.String("key-password", "test", "Password for encrypting the PEM key")
 )
 
 func main() {
 	flag.Parse()
+	ns := os.Getenv("NAMESPACE")
+	if ns == "" {
+		panic("env variable NAMESPACE must be set")
+	}
 
 	ctx := signals.NewContext()
 
@@ -78,9 +80,9 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
 	}
-	cm, err := clientset.CoreV1().ConfigMaps(*ns).Get(ctx, *cmname, metav1.GetOptions{})
+	cm, err := clientset.CoreV1().ConfigMaps(ns).Get(ctx, *cmname, metav1.GetOptions{})
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to get the configmap %s/%s: %v", *ns, *cmname, err)
+		logging.FromContext(ctx).Panicf("Failed to get the configmap %s/%s: %v", ns, *cmname, err)
 	}
 
 	if cm.Data == nil {
@@ -158,9 +160,9 @@ func main() {
 			cm.BinaryData = make(map[string][]byte)
 		}
 		cm.BinaryData[configKey] = marshalledConfig
-		_, err = clientset.CoreV1().ConfigMaps(*ns).Update(ctx, cm, metav1.UpdateOptions{})
+		_, err = clientset.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{})
 		if err != nil {
-			logging.FromContext(ctx).Panicf("Failed to update the configmap %s/%s: %v", *ns, *cmname, err)
+			logging.FromContext(ctx).Panicf("Failed to update the configmap %s/%s: %v", ns, *cmname, err)
 		}
 	}
 	// Extract public component.
@@ -172,7 +174,7 @@ func main() {
 		Bytes: x509.MarshalPKCS1PrivateKey(key),
 	}
 	// Encrypt the pem
-	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(*pemPassword), x509.PEMCipherAES256) // nolint
+	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(*keyPassword), x509.PEMCipherAES256) // nolint
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to encrypt private key: %v", err)
 	}
@@ -210,14 +212,14 @@ func main() {
 		data[configKey] = marshalledConfig
 	}
 
-	nsSecret := clientset.CoreV1().Secrets(*ns)
-	if err := secret.ReconcileSecret(ctx, *secretName, *ns, data, nsSecret); err != nil {
-		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", *ns, *secretName, err)
+	nsSecret := clientset.CoreV1().Secrets(ns)
+	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
 
 	pubData := map[string][]byte{"public": pubPEM}
-	if err := secret.ReconcileSecret(ctx, *pubKeySecretName, *ns, pubData, nsSecret); err != nil {
-		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", *ns, *secretName, err)
+	if err := secret.ReconcileSecret(ctx, *pubKeySecretName, ns, pubData, nsSecret); err != nil {
+		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
 	}
 }
 

@@ -16,6 +16,7 @@ package repo
 
 import (
 	"context"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -26,15 +27,18 @@ import (
 )
 
 // CreateRepo creates and initializes a Tuf repo for Sigstore by adding
-// Fulcio Root Certificate, Rekor, and CTLog public keys into it.
-func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStore, string, error) {
+// keys to bytes. keys are typically for a basic setup like:
+// "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
+// "ctfe.pub" - CTLog public key in PEM format
+// "rekor.pub" - Rekor public key in PEM format
+// but additional keys can be added here.
+func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
 	// TODO: Make this an in-memory fileystem.
 	tmpDir := os.TempDir()
 	dir := tmpDir + "tuf"
 	err := os.Mkdir(dir, os.ModePerm)
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to create tuf dir %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to create tmp TUF dir: %w", err)
 	}
 	dir = dir + "/"
 	logging.FromContext(ctx).Infof("Creating the FS in %q", dir)
@@ -44,14 +48,12 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	logging.FromContext(ctx).Infof("Creating new repo in %q", dir)
 	r, err := tuf.NewRepoIndent(local, "", " ")
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to create NewRepo %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to NewRepoIndent: %w", err)
 	}
 
 	// Added by vaikas
 	if err := r.Init(false); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to init repo %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to Init repo: %w", err)
 	}
 
 	// Make all metadata files expire in 6 months.
@@ -60,53 +62,33 @@ func CreateRepo(ctx context.Context, fulcio, rekor, ctlog []byte) (tuf.LocalStor
 	for _, role := range []string{"root", "targets", "snapshot", "timestamp"} {
 		_, err := r.GenKeyWithExpires(role, expires)
 		if err != nil {
-			logging.FromContext(ctx).Errorf("Failed to GenKeyWithExpires %v", err)
-			return nil, "", err
+			return nil, "", fmt.Errorf("failed to GenKeyWithExpires: %w", err)
 		}
 	}
 
-	// This is the map of targets to add to the trust root with their custom metadata.
-	// Use hard-coded names that are used as fallback targets by sigstore's TUF client.
-	// TODO(asraa): Update to adding targets in usage subdirectories when sigstore/sigstore#562 is fixed.
-	if err := writeStagedTarget(dir, "rekor.pub", []byte(rekor)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for rekor %v", err)
-		return nil, "", err
-	}
-	if err := writeStagedTarget(dir, "fulcio_v1.crt.pem", []byte(fulcio)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for fulcio %v", err)
-		return nil, "", err
-	}
-	if err := writeStagedTarget(dir, "ctfe.pub", []byte(ctlog)); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to writeStagedTarget for ctlog %v", err)
-		return nil, "", err
-	}
-
-	// Now add targets to the TUF repository.
-	targets := []string{
-		"fulcio_v1.crt.pem",
-		"ctfe.pub",
-		"rekor.pub",
+	targets := make([]string, 0, len(files))
+	for k, v := range files {
+		logging.FromContext(ctx).Infof("Adding %s file", k)
+		if err := writeStagedTarget(dir, k, v); err != nil {
+			return nil, "", fmt.Errorf("failed to write staged target %s: %w", k, err)
+		}
+		targets = append(targets, k)
 	}
 	err = r.AddTargetsWithExpires(targets, nil, expires)
 	if err != nil {
-		logging.FromContext(ctx).Errorf("Failed to AddTargets: %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to add AddTargetsWithExpires: %w", err)
 	}
 
 	// Snapshot, Timestamp, and Publish the repository.
 	if err := r.SnapshotWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to SnashotWithExpires %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to add SnapShotWithExpires: %w", err)
 	}
 	if err := r.TimestampWithExpires(expires); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to TimestampWithExpires %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to add TimestampWithExpires: %w", err)
 	}
 	if err := r.Commit(); err != nil {
-		logging.FromContext(ctx).Errorf("Failed to Commit %v", err)
-		return nil, "", err
+		return nil, "", fmt.Errorf("failed to Commit: %w", err)
 	}
-
 	return local, dir, nil
 }
 

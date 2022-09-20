@@ -27,6 +27,12 @@ variable "region" {
   type        = string
 }
 
+variable "bastion_zone" {
+  description = "Bastion zone"
+  type        = string
+  default     = ""
+}
+
 variable "tuf_region" {
   description = "The region in which to create the TUF bucket"
   type        = string
@@ -212,4 +218,16 @@ variable "iam_members_to_roles" {
   description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
   type        = map(set(string))
   default     = {}
+}
+
+variable "oslogin" {
+  type = object({
+    enabled          = bool
+    enabled_with_2fa = bool
+  })
+  default = {
+    enabled          = false
+    enabled_with_2fa = false
+  }
+  description = "oslogin settings for access to VMs"
 }

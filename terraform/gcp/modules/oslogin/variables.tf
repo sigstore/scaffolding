@@ -19,32 +19,28 @@ variable "project_id" {
   default = ""
   validation {
     condition     = length(var.project_id) > 0
-    error_message = "Must specify PROJECT_ID variable."
+    error_message = "Must specify project_id variable."
   }
 }
 
-// URLs for Sigstore services
-variable "rekor_url" {
-  description = "Rekor URL"
-  default     = "rekor.sigstore.dev"
+variable "oslogin" {
+  type = object({
+    enabled          = bool
+    enabled_with_2fa = bool
+  })
+  default = {
+    enabled          = false
+    enabled_with_2fa = false
+  }
+  description = "oslogin settings for access to VMs"
 }
 
-// Set-up for notification channel for alerting
-variable "notification_channel_ids" {
-  type        = list(string)
-  description = "List of notification channel IDs which alerts should be sent to. You can find this by running `gcloud alpha monitoring channels list`."
+variable "instance_os_login_members" {
+  type = map(object({
+    instance_name = string
+    zone          = string
+    members       = set(string)
+  }))
+  default     = {}
+  description = "Map of VMs and members to grant oslogin roles"
 }
-
-variable "api_endpoints_get" {
-  type = list(string)
-  default = [
-    "/",
-    "/api/v1/log",
-    "/api/v1/log/publicKey",
-  ]
-}
-
-locals {
-  notification_channels = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
-}
-

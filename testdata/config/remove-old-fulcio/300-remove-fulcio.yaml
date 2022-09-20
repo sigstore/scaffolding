@@ -18,8 +18,8 @@ spec:
       restartPolicy: Never
       automountServiceAccountToken: true
       containers:
-      - name: managefulcio
-        image: ko://github.com/sigstore/scaffolding/cmd/ctlog/managefulcio
+      - name: managectroots
+        image: ko://github.com/sigstore/scaffolding/cmd/ctlog/managectroots
         args: [
           "--configmap=ctlog-config",
           "--secret=ctlog-secret",

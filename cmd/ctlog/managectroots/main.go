@@ -50,11 +50,11 @@ var (
 	operation        = flag.String("operation", "", "Operation to perform for the specified fulcio [add,remove]")
 )
 
-type fulcioOp string
+type ctRootOp string
 
 const (
-	Add    fulcioOp = "ADD"
-	Remove fulcioOp = "REMOVE"
+	Add    ctRootOp = "ADD"
+	Remove ctRootOp = "REMOVE"
 )
 
 func main() {
@@ -66,8 +66,8 @@ func main() {
 
 	ctx := signals.NewContext()
 
-	var op fulcioOp
-	switch fulcioOperation := *operation; fulcioOperation {
+	var op ctRootOp
+	switch ctRootOperation := *operation; ctRootOperation {
 	case "add":
 		op = Add
 	case "remove":
@@ -77,7 +77,7 @@ func main() {
 	}
 
 	versionInfo := version.GetVersionInfo()
-	logging.FromContext(ctx).Infof("running managefulcio Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+	logging.FromContext(ctx).Infof("running managectroots Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
 	logging.FromContext(ctx).Infof("%sing %s", op, *fulcioURL)
 

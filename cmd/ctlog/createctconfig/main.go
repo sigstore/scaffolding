@@ -60,8 +60,17 @@ var (
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
 	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
 	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
-	keyType            = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
-	keyPassword        = flag.String("key-password", "test", "Password for encrypting the PEM key")
+	// TODO: Support ed25519
+	keyType     = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
+	curveType   = flag.String("curvetype", "p256", "Curve type to use [p256, p384,p521]")
+	keyPassword = flag.String("key-password", "test", "Password for encrypting the PEM key")
+
+	// Supported elliptic curve functions.
+	supportedCurves = map[string]elliptic.Curve{
+		"p256": elliptic.P256(),
+		"p384": elliptic.P384(),
+		"p521": elliptic.P521(),
+	}
 )
 
 func main() {
@@ -75,6 +84,9 @@ func main() {
 		panic(fmt.Sprintf("invalid keytype specified: %s, support for [rsa,ecdsa]", *keyType))
 	}
 
+	if _, ok := supportedCurves[*curveType]; !ok {
+		panic(fmt.Sprintf("invalid curvetype specified: %s, support for [p256,p384,p521]", *keyType))
+	}
 	ctx := signals.NewContext()
 
 	versionInfo := version.GetVersionInfo()
@@ -219,7 +231,7 @@ func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.CTLogConf
 			return nil, fmt.Errorf("Failed to generate Private RSA Key: %w", err)
 		}
 	} else {
-		privKey, err = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		privKey, err = ecdsa.GenerateKey(supportedCurves[*curveType], rand.Reader)
 		if err != nil {
 			return nil, fmt.Errorf("Failed to generate Private ECDSA Key: %w", err)
 

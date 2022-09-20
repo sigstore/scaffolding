@@ -73,7 +73,7 @@ jobs:
       run: |
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
-        /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh --release-version ${{ env.RELEASE_VERSION }}
 
         # TODO(vaikas): Figure out how these could be exposed by above.
         REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')

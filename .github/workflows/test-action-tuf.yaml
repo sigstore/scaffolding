@@ -24,7 +24,6 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
-        - v1.25.x
         release-version:
         - "latest-release" # Test explicitly with latest
         - "v0.4.6" # Test version with TUF

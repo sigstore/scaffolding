@@ -24,10 +24,11 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
+        - v1.25.x
         leg:
         - fulcio rekor ctlog e2e
         go-version:
-        - 1.18
+        - 1.19
 
     env:
       RELEASE_VERSION: "v0.4.6"

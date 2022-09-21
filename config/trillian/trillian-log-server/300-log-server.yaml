@@ -18,7 +18,7 @@ spec:
       serviceAccountName: trillian
       containers:
       - name: log-server
-        image: gcr.io/projectsigstore/trillian_log_server@sha256:04c648cccf6d631caefba5d41ae3bcb9fc6e830f845a34a230e7590cd05a6904 # v0.11.0
+        image: gcr.io/projectsigstore/trillian_log_server@sha256:be7014bf864322fed66452c93f88bf886c75c689596b7ae5c9b2d39c261dea59 # v0.12.1
         args: [
           "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/$(DATABASE_NAME)",
           "--mysql_max_idle_conns=0",

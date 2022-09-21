@@ -14,32 +14,22 @@
  * limitations under the License.
  */
 
-// Resources for Certificate Authority
-module "ca" {
-  source = "../ca"
+// Enable required services for this module
+resource "google_project_service" "service" {
+  for_each = toset([
+    "dns.googleapis.com", // For configuring DNS records
+  ])
+  project = var.project_id
+  service = each.key
 
-  # Disable CA creation if enable_ca is false
-  count = var.enable_ca ? 1 : 0
-
-  region       = var.region
-  project_id   = var.project_id
-  ca_pool_name = var.ca_pool_name
-  ca_name      = var.ca_name
+  // Do not disable the service on destroy. On destroy, we are going to
+  // destroy the project, but we need the APIs available to destroy the
+  // underlying resources.
+  disable_on_destroy = false
 }
 
-resource "google_dns_record_set" "A_fulcio" {
-  name = "fulcio.${var.dns_domain_name}"
-  type = "A"
-  ttl  = 60
-
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-
-  rrdatas = [var.load_balancer_ip]
-}
-
-resource "google_dns_record_set" "A_v1_fulcio" {
-  name = "v1.fulcio.${var.dns_domain_name}"
+resource "google_dns_record_set" "A_dex" {
+  name = "oauth2.${var.dns_domain_name}"
   type = "A"
   ttl  = 60
 

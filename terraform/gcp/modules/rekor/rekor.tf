@@ -17,6 +17,7 @@
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([
+    "dns.googleapis.com",      // For configuring DNS records
     "storage.googleapis.com",  // For GCS bucket. roles/storage.admin
     "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
   ])
@@ -39,4 +40,27 @@ module "redis" {
   cluster_name = var.cluster_name
 
   network = var.network
+}
+
+resource "google_dns_record_set" "A_rekor" {
+  name = "rekor.${var.dns_domain_name}"
+  type = "A"
+  ttl  = 60
+
+  project      = var.project_id
+  managed_zone = var.dns_zone_name
+
+  rrdatas = [var.load_balancer_ip]
+}
+
+// api.$dns_domain_name was a previous reference for rekor early on, and may be used by some clients
+resource "google_dns_record_set" "CNAME_api_sigstore_dev" {
+  name = "api.${var.dns_domain_name}"
+  type = "CNAME"
+  ttl  = 3600
+
+  project      = var.project_id
+  managed_zone = var.dns_zone_name
+
+  rrdatas = ["rekor.${var.dns_domain_name}"]
 }

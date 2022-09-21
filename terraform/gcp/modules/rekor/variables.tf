@@ -74,3 +74,18 @@ variable "kms_location" {
   description = "Location of KMS keyring"
   default     = "global"
 }
+
+variable "dns_zone_name" {
+  description = "Name of DNS Zone object in Google Cloud DNS"
+  type        = string
+}
+
+variable "dns_domain_name" {
+  description = "Name of DNS domain name in Google Cloud DNS"
+  type        = string
+}
+
+variable "load_balancer_ip" {
+  description = "IP adddress of external load balancer"
+  type        = string
+}

@@ -152,7 +152,7 @@ func TestRoundTrip(t *testing.T) {
 			LogID:           2022,
 			LogPrefix:       "2022-ctlog",
 		}
-		configIn.FulcioCerts = append(configIn.FulcioCerts, []byte(existingRootCert))
+		configIn.AddFulcioRoot(context.Background(), []byte(existingRootCert))
 
 		marshaledConfig, err := configIn.MarshalConfig(context.Background())
 		if err != nil {

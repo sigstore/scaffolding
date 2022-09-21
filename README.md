@@ -159,107 +159,55 @@ spec:
           - key: signing-secret
             path: signing-secret
 ```
-
-## [CTLog](https://github.com/google/certificate-transparency-go)
-
-CTLog is the first piece in the puzzle that requires a bit more wrangling
-because it actually has a dependency on Trillian as well as Fulcio (more about
-Fulcio details later).
-
-For Trillian, we just need to create another TreeID, but we’re reusing the
-same ‘**createtree**’ Job from above.
-
-In addition to Trillian, the dependency on Fulcio is that we need to establish
-trust for the Root Certificate that Fulcio is using so that when Fulcio sends
-requests for inclusion in our CTLog, we trust it. For this, we use
-[RootCert](https://github.com/sigstore/fulcio/blob/main/pkg/api/client.go#L132)
-API call to fetch the Certificate.
-
-Lastly we need to create a Certificate for CTLog itself.
-
-So in addition to ‘**createtree**’ Job, we also have a ‘**createctconfig**’ Job
-that will fail to make progress until TreeID has been populated in the ConfigMap
-by the ‘**createtree**’ call above. Once the TreeID has been created, it will
-try to fetch a Fulcio Root Certificate (again, failing until it becomes
-available). Once the Fulcio Root Certificate is retrieved, the Job will then
-create a Public/Private keys to be used by the CTLog service and will write the
-following two Secrets (names can be changed ofc):
-
-* ctlog-secrets - Holds the public/private keys for CTLog as well as Root Certificate for Fulcio in the following keys:
-    * private - CTLog private key
-    * public - CTLog public key
-    * rootca - Fulcio Root Certificate
-* ctlog-public-key - Holds the public key for CTLog so that clients calling
-Fulcio will able to verify the SCT that they receive from Fulcio.
-
-In addition to the Secrets above, the Job will also add a new entry into the
-ConfigMap (now that I write this, it could just as well go in the secrets above
-I think…) created by the ‘**createtree**’ above. This entry is called ‘config’
-and it’s a serialized ProtoBuf required by the CTLog to start up.
-
-Again by using the fact that the Pod will not start until all the required
-ConfigMaps / Secrets are available, we can configure the CTLog deployment to
-block until everything is available. Again for brevity some things have been
-left out, but the CTLog configuration would look like so:
-
-```
 spec:
   template:
     spec:
       containers:
-        - name: ctfe
-          image: ko://github.com/google/certificate-transparency-go/trillian/ctfe/ct_server
-          args: [
-            "--http_endpoint=0.0.0.0:6962",
-            "--log_config=/ctfe-config/ct_server.cfg",
-            "--alsologtostderr"
-          ]
-          volumeMounts:
-          - name: keys
-            mountPath: "/ctfe-keys"
-            readOnly: true
-          - name: config
-            mountPath: "/ctfe-config"
-            readOnly: true
+      - image: gcr.io/projectsigstore/fulcio@sha256:66870bd6b111f3c5478703a8fb31c062003f0127b2c2c5e49ccd82abc4ec7841
+        name: fulcio
+        args:
+          - "serve"
+          - "--port=5555"
+          - "--ca=fileca"
+          - "--fileca-key"
+          - "/var/run/fulcio-secrets/key.pem"
+          - "--fileca-cert"
+          - "/var/run/fulcio-secrets/cert.pem"
+          - "--fileca-key-passwd"
+          - "$(PASSWORD)"
+          - "--ct-log-url=http://ctlog.ctlog-system.svc/e2e-test-tree"
+        env:
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: fulcio-secret
+              key: password
+        volumeMounts:
+        - name: fulcio-cert
+          mountPath: "/var/run/fulcio-secrets"
+          readOnly: true
       volumes:
-        - name: keys
-          secret:
-            secretName: ctlog-secret
-            items:
-            - key: private
-              path: privkey.pem
-            - key: public
-              path: pubkey.pem
-            - key: rootca
-              path: roots.pem
-        - name: config
-          configMap:
-            name: ctlog-config
-            items:
-            - key: config
-              path: ct_server.cfg
+      - name: fulcio-cert
+        secret:
+          secretName: fulcio-secret
+          items:
+          - key: private
+            path: key.pem
+          - key: cert
+            path: cert.pem
 
-```
-
-Here instead of mounting into environmental variables, we must mount to the
-filesystem given how the CTLog expects these things to be materialized.
-
-Ok, so with the ‘**createtree**’ and ‘**createctconfig**’ jobs having successfully
-completed, CTLog will happily start up and be ready to serve requests. Again if
-it fails, tests will fail and the logs will contain information about the
-particular failure.
-
-Also, the reason why the public key was created in a different secret is because
-clients will need access to this key because they need that public key to verify
-the SCT returned by the Fulcio to ensure it actually was properly signed.
+In addition to creating a tree, we will also create a secret holding the
+public key of the Rekor client that we'll need to be able to construct a proper
+tuf root later on. This is handled by a rekor createsecret job and it creates
+a `rekor-pub-key` secret in the `rekor-system` namespace holding a single
+entry in it called `public` that holds the public key for the Rekor.
 
 ## Fulcio
 
-Make it stop!!! Is there more??? Last one, I promise… For Fulcio we just need to
-create a Root Certificate that it will use to sign incoming Signing Certificate
-requests. For this we again have a Job ‘**createcerts**’ that will create a self
-signed certificate, private/public keys as well as password used to encrypt the
-private key.
+For Fulcio we just need to create a Root Certificate that it will use to sign
+incoming Signing Certificate requests. For this we again have a Job
+‘**createcerts**’ that will create a self signed certificate, private/public
+keys as well as password used to encrypt the private key.
 Basically we need to ensure we have all the
 [necessary pieces](https://github.com/sigstore/fulcio/blob/main/cmd/app/serve.go#L63-L65)
 to start up Fulcio.
@@ -322,6 +270,100 @@ spec:
             path: cert.pem
 
 ```
+
+
+## [CTLog](https://github.com/google/certificate-transparency-go)
+
+CTLog is the first piece in the puzzle that requires a bit more wrangling
+because it actually has a dependency on Trillian as well as Fulcio that we
+created above.
+
+For Trillian, we just need to create another TreeID, but we’re reusing the
+same ‘**createtree**’ Job from above.
+
+In addition to Trillian, the dependency on Fulcio is that we need to establish
+trust for the Root Certificate that Fulcio is using so that when Fulcio sends
+requests for inclusion in our CTLog, we trust it. For this, we use
+[RootCert](https://github.com/sigstore/fulcio/blob/main/pkg/api/client.go#L132)
+API call to fetch the Certificate.
+
+Lastly we need to create a Certificate for CTLog itself.
+
+So in addition to ‘**createtree**’ Job, we also have a ‘**createctconfig**’ Job
+that will fail to make progress until TreeID has been populated in the ConfigMap
+by the ‘**createtree**’ call above. Once the TreeID has been created, it will
+try to fetch a Fulcio Root Certificate (again, failing until it becomes
+available). Once the Fulcio Root Certificate is retrieved, the Job will then
+create a Public/Private keys to be used by the CTLog service and will write the
+following two Secrets (names can be changed ofc):
+
+* ctlog-secrets - Holds the public/private keys for CTLog as well as Root Certificate for Fulcio in the following keys:
+    * private - CTLog private key
+    * public - CTLog public key
+    * rootca - Fulcio Root Certificate
+    * config - Serialized Protobuf required by the CTLog to start up.
+* ctlog-public-key - Holds the public key for CTLog so that clients calling
+Fulcio will able to verify the SCT that they receive from Fulcio.
+
+In addition to the Secrets above, the Job will also add a new entry into the
+ConfigMap (now that I write this, it could just as well go in the secrets above
+I think…) created by the ‘**createtree**’ above. This entry is called ‘config’
+and it’s a serialized ProtoBuf required by the CTLog to start up.
+
+Again by using the fact that the Pod will not start until all the required
+ConfigMaps / Secrets are available, we can configure the CTLog deployment to
+block until everything is available. Again for brevity some things have been
+left out, but the CTLog configuration would look like so:
+
+```
+spec:
+  template:
+    spec:
+      containers:
+        - name: ctfe
+          image: ko://github.com/google/certificate-transparency-go/trillian/ctfe/ct_server
+          args: [
+            "--http_endpoint=0.0.0.0:6962",
+            "--log_config=/ctfe-config/ct_server.cfg",
+            "--alsologtostderr"
+          ]
+          volumeMounts:
+          - name: keys
+            mountPath: "/ctfe-keys"
+            readOnly: true
+          - name: config
+            mountPath: "/ctfe-config"
+            readOnly: true
+      volumes:
+        - name: keys
+          secret:
+            secretName: ctlog-secret
+            items:
+            - key: private
+              path: privkey.pem
+            - key: public
+              path: pubkey.pem
+            - key: rootca
+              path: roots.pem
+        - name: config
+          secret:
+            secretName: ctlog-secret
+            items:
+            - key: config
+              path: ct_server.cfg
+```
+
+Here instead of mounting into environmental variables, we must mount to the
+filesystem given how the CTLog expects these things to be materialized.
+
+Ok, so with the ‘**createtree**’ and ‘**createctconfig**’ jobs having successfully
+completed, CTLog will happily start up and be ready to serve requests. Again if
+it fails, tests will fail and the logs will contain information about the
+particular failure.
+
+Also, the reason why the public key was created in a different secret is because
+clients will need access to this key because they need that public key to verify
+the SCT returned by the Fulcio to ensure it actually was properly signed.
 
 ## TUF
 

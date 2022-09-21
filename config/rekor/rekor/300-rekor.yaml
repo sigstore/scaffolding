@@ -19,10 +19,6 @@ spec:
       serviceAccountName: rekor
       containers:
       - name: rekor
-        # This has been built from here to pick up the file based signer change:
-        # https://github.com/sigstore/rekor/actions/runs/3061668501/jobs/4941722492
-        # Which contains this change that we need.
-        # https://github.com/sigstore/rekor/pull/1049
         image: gcr.io/projectsigstore/rekor-server@sha256:54bbbdac44f3ca5c5ba9c3667c33f1ba67dc56b82220753ec4b3450ebc5a76bc # v0.12.1
         ports:
         - containerPort: 3000

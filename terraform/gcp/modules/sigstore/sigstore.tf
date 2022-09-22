@@ -22,6 +22,8 @@ module "network" {
   project_id = var.project_id
 
   cluster_name = var.cluster_name
+
+  requested_external_ipv4_address = var.static_external_ipv4_address
 }
 
 // Bastion
@@ -188,7 +190,7 @@ module "rekor" {
 
   dns_zone_name    = var.dns_zone_name
   dns_domain_name  = var.dns_domain_name
-  load_balancer_ip = module.network.external_ip_address
+  load_balancer_ip = module.network.external_ipv4_address
 
   depends_on = [
     module.network,
@@ -214,7 +216,7 @@ module "fulcio" {
 
   dns_zone_name    = var.dns_zone_name
   dns_domain_name  = var.dns_domain_name
-  load_balancer_ip = module.network.external_ip_address
+  load_balancer_ip = module.network.external_ipv4_address
 
   depends_on = [
     module.gke-cluster,
@@ -271,7 +273,7 @@ module "ctlog" {
 
   dns_zone_name    = var.dns_zone_name
   dns_domain_name  = var.dns_domain_name
-  load_balancer_ip = module.network.external_ip_address
+  load_balancer_ip = module.network.external_ipv4_address
 
   depends_on = [
     module.gke-cluster,
@@ -287,7 +289,7 @@ module "dex" {
 
   dns_zone_name    = var.dns_zone_name
   dns_domain_name  = var.dns_domain_name
-  load_balancer_ip = module.network.external_ip_address
+  load_balancer_ip = module.network.external_ipv4_address
 
   depends_on = [
     module.gke-cluster,

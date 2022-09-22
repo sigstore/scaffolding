@@ -80,7 +80,7 @@ variable "dns_domain_name" {
   type        = string
 }
 
-variable "load_balancer_ip" {
-  description = "IP adddress of external load balancer"
+variable "load_balancer_ipv4" {
+  description = "IPv4 adddress of external load balancer"
   type        = string
 }

@@ -35,7 +35,7 @@ resource "google_dns_record_set" "A_fulcio" {
   project      = var.project_id
   managed_zone = var.dns_zone_name
 
-  rrdatas = [var.load_balancer_ip]
+  rrdatas = [var.load_balancer_ipv4]
 }
 
 resource "google_dns_record_set" "A_v1_fulcio" {
@@ -46,5 +46,5 @@ resource "google_dns_record_set" "A_v1_fulcio" {
   project      = var.project_id
   managed_zone = var.dns_zone_name
 
-  rrdatas = [var.load_balancer_ip]
+  rrdatas = [var.load_balancer_ipv4]
 }

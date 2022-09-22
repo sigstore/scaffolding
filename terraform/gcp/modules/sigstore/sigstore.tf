@@ -139,7 +139,9 @@ module "gke-cluster" {
   ]
 }
 
-// MYSQL
+// MYSQL. This is the original DB that was used for both Rekor and CTLog.
+// Newer versions of CTLog create their own database instance, so there's
+// one database instance to a single ctlog shard.
 module "mysql" {
   source = "../mysql"
 
@@ -283,11 +285,19 @@ module "oslogin" {
   ]
 }
 
-// ctlog
+// ctlog. This was the original (pre-ga) ctlog that shared the DB instance
+// with Rekor.
 module "ctlog" {
   source = "../ctlog"
 
   project_id = var.project_id
+
+  // We do not want the old CTLog to have its own Cloud SQL instance. It shares
+  // it with Rekor.
+  enable_ctlog_sql = false
+
+  // Required placeholders even though they are not used for the old ctlog.
+  region = var.region
 
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name
@@ -297,6 +307,47 @@ module "ctlog" {
     module.gke-cluster,
     module.network,
     module.project_roles
+  ]
+}
+
+// ctlog-shards. This will create CTLog shard that has its own Cloud SQL
+// instance for each shard
+module "ctlog_shards" {
+  source = "../ctlog"
+
+  for_each = toset(var.ctlog_shards)
+  // We want each CTLog shard to have its own Cloud SQL instance
+  enable_ctlog_sql = true
+
+  mysql_instance_name = format("ctlog-%s", each.key)
+
+  project_id = var.project_id
+  region     = var.region
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  cluster_name            = var.cluster_name
+  mysql_database_version  = var.mysql_db_version
+  mysql_tier              = var.mysql_tier
+  mysql_availability_type = var.mysql_availability_type
+
+  mysql_replica_zones = var.mysql_replica_zones
+  mysql_replica_tier  = var.mysql_replica_tier
+
+  network = module.network.network_self_link
+
+  mysql_db_name = var.mysql_db_name
+
+  mysql_ipv4_enabled              = var.mysql_ipv4_enabled
+  mysql_require_ssl               = var.mysql_require_ssl
+  mysql_backup_enabled            = var.mysql_backup_enabled
+  mysql_binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
+  depends_on = [
+    module.gke-cluster,
+    module.network
   ]
 }
 

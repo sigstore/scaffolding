@@ -31,6 +31,13 @@ output "mysql_instance" {
   value       = module.mysql.mysql_instance
 }
 
+// Used for setting up the GKE cluster to talk to CTLog Shard DBs.
+// Outputs a list of strings for each CTLog Cloud SQL instance.
+output "ctlog_mysql_instances" {
+  description = "Names of the DB instances created for the CTLog shards"
+  value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.ctlog_mysql_instance]
+}
+
 // Full connection string for the MySQL DB>
 output "mysql_connection" {
   description = "The connection string dynamically generated for storage inside the Kubernetes configmap"

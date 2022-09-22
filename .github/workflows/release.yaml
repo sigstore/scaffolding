@@ -55,7 +55,7 @@ jobs:
 
     - name: Run goreleaser
       working-directory: ./src/github.com/${{ github.repository }}
-      run: goreleaser release --rm-dist
+      run: goreleaser release --rm-dist --timeout 120m
       env:
         GIT_TAG: ${{ steps.get_tag.outputs.TAG }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

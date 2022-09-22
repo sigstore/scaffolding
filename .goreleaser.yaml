@@ -9,7 +9,7 @@ before:
     - go mod tidy
     - /bin/bash -c 'if [ -n "$(git --no-pager diff --exit-code go.mod go.sum)" ]; then exit 1; fi'
     - /bin/bash -c 'make release-images'
-    - /bin/bash -c 'make sign-images'
+    - /bin/bash -c 'make sign-release-images'
 
 builds:
   - skip: true

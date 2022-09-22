@@ -37,4 +37,5 @@ variable "cluster_name" {
 variable "requested_external_ipv4_address" {
   type        = string
   description = "External IPv4 address to request"
+  default     = ""
 }

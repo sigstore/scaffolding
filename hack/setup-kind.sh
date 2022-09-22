@@ -359,6 +359,10 @@ done
 # Enable magic dns so we can interact with minio from our scripts.
 resource_blaster serving serving-default-domain.yaml | kubectl apply -f -
 
+# sleep little so that the job gets a chance to come up before we start
+# waiting for it.
+sleep 3
+
 # Wait for the job to complete, so we can reliably use ksvc hostnames.
 kubectl wait -n knative-serving --timeout=180s --for=condition=Complete jobs --all
 

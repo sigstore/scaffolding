@@ -245,4 +245,5 @@ variable "dns_domain_name" {
 variable "static_external_ipv4_address" {
   description = "Static IPv4 Address to request for external services"
   type        = string
+  default     = ""
 }

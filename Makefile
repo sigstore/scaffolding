@@ -30,7 +30,7 @@ sign-test-images:
 .PHONY: sign-release-images
 sign-release-images: sign-test-images
 	$(foreach artifact,$(artifacts), \
-		GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$(artifact); ./scripts/sign-release-images.sh \
+		echo "Signing $(artifact)"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$(artifact); ./scripts/sign-release-images.sh \
 	)
 
 .PHONY: release-images

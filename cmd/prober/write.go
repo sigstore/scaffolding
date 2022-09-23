@@ -80,6 +80,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	req.Header.Set("Authorization", "Bearer "+tok)
 	// Set the content-type to reflect we're sending JSON.
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
 
 	t := time.Now()
 	resp, err := http.DefaultClient.Do(req)
@@ -109,6 +110,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	}
 	// Set the content-type to reflect we're sending JSON.
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
 
 	t := time.Now()
 	resp, err := http.DefaultClient.Do(req)

@@ -1,7 +1,7 @@
 dist/
-imagerefs
+imagerefs*
 testimagerefs
-release.yaml
+release-*.yaml
 testrelease.yaml
 kind.yaml
 .vscode/*

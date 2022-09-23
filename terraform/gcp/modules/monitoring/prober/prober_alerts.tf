@@ -117,7 +117,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
 
       duration = "300s"
-      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\"", each.key)
+      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\"", each.key)
 
       trigger {
         count   = "1"
@@ -161,7 +161,7 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != one_of(\"200\", \"201\") AND metric.labels.endpoint != \"/api/v1/index/retrieve\""
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != one_of(\"200\", \"201\") AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\""
       threshold_value = "0"
 
       trigger {

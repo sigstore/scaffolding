@@ -26,6 +26,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	"sigs.k8s.io/release-utils/version"
 
 	_ "github.com/sigstore/cosign/pkg/providers/all"
 )
@@ -37,6 +38,7 @@ var (
 	fulcioURL      string
 	oneTime        bool
 	runWriteProber bool
+	versionInfo    version.Info
 )
 
 func init() {
@@ -54,8 +56,12 @@ func init() {
 
 func main() {
 	ctx := context.Background()
+	versionInfo = version.GetVersionInfo()
+	fmt.Printf("running create_ct_config Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+
 	reg := prometheus.NewRegistry()
 	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram)
+	reg.MustRegister(NewVersionCollector("sigstore_prober"))
 
 	go runProbers(ctx, frequency, oneTime)
 
@@ -67,6 +73,7 @@ func main() {
 			EnableOpenMetrics: true,
 		},
 	))
+	fmt.Printf("Starting Server on port %s", addr)
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 

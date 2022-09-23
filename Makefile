@@ -36,6 +36,10 @@ sign-release-images: sign-test-images
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
 
+.PHONY: prober
+prober:
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/prober
+
 ### Testing
 
 .PHONY: ko-apply

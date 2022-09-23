@@ -50,7 +50,7 @@ resource "google_dns_record_set" "A_rekor" {
   project      = var.project_id
   managed_zone = var.dns_zone_name
 
-  rrdatas = [var.load_balancer_ip]
+  rrdatas = [var.load_balancer_ipv4]
 }
 
 // api.$dns_domain_name was a previous reference for rekor early on, and may be used by some clients

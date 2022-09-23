@@ -241,3 +241,9 @@ variable "dns_domain_name" {
   description = "Name of DNS domain name in Google Cloud DNS"
   type        = string
 }
+
+variable "static_external_ipv4_address" {
+  description = "Static IPv4 Address to request for external services"
+  type        = string
+  default     = ""
+}

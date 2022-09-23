@@ -30,10 +30,10 @@ output "secondary_ip_range" {
   value = google_compute_subnetwork.subnetwork.secondary_ip_range
 }
 
-output "external_ip_name" {
-  value = google_compute_global_address.default.name
+output "external_ipv4_name" {
+  value = google_compute_global_address.default_ipv4.name
 }
 
-output "external_ip_address" {
-  value = google_compute_global_address.default.address
+output "external_ipv4_address" {
+  value = google_compute_global_address.default_ipv4.address
 }

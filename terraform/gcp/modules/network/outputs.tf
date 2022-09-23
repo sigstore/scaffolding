@@ -31,9 +31,9 @@ output "secondary_ip_range" {
 }
 
 output "external_ipv4_name" {
-  value = google_compute_global_address.default_ipv4.name
+  value = google_compute_address.default_ipv4.name
 }
 
 output "external_ipv4_address" {
-  value = google_compute_global_address.default_ipv4.address
+  value = google_compute_address.default_ipv4.address
 }

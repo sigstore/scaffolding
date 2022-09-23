@@ -27,4 +27,5 @@ if [[ ! -f $ARTIFACT ]]; then
 fi
 
 echo "Signing images with Keyless..."
-cosign sign --timeout 5m --force -a GIT_HASH="$GIT_HASH" -a GIT_VERSION="$GIT_VERSION" $(cat $ARTIFACT)
+readarray -t file_args < <(cat "$ARTIFACT")
+cosign sign --timeout 5m --force -a GIT_HASH="$GIT_HASH" -a GIT_VERSION="$GIT_VERSION" "${file_args[@]}"

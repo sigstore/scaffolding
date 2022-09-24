@@ -156,6 +156,8 @@ jobs:
     - name: Initialize cosign with our custom tuf root and make root copy
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        # Also grab the compressed repository for airgap testing.
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.repository}'  | base64 -d > ./repository.tar.gz
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
@@ -202,6 +204,30 @@ jobs:
     - name: Verify with cosign from the action using k8s token
       run: |
         cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    # Test with cosign in 'airgapped mode'
+    # Uncomment these once modified cosign goes in.
+    #- name: Checkout modified cosign for testing.
+    #  uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+    #  with:
+    #    repository: vaikas/cosign
+    #    ref: air-gap
+    #    path: ./src/github.com/sigstore/cosign
+    #- name: Build cosign
+    #  working-directory: ./src/github.com/sigstore/cosign
+    #  run: |
+    #    go build -o ./cosign ./cmd/cosign/main.go
+    #- name: Untar the repository from the fetched secret, initialize and verify with it
+    #  working-directory: ./src/github.com/sigstore/cosign
+    #  run: |
+    #    # Also grab the compressed repository for airgap testing.
+    #    kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.repository}'  | base64 -d > ./repository.tar.gz
+    #    tar -zxvf ./repository.tar.gz
+    #    PWD=$(pwd)
+    #    ROOT=${PWD}/repository/1.root.json
+    #    REPOSITORY=${PWD}/repository
+    #    ./cosign initialize --root ${ROOT} --mirror file://${REPOSITORY}
+    #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Collect diagnostics
       if: ${{ failure() }}

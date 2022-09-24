@@ -144,8 +144,8 @@ func httpRequest(host string, r ReadProberCheck) (*http.Request, error) {
 	if err != nil {
 		return nil, err
 	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
+	setHeaders(req, "")
 	q := req.URL.Query()
 	for k, v := range r.queries {
 		q.Add(k, v)

@@ -53,6 +53,16 @@ const (
 	rekorEndpoint  = "/api/v1/log/entries"
 )
 
+func setHeaders(req *http.Request, token string) {
+	if token != "" {
+		// Set the authorization header to our OIDC bearer token.
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	// Set the content-type to reflect we're sending JSON.
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+}
+
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
 // which is "/api/v1/signingCert", which requests a cert from Fulcio
 func fulcioWriteEndpoint(ctx context.Context) error {
@@ -76,11 +86,8 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the authorization header to our OIDC bearer token.
-	req.Header.Set("Authorization", "Bearer "+tok)
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
+	setHeaders(req, tok)
 
 	t := time.Now()
 	resp, err := http.DefaultClient.Do(req)
@@ -108,9 +115,8 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
+	setHeaders(req, "")
 
 	t := time.Now()
 	resp, err := http.DefaultClient.Do(req)

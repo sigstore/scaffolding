@@ -23,3 +23,17 @@ variable "project_id" {
   }
 }
 
+variable "dns_zone_name" {
+  description = "Name of DNS Zone object in Google Cloud DNS"
+  type        = string
+}
+
+variable "dns_domain_name" {
+  description = "Name of DNS domain name in Google Cloud DNS"
+  type        = string
+}
+
+variable "load_balancer_ipv4" {
+  description = "IPv4 adddress of external load balancer"
+  type        = string
+}

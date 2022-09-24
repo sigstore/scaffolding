@@ -22,6 +22,8 @@ module "network" {
   project_id = var.project_id
 
   cluster_name = var.cluster_name
+
+  requested_external_ipv4_address = var.static_external_ipv4_address
 }
 
 // Bastion
@@ -186,6 +188,10 @@ module "rekor" {
   attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
   storage_class      = var.attestation_storage_class
 
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
   depends_on = [
     module.network,
     module.gke-cluster
@@ -207,6 +213,10 @@ module "fulcio" {
   // KMS
   fulcio_keyring_name = var.fulcio_keyring_name
   fulcio_key_name     = var.fulcio_intermediate_key_name
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
 
   depends_on = [
     module.gke-cluster,
@@ -257,13 +267,32 @@ module "oslogin" {
 
 // ctlog
 module "ctlog" {
-  source     = "../ctlog"
+  source = "../ctlog"
+
   project_id = var.project_id
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  depends_on = [
+    module.gke-cluster,
+    module.network
+  ]
 }
 
 // dex
 module "dex" {
-  source     = "../dex"
-  project_id = var.project_id
-}
+  source = "../dex"
 
+  project_id = var.project_id
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  depends_on = [
+    module.gke-cluster,
+    module.network
+  ]
+}

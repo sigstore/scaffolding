@@ -1,4 +1,5 @@
 GIT_TAG ?= $(shell git describe --tags --always --dirty)
+GIT_HASH ?= $(shell git rev-parse HEAD)
 
 LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
 
@@ -10,31 +11,34 @@ artifacts := trillian ctlog fulcio rekor tuf prober
 .PHONY: ko-resolve
 ko-resolve:
 	# "Doing ko resolve for config"
-	$(foreach artifact, $(artifacts), $(shell export LDFLAGS="$(LDFLAGS)"; \
+	$(foreach artifact, $(artifacts), $(shell export LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO); \
 	ko resolve --tags $(GIT_TAG),latest -BRf ./config/$(artifact) \
 	--platform=all \
 	--image-refs imagerefs-$(artifact) > release-$(artifact).yaml )) \
-
-	# Then collect all the imagerefs from various imageref-* produced above
-	# because otherwise they would stomp on each other above if writing to same
-	# file.
-	$(foreach artifact, $(artifacts), $(shell cat imagerefs-$(artifact) >> ./imagerefs )) \
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
 	# "Doing ko resolve for testdata"
 	# "Build a big bundle of joy, this also produces SBOMs"
-	LDFLAGS="$(LDFLAGS)" \
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
 
-imagerefs := $(shell cat imagerefs testimagerefs)
-sign-refs := $(foreach ref,$(imagerefs),$(ref))
-.PHONY: sign-images
-sign-images:
-	cosign sign -a GIT_TAG=$(GIT_TAG) -a GIT_HASH=$(GIT_HASH) $(sign-refs)
+.PHONY: sign-test-images
+sign-test-images:
+	GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=testimagerefs ./scripts/sign-release-images.sh
+
+.PHONY: sign-release-images
+sign-release-images: sign-test-images
+	$(foreach artifact,$(artifacts), \
+		echo "Signing $(artifact)"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$(artifact); ./scripts/sign-release-images.sh \
+	)
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
+
+.PHONY: prober
+prober:
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/prober
 
 ### Testing
 

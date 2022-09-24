@@ -62,3 +62,25 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	fmt.Println("Status code: ", statusCode)
 	fmt.Printf("Latency for %s %s: %d\n", method, host+endpoint, latency)
 }
+
+// NewVersionCollector returns a collector that exports metrics about current version
+// information.
+func NewVersionCollector(program string) prometheus.Collector {
+	return prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Namespace: program,
+			Name:      "build_info",
+			Help: fmt.Sprintf(
+				"A metric with a constant '1' value labeled by version, revision, branch, and goversion from which %s was built.",
+				program,
+			),
+			ConstLabels: prometheus.Labels{
+				"version":    versionInfo.GitVersion,
+				"revision":   versionInfo.GitCommit,
+				"build_date": versionInfo.BuildDate,
+				"goversion":  versionInfo.GoVersion,
+			},
+		},
+		func() float64 { return 1 },
+	)
+}

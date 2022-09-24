@@ -1,7 +1,7 @@
-defaultBaseImage: ghcr.io/distroless/alpine-base:latest
+defaultBaseImage: cgr.dev/chainguard/alpine-base:latest
 
 builds:
-- id: ctlog
+- id: ctlog-createctconfig
   dir: .
   main: ./cmd/ctlog/createctconfig
   env:
@@ -16,7 +16,37 @@ builds:
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
 
-- id: fulcio
+- id: ctlog-managectroots
+  dir: .
+  main: ./cmd/ctlog/managectroots
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: ctlog-verifyfulcio
+  dir: .
+  main: ./cmd/ctlog/verifyfulcio
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: fulcio-createcerts
   dir: .
   main: ./cmd/fulcio/createcerts
   env:
@@ -31,9 +61,24 @@ builds:
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
 
-- id: tuf
+- id: tuf-createsecret
   dir: .
   main: ./cmd/tuf/createsecret
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: tuf-server
+  dir: .
+  main: ./cmd/tuf/server
   env:
   - CGO_ENABLED=0
   flags:
@@ -76,6 +121,21 @@ builds:
   - -extldflags "-static"
   - "{{ .Env.LDFLAGS }}"
 
+- id: trillian-updatetree
+  dir: .
+  main: ./cmd/trillian/updatetree
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
 - id: getoidctoken
   dir: .
   main: ./cmd/getoidctoken
@@ -94,6 +154,21 @@ builds:
 - id: prober
   dir: .
   main: ./cmd/prober
+  env:
+  - CGO_ENABLED=0
+  flags:
+  - -trimpath
+  - -tags
+  - nostackdriver
+  ldflags:
+  - -s
+  - -w
+  - -extldflags "-static"
+  - "{{ .Env.LDFLAGS }}"
+
+- id: rekor-createsecret
+  dir: .
+  main: ./cmd/rekor/createsecret
   env:
   - CGO_ENABLED=0
   flags:

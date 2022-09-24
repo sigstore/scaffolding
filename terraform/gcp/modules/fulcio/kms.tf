@@ -17,6 +17,7 @@
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([
+    "dns.googleapis.com",      // For configuring DNS records
     "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
   ])
   project = var.project_id

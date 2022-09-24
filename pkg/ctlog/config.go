@@ -57,7 +57,9 @@ const (
 	// container.
 	rootsPemFileDir = "/ctfe-keys/"
 	// This file contains the private key for the CTLog
-	privateKeyFile = "/ctfe-keys/privkey.pem"
+	privateKeyFile = "/ctfe-keys/private"
+	// This file contains the serialized proto config for the CTLog
+	configFile = "/ctfe-keys/config"
 )
 
 // CTLogConfig abstracts the proto munging to/from bytes suitable for working
@@ -81,29 +83,54 @@ type CTLogConfig struct {
 	FulcioCerts [][]byte
 }
 
+func extractFulcioRoot(fulcioRoot []byte) ([]byte, error) {
+	// Fetch only root certificate from the chain
+	certs, err := cryptoutils.UnmarshalCertificatesFromPEM(fulcioRoot)
+	if err != nil {
+		return nil, fmt.Errorf("unable to unmarshal certficate chain: %w", err)
+	}
+	return cryptoutils.MarshalCertificateToPEM(certs[len(certs)-1])
+}
+
 // AddFulcioRoot will add the specified fulcioRoot to the list of trusted
 // Fulcios. If it already exists, it's a nop.
 // The fulcioRoot should come from the call to fetch a PublicFulcio root
 // and is the ChainPEM from the fulcioclient RootResponse.
-func (c *CTLogConfig) AddFulcioRoot(ctx context.Context, fulcioRoot []byte) {
+func (c *CTLogConfig) AddFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
+	root, err := extractFulcioRoot(fulcioRoot)
+	if err != nil {
+		return fmt.Errorf("extracting fulcioRoot: %w", err)
+	}
 	for _, fc := range c.FulcioCerts {
-		if bytes.Compare(fc, fulcioRoot) == 0 {
-			return
+		if bytes.Compare(fc, root) == 0 {
+			logging.FromContext(ctx).Infof("Found existing fulcio root, not adding: %s", string(root))
+			return nil
 		}
 	}
-	c.FulcioCerts = append(c.FulcioCerts, fulcioRoot)
+	logging.FromContext(ctx).Infof("Adding new FulcioRoot: %s", string(root))
+	c.FulcioCerts = append(c.FulcioCerts, root)
+	return nil
 }
 
 // RemoveFulcioRoot will remove the specified fulcioRoot from the list of
 // trusted Fulcios. If
-func (c *CTLogConfig) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) {
+func (c *CTLogConfig) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
+	root, err := extractFulcioRoot(fulcioRoot)
+	if err != nil {
+		return fmt.Errorf("extracting fulcioRoot: %w", err)
+	}
+
 	newCerts := make([][]byte, 0, len(c.FulcioCerts))
 	for _, fc := range c.FulcioCerts {
-		if bytes.Compare(fc, fulcioRoot) != 0 {
+		if bytes.Compare(fc, root) != 0 {
 			newCerts = append(newCerts, fc)
+		} else {
+			logging.FromContext(ctx).Infof("Found existing fulcio root, removing: %s", string(root))
+
 		}
 	}
 	c.FulcioCerts = newCerts
+	return nil
 }
 
 func (c *CTLogConfig) String() string {
@@ -208,7 +235,7 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 	}
 
 	// If there's legacy rootCA entry, check it first.
-	if legacyRoot, ok := in[LegacyRootCAKey]; ok {
+	if legacyRoot, ok := in[LegacyRootCAKey]; ok && len(legacyRoot) > 0 {
 		ret.FulcioCerts = append(ret.FulcioCerts, legacyRoot)
 	}
 	// Then loop through Fulcio roots
@@ -238,6 +265,7 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 	for i := range c.FulcioCerts {
 		rootPems = append(rootPems, fmt.Sprintf("%sfulcio-%d", rootsPemFileDir, i))
 	}
+
 	var pubkey crypto.Signer
 	var ok bool
 	// Note this goofy cast to crypto.Signer since the any interface has no
@@ -335,17 +363,7 @@ func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
 	}
 	for i, cert := range c.FulcioCerts {
 		fulcioKey := fmt.Sprintf("fulcio-%d", i)
-
-		// Fetch only root certificate from the chain
-		certs, err := cryptoutils.UnmarshalCertificatesFromPEM(cert)
-		if err != nil {
-			return nil, fmt.Errorf("unable to unmarshal certficate chain: %w", err)
-		}
-		rootCertPEM, err := cryptoutils.MarshalCertificateToPEM(certs[len(certs)-1])
-		if err != nil {
-			return nil, fmt.Errorf("unable to marshal root certificate: %v", err)
-		}
-		data[fulcioKey] = rootCertPEM
+		data[fulcioKey] = cert
 	}
 	return data, nil
 }

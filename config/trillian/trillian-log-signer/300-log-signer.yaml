@@ -64,7 +64,7 @@ spec:
               secretKeyRef:
                 name: trillian-database
                 key: host
-        image: gcr.io/projectsigstore/trillian_log_signer@sha256:2f80647c4c81621ba850b4993bdd4332a63570e775f81fe124e946e947fd29c8 # v0.11.0
+        image: gcr.io/projectsigstore/trillian_log_signer@sha256:fbadcd0576f831e7827d7710621a7d126fdc2e294ce2fa2927016ce8043e7bda # v0.12.1
         ports:
         - name: h2c
           containerPort: 8090

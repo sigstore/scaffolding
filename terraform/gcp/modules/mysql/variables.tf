@@ -23,6 +23,12 @@ variable "project_id" {
   }
 }
 
+variable "project_secrets_id" {
+  type        = string
+  description = "Project ID to access the secrets"
+  default     = ""
+}
+
 variable "region" {
   type        = string
   description = "GCP region"

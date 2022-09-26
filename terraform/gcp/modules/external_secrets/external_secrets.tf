@@ -40,11 +40,17 @@ resource "google_service_account" "external_secrets_sa" {
   project      = var.project_id
 }
 
+resource "google_service_account" "external_secrets_accessor_sa" {
+  account_id   = "external-secrets-accessor-sa"
+  display_name = "external-secrets Service Account for sigstore-secrets project"
+  project      = var.project_secrets_id != "" ? var.project_secrets_id : var.project_id
+}
+
 resource "google_project_iam_member" "external_secrets_binding" {
-  project    = var.project_id
+  project    = var.project_secrets_id
   role       = "roles/secretmanager.secretAccessor"
-  member     = "serviceAccount:${google_service_account.external_secrets_sa.email}"
-  depends_on = [google_service_account.external_secrets_sa]
+  member     = "serviceAccount:${google_service_account.external_secrets_accessor_sa.email}"
+  depends_on = [google_service_account.external_secrets_accessor_sa]
 }
 
 resource "google_service_account_iam_member" "gke_sa_iam_member_external_secrets" {
@@ -68,7 +74,7 @@ metadata:
 spec:
   provider:
       gcpsm:
-        projectID: "${var.project_id}"
+        projectID: "${var.project_secrets_id != "" ? var.project_secrets_id : var.project_id}"
 YAML
 
   depends_on = [helm_release.external_secrets]

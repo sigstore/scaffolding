@@ -23,12 +23,23 @@ resource "google_project_service" "service" {
     "cloudresourcemanager.googleapis.com", // For IAM bindings. roles/resourcemanager.projectIamAdmin
     "compute.googleapis.com",              // For compute global address. roles/compute.networkAdmin
     "iam.googleapis.com",                  // For creating service accounts and access control. roles/iam.serviceAccountAdmin
-    "secretmanager.googleapis.com",        // For Secrets. roles/secretmanager.admin
     "servicenetworking.googleapis.com",    // For service networking connection. roles/servicenetworking.networksAdmin
     "sqladmin.googleapis.com",             // For Cloud SQL. roles/cloudsql.admin
   ])
   project = var.project_id
   service = each.key
+
+  // Do not disable the service on destroy. On destroy, we are going to
+  // destroy the project, but we need the APIs available to destroy the
+  // underlying resources.
+  disable_on_destroy = false
+}
+
+
+// Enable required secretmanager service for this module
+resource "google_project_service" "secretmanager_service" {
+  project = var.project_secrets_id != "" ? var.project_secrets_id : var.project_id
+  service = "secretmanager.googleapis.com"
 
   // Do not disable the service on destroy. On destroy, we are going to
   // destroy the project, but we need the APIs available to destroy the
@@ -203,7 +214,7 @@ resource "google_secret_manager_secret" "mysql-password" {
   replication {
     automatic = true
   }
-  depends_on = [google_project_service.service]
+  depends_on = [google_project_service.secretmanager_service]
 }
 
 resource "google_secret_manager_secret_version" "mysql-password" {

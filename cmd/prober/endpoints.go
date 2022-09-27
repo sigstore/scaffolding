@@ -37,7 +37,12 @@ var RekorEndpoints = []ReadProberCheck{
 		endpoint: "/api/v1/log/entries",
 		method:   GET,
 		queries:  map[string]string{"logIndex": "10"},
-	}, {
+	},
+	{
+		endpoint: "/api/v1/log/entries/c6a179199b1f68c7cb3d40dad4af4481455d787611ce49d3e5cfa9cd7b6131e0",
+		method:   GET,
+	},
+	{
 		endpoint: "/api/v1/log/proof",
 		method:   GET,
 		queries:  map[string]string{"firstSize": "10", "lastSize": "20"},

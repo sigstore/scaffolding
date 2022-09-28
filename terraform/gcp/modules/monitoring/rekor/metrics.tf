@@ -17,9 +17,9 @@
 # This file contains alerts generic to the Sigstore project
 # Alerts specific to fulcio, rekor or dex should be in the appropriate `modules/monitoring/[service]` directory
 
-resource "google_logging_metric" "k8s_pod_restart_failing_container" {
-  name   = "k8s_pod/restarting-failed-container"
-  filter = "resource.type=k8s_pod AND severity>=WARNING \"Back-off restarting failed container\""
+resource "google_logging_metric" "rekor_k8s_pod_restart_failing_container" {
+  name   = "rekor_k8s_pod/restarting-failed-container"
+  filter = "resource.labels.namespace_name=\"rekor-system\" resource.type=k8s_pod AND severity>=WARNING \"Back-off restarting failed container\""
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
@@ -32,8 +32,8 @@ resource "google_logging_metric" "k8s_pod_restart_failing_container" {
 }
 
 resource "google_logging_metric" "k8s_pod_unschedulable" {
-  name   = "k8s_pod/unschedulable"
-  filter = "resource.type=k8s_pod AND severity>=WARNING \"unschedulable\""
+  name   = "rekor_k8s_pod/unschedulable"
+  filter = "resource.labels.namespace_name=\"rekor-system\" resource.type=k8s_pod AND severity>=WARNING \"unschedulable\""
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"

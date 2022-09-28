@@ -69,7 +69,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
   conditions {
     condition_threshold {
       filter     = "metric.name=\"k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
-      duration   = "300s"
+      duration   = "600s"
       comparison = "COMPARISON_GE"
       aggregations {
         alignment_period   = "60s"
@@ -77,7 +77,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
       }
     }
 
-    display_name = "K8s Restart Failing Container for at least five minutes"
+    display_name = "K8s Restart Failing Container for at least ten minutes"
   }
 
   display_name = "Rekor K8s Restart Failing Container Alert"
@@ -104,7 +104,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
   conditions {
     condition_threshold {
       filter     = "metric.name=\"k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
-      duration   = "300s"
+      duration   = "600s"
       comparison = "COMPARISON_GE"
       aggregations {
         alignment_period   = "60s"
@@ -112,7 +112,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
       }
     }
 
-    display_name = "K8s was unable to schedule a pod for at least five minutes"
+    display_name = "K8s was unable to schedule a pod for at least ten minutes"
   }
 
   display_name = "Rekor K8s Unscheduable"

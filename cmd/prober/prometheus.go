@@ -26,6 +26,7 @@ var (
 	hostLabel       = "host"
 	statusCodeLabel = "status_code"
 	methodLabel     = "method"
+	verifiedLabel   = "verified"
 )
 
 var (
@@ -45,6 +46,14 @@ var (
 		Buckets: []float64{0.0, 200.0, 400.0, 600.0, 800.0, 1000.0},
 	},
 		[]string{endpointLabel, hostLabel, statusCodeLabel, methodLabel})
+
+	verificationCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "verification",
+			Help: "Rekor verification correctness counter",
+		},
+		[]string{verifiedLabel},
+	)
 )
 
 func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, latency int64) {

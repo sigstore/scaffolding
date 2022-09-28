@@ -23,7 +23,7 @@ resource "google_logging_metric" "rekor_k8s_pod_restart_failing_container" {
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
-    unit = 1
+    unit        = 1
     labels {
       key         = "error_count"
       value_type  = "INT64"
@@ -38,7 +38,7 @@ resource "google_logging_metric" "k8s_pod_unschedulable" {
   metric_descriptor {
     metric_kind = "DELTA"
     value_type  = "INT64"
-    unit = 1
+    unit        = 1
     labels {
       key         = "error_count"
       value_type  = "INT64"

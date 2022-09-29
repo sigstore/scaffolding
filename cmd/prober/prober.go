@@ -60,7 +60,7 @@ func main() {
 	fmt.Printf("running create_ct_config Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
 	reg := prometheus.NewRegistry()
-	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram)
+	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram, verificationCounter)
 	reg.MustRegister(NewVersionCollector("sigstore_prober"))
 
 	go runProbers(ctx, frequency, oneTime)

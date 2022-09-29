@@ -25,16 +25,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
+	rclient "github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -121,17 +122,33 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	t := time.Now()
 	resp, err := http.DefaultClient.Do(req)
 	latency := time.Since(t).Milliseconds()
+	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 	if err != nil {
-		fmt.Printf("error adding entry: %v\n", err.Error())
+		return fmt.Errorf("error adding entry: %w", err)
 	}
 
-	// Export data to prometheus
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
+	// If entry was added successfully, we should verify it
+	rekorClient, err := rclient.GetRekorClient(rekorURL, rclient.WithUserAgent(fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion)))
+	if err != nil {
+		return fmt.Errorf("creating rekor client: %w", err)
+	}
 	defer resp.Body.Close()
-	body, _ = io.ReadAll(resp.Body)
-	fmt.Println(string(body))
-	return nil
+	var logEntry models.LogEntry
+	err = json.NewDecoder(resp.Body).Decode(&logEntry)
+	if err != nil {
+		return fmt.Errorf("unmarshal: %w", err)
+	}
+	var logEntryAnon models.LogEntryAnon
+	for _, e := range logEntry {
+		logEntryAnon = e
+		break
+	}
+	verified := "true"
+	if err = cosign.VerifyTLogEntry(ctx, rekorClient, &logEntryAnon); err != nil {
+		verified = "false"
+	}
+	verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+	return err
 }
 
 func rekorEntryRequest() ([]byte, error) {

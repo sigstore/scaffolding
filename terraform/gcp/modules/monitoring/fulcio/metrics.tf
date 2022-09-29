@@ -24,11 +24,11 @@ resource "google_logging_metric" "fulcio_k8s_pod_restart_failing_container" {
     metric_kind = "DELTA"
     value_type  = "INT64"
     unit        = 1
-  }
-  labels {
-    key         = "error_count"
-    value_type  = "INT64"
-    description = "the number of logs containing the error messages"
+    labels {
+      key         = "error_count"
+      value_type  = "INT64"
+      description = "the number of logs containing the error messages"
+    }
   }
 }
 

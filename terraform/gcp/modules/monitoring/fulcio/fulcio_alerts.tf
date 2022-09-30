@@ -207,7 +207,7 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_contai
     display_name = "K8s Restart Failing Container for more than ten minutes"
   }
 
-  display_name = "Fulcio K8s Restart Failing Container Alert"
+  display_name = "Fulcio K8s Restart Failing Container"
 
   documentation {
     content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help.\n"

@@ -80,7 +80,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
     display_name = "K8s Restart Failing Container for at least ten minutes"
   }
 
-  display_name = "Rekor K8s Restart Failing Container Alert"
+  display_name = "Rekor K8s Restart Failing Container"
 
   documentation {
     content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help."
@@ -122,7 +122,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
     display_name = "K8s Restart Failing Container for over ten minutes"
   }
 
-  display_name = "Rekor K8s Restart Failing Container Alert"
+  display_name = "Rekor K8s Restart Failing Container"
 
   documentation {
     content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help."

@@ -188,7 +188,7 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_contai
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
+      filter     = "metric.name=\"fulcio/k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
       duration   = "600s"
       comparison = "COMPARISON_GE"
       aggregations {
@@ -223,7 +223,7 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_unschedulable" {
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
+      filter     = "metric.name=\"fulcio/k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
       duration   = "600s"
       comparison = "COMPARISON_GE"
       aggregations {

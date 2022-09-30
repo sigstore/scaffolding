@@ -18,7 +18,7 @@
 # Alerts specific to fulcio, rekor or dex should be in the appropriate `modules/monitoring/[service]` directory
 
 resource "google_logging_metric" "fulcio_k8s_pod_restart_failing_container" {
-  name   = "fulcio_k8s_pod/restarting-failed-container"
+  name   = "fulcio/k8s_pod/restarting-failed-container"
   filter = "resource.labels.namespace_name=\"fulcio-system\" resource.type=k8s_pod AND severity>=WARNING \"Back-off restarting failed container\""
   metric_descriptor {
     metric_kind = "DELTA"
@@ -33,7 +33,7 @@ resource "google_logging_metric" "fulcio_k8s_pod_restart_failing_container" {
 }
 
 resource "google_logging_metric" "k8s_pod_unschedulable" {
-  name   = "fulcio_k8s_pod/unschedulable"
+  name   = "fulcio/k8s_pod/unschedulable"
   filter = "resource.labels.namespace_name=\"fulcio-system\" resource.type=k8s_pod AND severity>=WARNING \"unschedulable\""
   metric_descriptor {
     metric_kind = "DELTA"

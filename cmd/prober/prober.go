@@ -42,7 +42,7 @@ var (
 )
 
 func init() {
-	flag.IntVar(&frequency, "frequecy", 10, "How often to run probers (in seconds)")
+	flag.IntVar(&frequency, "frequency", 10, "How often to run probers (in seconds)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
 
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")

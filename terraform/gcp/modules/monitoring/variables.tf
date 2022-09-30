@@ -86,3 +86,9 @@ variable "ca_pool_name" {
   type        = string
   default     = "sigstore"
 }
+
+variable "create_slos" {
+  description = "Creates SLOs when true."
+  type        = bool
+  default     = false
+}

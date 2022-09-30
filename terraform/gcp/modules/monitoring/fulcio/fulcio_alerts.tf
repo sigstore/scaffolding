@@ -179,7 +179,6 @@ resource "google_monitoring_alert_policy" "ca_service_cert_quota" {
 
 resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_container" {
   # In the absence of data, incident will auto-close in 7 days
-
   alert_strategy {
     auto_close = "604800s"
   }
@@ -188,22 +187,30 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_contai
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"fulcio/k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
-      duration   = "600s"
-      comparison = "COMPARISON_GE"
       aggregations {
-        alignment_period   = "60s"
-        per_series_aligner = "ALIGN_RATE"
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_COUNT"
+      }
+
+      comparison              = "COMPARISON_GT"
+      duration                = "600s"
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_NO_OP"
+      filter                  = "metric.type=\"logging.googleapis.com/user/fulcio/k8s_pod/restarting-failed-container\""
+      threshold_value         = "1"
+
+      trigger {
+        count   = "1"
+        percent = "0"
       }
     }
 
-    display_name = "K8s Restart Failing Container for at least ten minutes"
+    display_name = "K8s Restart Failing Container for more than ten minutes"
   }
 
   display_name = "Fulcio K8s Restart Failing Container Alert"
 
   documentation {
-    content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help."
+    content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help.\n"
     mime_type = "text/markdown"
   }
 
@@ -214,7 +221,6 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_contai
 
 resource "google_monitoring_alert_policy" "fulcio_k8s_pod_unschedulable" {
   # In the absence of data, incident will auto-close in 7 days
-
   alert_strategy {
     auto_close = "604800s"
   }
@@ -223,22 +229,31 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_unschedulable" {
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"fulcio/k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
-      duration   = "600s"
-      comparison = "COMPARISON_GE"
       aggregations {
-        alignment_period   = "60s"
-        per_series_aligner = "ALIGN_RATE"
+        alignment_period     = "600s"
+        cross_series_reducer = "REDUCE_COUNT"
+        per_series_aligner   = "ALIGN_COUNT"
+      }
+
+      comparison              = "COMPARISON_GT"
+      duration                = "600s"
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_NO_OP"
+      filter                  = "metric.type=\"logging.googleapis.com/user/fulcio/k8s_pod/unschedulable\""
+      threshold_value         = "1"
+
+      trigger {
+        count   = "1"
+        percent = "0"
       }
     }
 
-    display_name = "K8s was unable to schedule a pod for at least ten minutes"
+    display_name = "K8s was unable to schedule a pod for more than ten minutes"
   }
 
   display_name = "Fulcio K8s Unscheduable"
 
   documentation {
-    content   = "K8s is failing to schedulable pod for longer than the accepted time limit, please see playbook for help."
+    content   = "K8s is failing to schedulable pod for longer than the accepted time limit, please see playbook for help.\n"
     mime_type = "text/markdown"
   }
 

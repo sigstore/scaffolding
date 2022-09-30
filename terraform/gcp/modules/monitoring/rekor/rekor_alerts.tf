@@ -103,22 +103,29 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"rekor/k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
-      duration   = "600s"
-      comparison = "COMPARISON_GE"
       aggregations {
-        alignment_period   = "60s"
-        per_series_aligner = "ALIGN_RATE"
+        alignment_period   = "600s"
+        per_series_aligner = "ALIGN_COUNT"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "600s"
+      filter          = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/restarting-failed-container\""
+      threshold_value = "1"
+
+      trigger {
+        count   = "1"
+        percent = "0"
       }
     }
 
-    display_name = "K8s was unable to schedule a pod for at least ten minutes"
+    display_name = "K8s Restart Failing Container for over ten minutes"
   }
 
-  display_name = "Rekor K8s Unscheduable"
+  display_name = "Rekor K8s Restart Failing Container Alert"
 
   documentation {
-    content   = "K8s is failing to schedulable pod for longer than the accepted time limit, please see playbook for help."
+    content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help."
     mime_type = "text/markdown"
   }
 

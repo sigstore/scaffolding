@@ -18,31 +18,29 @@
 # Alerts specific to fulcio, rekor or dex should be in the appropriate `modules/monitoring/[service]` directory
 
 resource "google_logging_metric" "fulcio_k8s_pod_restart_failing_container" {
-  name   = "fulcio/k8s_pod/restarting-failed-container"
-  filter = "resource.labels.namespace_name=\"fulcio-system\" resource.type=k8s_pod AND severity>=WARNING \"Back-off restarting failed container\""
+  description = "Counts the number of k8s_pod resource logs that contain the \"restarting failed container\" message"
+  filter      = "resource.labels.namespace_name=\"fulcio-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"Back-off restarting failed container\"\n"
+
   metric_descriptor {
     metric_kind = "DELTA"
+    unit        = "1"
     value_type  = "INT64"
-    unit        = 1
-    labels {
-      key         = "error_count"
-      value_type  = "INT64"
-      description = "the number of logs containing the error messages"
-    }
   }
+
+  name    = "fulcio/k8s_pod/restarting-failed-container"
+  project = var.project_id
 }
 
 resource "google_logging_metric" "k8s_pod_unschedulable" {
-  name   = "fulcio/k8s_pod/unschedulable"
-  filter = "resource.labels.namespace_name=\"fulcio-system\" resource.type=k8s_pod AND severity>=WARNING \"unschedulable\""
+  description = "Counts the number of k8s_pod resource logs that contain the unschedulable message"
+  filter      = "resource.labels.namespace_name=\"fulcio-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"unschedulable\"\n"
+
   metric_descriptor {
     metric_kind = "DELTA"
+    unit        = "1"
     value_type  = "INT64"
-    unit        = 1
-    labels {
-      key         = "error_count"
-      value_type  = "INT64"
-      description = "the number of logs containing the error messages"
-    }
   }
+
+  name    = "fulcio/k8s_pod/unschedulable"
+  project = var.project_id
 }

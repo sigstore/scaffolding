@@ -25,6 +25,11 @@ output "cluster_endpoint" {
   value       = google_container_cluster.cluster.endpoint
 }
 
+output "cluster_location" {
+  description = "Cluster location"
+  value       = google_container_cluster.cluster.location
+}
+
 output "cluster_ca_certificate" {
   sensitive   = true
   description = "Cluster ca certificate (base64 encoded)"

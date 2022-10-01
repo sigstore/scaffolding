@@ -62,13 +62,14 @@ module "monitoring" {
   count = var.monitoring.enabled ? 1 : 0
 
   project_id               = var.project_id
-  cluster_location         = var.project_id
+  cluster_location         = module.gke-cluster.cluster_location
   cluster_name             = var.cluster_name
   ca_pool_name             = var.ca_pool_name
   fulcio_url               = var.monitoring.fulcio_url
   rekor_url                = var.monitoring.rekor_url
   dex_url                  = var.monitoring.dex_url
   notification_channel_ids = var.monitoring.notification_channel_ids
+  create_slos              = var.create_slos
 
   depends_on = [
     module.gke-cluster

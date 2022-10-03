@@ -17,7 +17,7 @@ require (
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sigstore/cosign v1.12.1
 	github.com/sigstore/fulcio v0.6.0
-	github.com/sigstore/rekor v0.12.1
+	github.com/sigstore/rekor v0.12.2
 	github.com/sigstore/sigstore v1.4.2
 	github.com/theupdateframework/go-tuf v0.5.1-0.20220920170306-f237d7ca5b42
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399

@@ -17,6 +17,7 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -51,7 +52,26 @@ func init() {
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
 
+	var rekorRequestsJson string
+	flag.StringVar(&rekorRequestsJson, "rekor-requests", "[]", "Additional rekor requests (JSON array.)")
+
+	var fulcioRequestsJson string
+	flag.StringVar(&fulcioRequestsJson, "fulcio-requests", "[]", "Additional fulcio requests (JSON array.)")
+
 	flag.Parse()
+
+	var rekorFlagRequests []ReadProberCheck
+	if err := json.Unmarshal([]byte(rekorRequestsJson), &rekorFlagRequests); err != nil {
+		log.Fatal("Failed to parse rekor-requests: ", err)
+	}
+
+	var fulcioFlagRequests []ReadProberCheck
+	if err := json.Unmarshal([]byte(fulcioRequestsJson), &fulcioFlagRequests); err != nil {
+		log.Fatal("Failed to parse fulcio-requests: ", err)
+	}
+
+	RekorEndpoints = append(RekorEndpoints, rekorFlagRequests...)
+	FulcioEndpoints = append(FulcioEndpoints, fulcioFlagRequests...)
 }
 
 func main() {
@@ -84,13 +104,13 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 		for _, r := range RekorEndpoints {
 			if err := observeRequest(rekorURL, r); err != nil {
 				hasErr = true
-				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
+				fmt.Printf("error running request %s: %v\n", r.Endpoint, err)
 			}
 		}
 		for _, r := range FulcioEndpoints {
 			if err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
-				fmt.Printf("error running request %s: %v\n", r.endpoint, err)
+				fmt.Printf("error running request %s: %v\n", r.Endpoint, err)
 			}
 		}
 		if runWriteProber {
@@ -135,19 +155,19 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	defer resp.Body.Close()
 
-	exportDataToPrometheus(resp, host, r.endpoint, r.method, latency)
+	exportDataToPrometheus(resp, host, r.Endpoint, r.Method, latency)
 	return nil
 }
 
 func httpRequest(host string, r ReadProberCheck) (*http.Request, error) {
-	req, err := http.NewRequest(r.method, host+r.endpoint, bytes.NewBuffer([]byte(r.body)))
+	req, err := http.NewRequest(r.Method, host+r.Endpoint, bytes.NewBuffer([]byte(r.Body)))
 	if err != nil {
 		return nil, err
 	}
 
 	setHeaders(req, "")
 	q := req.URL.Query()
-	for k, v := range r.queries {
+	for k, v := range r.Queries {
 		q.Add(k, v)
 	}
 	req.URL.RawQuery = q.Encode()

@@ -155,7 +155,15 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	defer resp.Body.Close()
 
-	exportDataToPrometheus(resp, host, r.Endpoint, r.Method, latency)
+	// Report the normalized SLO endpoint to prometheus if
+	// one is specified. This allows us to report metrics for
+	// "/api/v1/log/entries/{entryUUID}" instead of
+	// "/api/v1/log/entries/<literal uuid>.
+	sloEndpoint := r.SLOEndpoint
+	if sloEndpoint == "" {
+		sloEndpoint = r.Endpoint
+	}
+	exportDataToPrometheus(resp, host, sloEndpoint, r.Method, latency)
 	return nil
 }
 

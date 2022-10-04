@@ -20,10 +20,11 @@ var (
 )
 
 type ReadProberCheck struct {
-	Endpoint string            `json:"endpoint"`
-	Method   string            `json:"method"`
-	Body     string            `json:"body"`
-	Queries  map[string]string `json:"queries"`
+	Endpoint    string            `json:"endpoint"`
+	Method      string            `json:"method"`
+	Body        string            `json:"body"`
+	Queries     map[string]string `json:"queries"`
+	SLOEndpoint string            `json:"slo-endpoint"`
 }
 
 var RekorEndpoints = []ReadProberCheck{

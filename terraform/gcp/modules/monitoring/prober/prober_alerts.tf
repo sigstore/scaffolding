@@ -213,7 +213,12 @@ resource "google_monitoring_alert_policy" "prober_verification" {
     display_name = "Kubernetes Container - external/prometheus/verification"
   }
 
-  display_name          = "API Prober: Verification failed at least once in the last 60s"
+  documentation {
+    content   = "An entry written to Rekor produced an unverifiable response at least once in the last 60s.\n"
+    mime_type = "text/markdown"
+  }
+
+  display_name          = "API Prober: Rekor write correctness verifier returned 'false' within the last 60s"
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id

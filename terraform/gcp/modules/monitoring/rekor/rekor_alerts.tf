@@ -68,7 +68,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
 
   conditions {
     condition_threshold {
-      filter         = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/restarting-failed-container\""
+      filter         = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/restarting-failed-container\" resource.type=\"metric\""
       duration       = "600s"
       comparison     = "COMPARISON_GE"
       hreshold_value = "1"
@@ -115,7 +115,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
 
       comparison      = "COMPARISON_GT"
       duration        = "600s"
-      filter          = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/unschedulable\""
+      filter          = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/unschedulable\" resource.type=\"metric\""
       threshold_value = "1"
 
       trigger {

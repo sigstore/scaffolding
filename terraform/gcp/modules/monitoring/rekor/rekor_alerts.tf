@@ -68,9 +68,14 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
 
   conditions {
     condition_threshold {
-      filter     = "metric.name=\"rekor/k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
-      duration   = "600s"
-      comparison = "COMPARISON_GE"
+      filter         = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/restarting-failed-container\""
+      duration       = "600s"
+      comparison     = "COMPARISON_GE"
+      hreshold_value = "1"
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
       aggregations {
         alignment_period   = "60s"
         per_series_aligner = "ALIGN_RATE"
@@ -110,7 +115,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
 
       comparison      = "COMPARISON_GT"
       duration        = "600s"
-      filter          = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/restarting-failed-container\""
+      filter          = "metric.type=\"logging.googleapis.com/user/rekor/k8s_pod/unschedulable\""
       threshold_value = "1"
 
       trigger {

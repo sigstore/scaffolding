@@ -184,3 +184,42 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
   notification_channels = local.notification_channels
   project               = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "prober_verification" {
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_SUM"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/verification\" AND metric.labels.verified = \"false\""
+      threshold_value = "0"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Container - external/prometheus/verification"
+  }
+
+  documentation {
+    content   = "An entry written to Rekor produced an unverifiable response at least once in the last 60s.\n"
+    mime_type = "text/markdown"
+  }
+
+  display_name          = "API Prober: Rekor write correctness verifier returned 'false' within the last 60s"
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}

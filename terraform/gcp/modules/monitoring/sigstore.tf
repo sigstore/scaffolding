@@ -71,6 +71,9 @@ module "dex" {
 
   project_id               = var.project_id
   notification_channel_ids = var.notification_channel_ids
+  cluster_name             = var.cluster_name
+  cluster_location         = var.cluster_location
+  create_slos              = var.create_slos
 
   dex_url = var.dex_url
 

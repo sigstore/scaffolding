@@ -36,6 +36,13 @@ variable "cluster_name" {
   default     = ""
 }
 
+// Namespace for monitored service
+variable "gke_namespace" {
+  description = "GKE Namespace"
+  type        = string
+  default     = "dex-system"
+}
+
 // URLs for Sigstore services
 variable "dex_url" {
   description = "Dex URL"
@@ -50,4 +57,10 @@ variable "notification_channel_ids" {
 
 locals {
   notification_channels = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
+}
+
+variable "create_slos" {
+  description = "True to enable SLO creation"
+  type        = bool
+  default     = false
 }

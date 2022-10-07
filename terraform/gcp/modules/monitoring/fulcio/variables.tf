@@ -56,6 +56,13 @@ variable "gke_namespace" {
   default     = "fulcio-system"
 }
 
+// Namespace for ct log service
+variable "ctlog_gke_namespace" {
+  description = "CT Log GKE Namespace"
+  type        = string
+  default     = "ctlog-system"
+}
+
 variable "ctlog_url" {
   description = "CT Log URL"
   default     = "ctfe.sigstore.dev"

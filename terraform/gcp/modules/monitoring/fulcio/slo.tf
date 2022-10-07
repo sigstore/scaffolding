@@ -104,3 +104,35 @@ module "slos" {
     }
   }
 }
+
+module "ctlog_slos" {
+  source = "../slo"
+  count  = var.create_slos ? 1 : 0
+
+  project_id    = var.project_id
+  service_id    = "ctlog"
+  display_name  = "CT Log"
+  resource_name = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.ctlog_gke_namespace)
+
+
+  availability_slos = {
+    server-availability = {
+      display_prefix            = "Availability (Server)"
+      base_total_service_filter = format("metric.type=\"prometheus.googleapis.com/http_rsps/counter\" resource.type=\"prometheus_target\" resource.labels.namespace=\"%s\"", var.ctlog_gke_namespace)
+      # Only count server errors.
+      bad_filter = "metric.labels.rc=monitoring.regex.full_match(\"5[0-9][0-9]\")"
+      slos = {
+        all-methods = {
+          display_suffix = "All Methods"
+          label_filter   = ""
+          goal           = 0.995
+        },
+        add-pre-chain = {
+          display_suffix = "AddPreChain"
+          label_filter   = "metric.labels.ep=\"AddPreChain\""
+          goal           = 0.995
+        }
+      }
+    }
+  }
+}

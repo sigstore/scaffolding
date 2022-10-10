@@ -46,6 +46,12 @@ variable "resource_name" {
   default     = ""
 }
 
+variable "notification_channels" {
+  description = "Set of preformated notification channel resource ids"
+  type        = set(string)
+  default     = []
+}
+
 /* availability_slos define 30-day window, request based availability SLOs, grouped by category.
  *
  * Example usage:
@@ -102,13 +108,23 @@ variable "resource_name" {
 variable "availability_slos" {
   type = map(object(
     {
-      display_prefix            = string,
-      base_total_service_filter = string,
-      bad_filter                = string,
+      display_prefix            = string
+      base_total_service_filter = string
+      bad_filter                = string
+      page_configuration = optional(object({
+        fast_burn   = bool
+        medium_burn = bool
+        slow_burn   = bool
+      }))
       slos = map(object({
-        goal           = number,
-        display_suffix = string,
-        label_filter   = string,
+        goal           = number
+        display_suffix = string
+        label_filter   = string
+        page_configuration = optional(object({
+          fast_burn   = bool
+          medium_burn = bool
+          slow_burn   = bool
+        }))
       }))
   }))
   default = {}

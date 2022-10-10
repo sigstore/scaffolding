@@ -18,11 +18,11 @@ module "slos" {
   source = "../slo"
   count  = var.create_slos ? 1 : 0
 
-  project_id    = var.project_id
-  service_id    = "dex"
-  display_name  = "Dex"
-  resource_name = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
-
+  project_id            = var.project_id
+  service_id            = "dex"
+  display_name          = "Dex"
+  resource_name         = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
+  notification_channels = local.notification_channels
 
   availability_slos = {
     server-availability = {

@@ -18,11 +18,11 @@ module "slos" {
   source = "../slo"
   count  = var.create_slos ? 1 : 0
 
-  project_id    = var.project_id
-  service_id    = "rekor"
-  display_name  = "Rekor"
-  resource_name = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
-
+  project_id            = var.project_id
+  service_id            = "rekor"
+  display_name          = "Rekor"
+  resource_name         = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
+  notification_channels = local.notification_channels
 
   availability_slos = {
     server-availability = {
@@ -70,6 +70,11 @@ module "slos" {
           display_suffix = "/api/v1/index/retrieve - POST"
           label_filter   = "metric.labels.path=\"/api/v1/index/retrieve\" metric.labels.method=\"POST\""
           goal           = 0.8
+          page_configuration = {
+            fast_burn   = false
+            medium_burn = false
+            slow_burn   = false
+          }
         },
       }
     },
@@ -88,6 +93,11 @@ module "slos" {
           display_suffix = "/api/v1/index/retrieve - POST"
           label_filter   = "metric.labels.endpoint=\"/api/v1/index/retrieve\" metric.labels.method=\"POST\""
           goal           = 0.8
+          page_configuration = {
+            fast_burn   = false
+            medium_burn = false
+            slow_burn   = false
+          }
         },
         api-v1-log-get = {
           display_suffix = "/api/v1/log - GET"

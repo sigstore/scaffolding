@@ -25,6 +25,8 @@ import (
 	"os"
 	"time"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"sigs.k8s.io/release-utils/version"
@@ -34,6 +36,7 @@ import (
 
 var (
 	frequency      int
+	retries        uint
 	addr           string
 	rekorURL       string
 	fulcioURL      string
@@ -57,6 +60,8 @@ func init() {
 
 	var fulcioRequestsJson string
 	flag.StringVar(&fulcioRequestsJson, "fulcio-requests", "[]", "Additional fulcio requests (JSON array.)")
+
+	flag.UintVar(&retries, "retry", 4, "maximum number of retries before marking HTTP request as failed")
 
 	flag.Parse()
 
@@ -139,7 +144,8 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 }
 
 func observeRequest(host string, r ReadProberCheck) error {
-	client := &http.Client{}
+	client := retryablehttp.NewClient()
+	client.RetryMax = int(retries)
 
 	req, err := httpRequest(host, r)
 	if err != nil {
@@ -167,8 +173,8 @@ func observeRequest(host string, r ReadProberCheck) error {
 	return nil
 }
 
-func httpRequest(host string, r ReadProberCheck) (*http.Request, error) {
-	req, err := http.NewRequest(r.Method, host+r.Endpoint, bytes.NewBuffer([]byte(r.Body)))
+func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error) {
+	req, err := retryablehttp.NewRequest(r.Method, host+r.Endpoint, bytes.NewBuffer([]byte(r.Body)))
 	if err != nil {
 		return nil, err
 	}

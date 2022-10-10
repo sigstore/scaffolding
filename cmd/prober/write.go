@@ -32,6 +32,8 @@ import (
 	"github.com/go-openapi/swag"
 	"github.com/prometheus/client_golang/prometheus"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
@@ -54,7 +56,7 @@ const (
 	rekorEndpoint  = "/api/v1/log/entries"
 )
 
-func setHeaders(req *http.Request, token string) {
+func setHeaders(req *retryablehttp.Request, token string) {
 	if token != "" {
 		// Set the authorization header to our OIDC bearer token.
 		req.Header.Set("Authorization", "Bearer "+token)
@@ -83,7 +85,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	endpoint := fulcioEndpoint
 	hostPath := fulcioURL + endpoint
 
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -91,7 +93,9 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	setHeaders(req, tok)
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.RetryMax = int(retries)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		fmt.Printf("error requesting cert: %v\n", err.Error())
@@ -112,7 +116,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("rekor entry: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -120,7 +124,9 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	setHeaders(req, "")
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.RetryMax = int(retries)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 	if err != nil {

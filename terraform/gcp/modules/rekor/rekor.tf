@@ -52,15 +52,3 @@ resource "google_dns_record_set" "A_rekor" {
 
   rrdatas = [var.load_balancer_ipv4]
 }
-
-// api.$dns_domain_name was a previous reference for rekor early on, and may be used by some clients
-resource "google_dns_record_set" "CNAME_api_sigstore_dev" {
-  name = "api.${var.dns_domain_name}"
-  type = "CNAME"
-  ttl  = 3600
-
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-
-  rrdatas = ["rekor.${var.dns_domain_name}"]
-}

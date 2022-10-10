@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+// IAM project roles
+module "project_roles" {
+  source               = "../project_roles"
+  project_id           = var.project_id
+  iam_members_to_roles = var.iam_members_to_roles
+}
+
 // Private network
 module "network" {
   source = "../network"
@@ -24,6 +31,10 @@ module "network" {
   cluster_name = var.cluster_name
 
   requested_external_ipv4_address = var.static_external_ipv4_address
+
+  depends_on = [
+    module.project_roles
+  ]
 }
 
 // Bastion
@@ -38,7 +49,8 @@ module "bastion" {
   tunnel_accessor_sa = var.tunnel_accessor_sa
 
   depends_on = [
-    module.network
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -51,6 +63,10 @@ module "tuf" {
   tuf_bucket         = var.tuf_bucket
   tuf_preprod_bucket = var.tuf_preprod_bucket
   storage_class      = var.tuf_storage_class
+
+  depends_on = [
+    module.project_roles
+  ]
 }
 
 // Monitoring
@@ -72,7 +88,8 @@ module "monitoring" {
   create_slos              = var.create_slos
 
   depends_on = [
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -93,7 +110,8 @@ resource "google_compute_firewall" "bastion-egress" {
 
   depends_on = [
     module.network,
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -116,7 +134,8 @@ module "gke-cluster" {
 
   depends_on = [
     module.network,
-    module.bastion
+    module.bastion,
+    module.project_roles
   ]
 }
 
@@ -148,7 +167,8 @@ module "mysql" {
 
   depends_on = [
     module.network,
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -163,7 +183,8 @@ module "policy_bindings" {
   github_repo  = var.github_repo
 
   depends_on = [
-    module.network
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -195,7 +216,8 @@ module "rekor" {
 
   depends_on = [
     module.network,
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -221,7 +243,8 @@ module "fulcio" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -229,13 +252,6 @@ module "fulcio" {
 module "audit" {
   source     = "../audit"
   project_id = var.project_id
-}
-
-// IAM project roles
-module "project_roles" {
-  source               = "../project_roles"
-  project_id           = var.project_id
-  iam_members_to_roles = var.iam_members_to_roles
 }
 
 // OSLogin configuration
@@ -262,7 +278,8 @@ module "oslogin" {
   }
   depends_on = [
     module.bastion,
-    module.policy_bindings
+    module.policy_bindings,
+    module.project_roles
   ]
 }
 
@@ -278,7 +295,8 @@ module "ctlog" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -294,6 +312,7 @@ module "dex" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
   ]
 }

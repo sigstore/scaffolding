@@ -32,6 +32,8 @@ import (
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
 
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
@@ -72,7 +74,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	endpoint := fulcioEndpoint
 	hostPath := fulcioURL + endpoint
 
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -82,7 +84,9 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.RetryMax = int(retries)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		fmt.Printf("error requesting cert: %v\n", err.Error())
@@ -103,7 +107,7 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("rekor entry: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
@@ -111,7 +115,9 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	retryableClient := retryablehttp.NewClient()
+	retryableClient.RetryMax = int(retries)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		fmt.Printf("error adding entry: %v\n", err.Error())

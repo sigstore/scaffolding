@@ -91,12 +91,12 @@ output "bastion_kubectl" {
   value       = "HTTPS_PROXY=socks5://localhost:8118 kubectl get pods --all-namespaces"
 }
 
-output "external_ip_name" {
-  description = "Name of the external IP for services on the cluster"
-  value       = module.network.external_ip_name
+output "external_ipv4_name" {
+  description = "Name of the external IPv4 address resource for services on the cluster"
+  value       = module.network.external_ipv4_name
 }
 
-output "external_ip_address" {
-  description = "External IP Address for services on the cluster"
-  value       = module.network.external_ip_address
+output "external_ipv4_address" {
+  description = "External IPv4 Address for services on the cluster"
+  value       = module.network.external_ipv4_address
 }

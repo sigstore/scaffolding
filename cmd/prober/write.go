@@ -25,18 +25,19 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/prometheus/client_golang/prometheus"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
 	"github.com/sigstore/cosign/pkg/cosign"
 	"github.com/sigstore/cosign/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
+	rclient "github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -54,6 +55,16 @@ const (
 	fulcioEndpoint = "/api/v1/signingCert"
 	rekorEndpoint  = "/api/v1/log/entries"
 )
+
+func setHeaders(req *retryablehttp.Request, token string) {
+	if token != "" {
+		// Set the authorization header to our OIDC bearer token.
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	// Set the content-type to reflect we're sending JSON.
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+}
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
 // which is "/api/v1/signingCert", which requests a cert from Fulcio
@@ -78,10 +89,8 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the authorization header to our OIDC bearer token.
-	req.Header.Set("Authorization", "Bearer "+tok)
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
+
+	setHeaders(req, tok)
 
 	t := time.Now()
 	retryableClient := retryablehttp.NewClient()
@@ -111,24 +120,41 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
+
+	setHeaders(req, "")
 
 	t := time.Now()
 	retryableClient := retryablehttp.NewClient()
 	retryableClient.RetryMax = int(retries)
 	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
+	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 	if err != nil {
-		fmt.Printf("error adding entry: %v\n", err.Error())
+		return fmt.Errorf("error adding entry: %w", err)
 	}
 
-	// Export data to prometheus
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
-	body, _ = io.ReadAll(resp.Body)
-	fmt.Println(string(body))
-	return nil
+	// If entry was added successfully, we should verify it
+	rekorClient, err := rclient.GetRekorClient(rekorURL, rclient.WithUserAgent(fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion)))
+	if err != nil {
+		return fmt.Errorf("creating rekor client: %w", err)
+	}
+	defer resp.Body.Close()
+	var logEntry models.LogEntry
+	err = json.NewDecoder(resp.Body).Decode(&logEntry)
+	if err != nil {
+		return fmt.Errorf("unmarshal: %w", err)
+	}
+	var logEntryAnon models.LogEntryAnon
+	for _, e := range logEntry {
+		logEntryAnon = e
+		break
+	}
+	verified := "true"
+	if err = cosign.VerifyTLogEntry(ctx, rekorClient, &logEntryAnon); err != nil {
+		verified = "false"
+	}
+	verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+	return err
 }
 
 func rekorEntryRequest() ([]byte, error) {

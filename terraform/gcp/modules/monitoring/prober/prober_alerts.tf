@@ -117,7 +117,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
 
       duration = "300s"
-      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", each.key)
+      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\"", each.key)
 
       trigger {
         count   = "1"
@@ -142,6 +142,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
 
 // This alert will fire if a non-200 error code is seen over the past 60s (alignment_period)
 // AND if this sustains for 5 minutes (duration)
+// NOTE: The Rekor endpoint for `/api/v1/index/retrieve` is ignored as it is experimental and will not alert
 resource "google_monitoring_alert_policy" "prober_error_codes" {
   alert_strategy {
     auto_close = "604800s"
@@ -160,7 +161,7 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != \"200\""
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != one_of(\"200\", \"201\") AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\""
       threshold_value = "0"
 
       trigger {
@@ -179,6 +180,45 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
     mime_type = "text/markdown"
   }
 
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "prober_verification" {
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_SUM"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/verification\" AND metric.labels.verified = \"false\""
+      threshold_value = "0"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Container - external/prometheus/verification"
+  }
+
+  documentation {
+    content   = "An entry written to Rekor produced an unverifiable response at least once in the last 60s.\n"
+    mime_type = "text/markdown"
+  }
+
+  display_name          = "API Prober: Rekor write correctness verifier returned 'false' within the last 60s"
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id

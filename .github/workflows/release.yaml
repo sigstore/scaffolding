@@ -22,15 +22,14 @@ jobs:
     steps:
     - uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
       with:
-        go-version: 1.18
+        go-version: 1.19
         check-latest: true
 
-    # will use the latest release available for ko
     - name: Install ko
-      uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+      uses: imjasonh/setup-ko@v0.6
 
     - name: Install cosign
-      uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
+      uses: sigstore/cosign-installer@7cc35d7fdbe70d4278a0c96779081e6fac665f88 # v2
 
     - name: Install GoReleaser
       uses: goreleaser/goreleaser-action@ff11ca24a9b39f2d36796d1fbd7a4e39c182630a # v3.1.0
@@ -45,7 +44,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check out code onto GOPATH
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.0.2
       with:
         fetch-depth: 1
         path: ./src/github.com/${{ github.repository }}
@@ -56,7 +55,7 @@ jobs:
 
     - name: Run goreleaser
       working-directory: ./src/github.com/${{ github.repository }}
-      run: goreleaser release --rm-dist
+      run: goreleaser release --rm-dist --timeout 120m
       env:
         GIT_TAG: ${{ steps.get_tag.outputs.TAG }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

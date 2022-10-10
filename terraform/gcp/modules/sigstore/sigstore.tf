@@ -22,6 +22,8 @@ module "network" {
   project_id = var.project_id
 
   cluster_name = var.cluster_name
+
+  requested_external_ipv4_address = var.static_external_ipv4_address
 }
 
 // Bastion
@@ -30,6 +32,7 @@ module "bastion" {
 
   project_id         = var.project_id
   region             = var.region
+  zone               = var.bastion_zone
   network            = module.network.network_name
   subnetwork         = module.network.subnetwork_self_link
   tunnel_accessor_sa = var.tunnel_accessor_sa
@@ -59,13 +62,14 @@ module "monitoring" {
   count = var.monitoring.enabled ? 1 : 0
 
   project_id               = var.project_id
-  cluster_location         = var.project_id
+  cluster_location         = module.gke-cluster.cluster_location
   cluster_name             = var.cluster_name
   ca_pool_name             = var.ca_pool_name
   fulcio_url               = var.monitoring.fulcio_url
   rekor_url                = var.monitoring.rekor_url
   dex_url                  = var.monitoring.dex_url
   notification_channel_ids = var.monitoring.notification_channel_ids
+  create_slos              = var.create_slos
 
   depends_on = [
     module.gke-cluster
@@ -185,6 +189,10 @@ module "rekor" {
   attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
   storage_class      = var.attestation_storage_class
 
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
   depends_on = [
     module.network,
     module.gke-cluster
@@ -207,6 +215,10 @@ module "fulcio" {
   fulcio_keyring_name = var.fulcio_keyring_name
   fulcio_key_name     = var.fulcio_intermediate_key_name
 
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
   depends_on = [
     module.gke-cluster,
     module.network
@@ -224,4 +236,64 @@ module "project_roles" {
   source               = "../project_roles"
   project_id           = var.project_id
   iam_members_to_roles = var.iam_members_to_roles
+}
+
+// OSLogin configuration
+module "oslogin" {
+  source     = "../oslogin"
+  project_id = var.project_id
+
+  // Disable module entirely if oslogin is disabled
+  count = var.oslogin.enabled ? 1 : 0
+
+  oslogin = var.oslogin
+
+  // Grant OSLogin access to the bastion instance to the GHA
+  // SA for terraform access and to tunnel accessors.
+  instance_os_login_members = {
+    bastion = {
+      instance_name = module.bastion.name
+      zone          = module.bastion.zone
+      members = [
+        var.tunnel_accessor_sa,
+        module.policy_bindings.gha_serviceaccount_member
+      ]
+    }
+  }
+  depends_on = [
+    module.bastion,
+    module.policy_bindings
+  ]
+}
+
+// ctlog
+module "ctlog" {
+  source = "../ctlog"
+
+  project_id = var.project_id
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  depends_on = [
+    module.gke-cluster,
+    module.network
+  ]
+}
+
+// dex
+module "dex" {
+  source = "../dex"
+
+  project_id = var.project_id
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  depends_on = [
+    module.gke-cluster,
+    module.network
+  ]
 }

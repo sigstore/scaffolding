@@ -26,6 +26,7 @@ var (
 	hostLabel       = "host"
 	statusCodeLabel = "status_code"
 	methodLabel     = "method"
+	verifiedLabel   = "verified"
 )
 
 var (
@@ -45,6 +46,14 @@ var (
 		Buckets: []float64{0.0, 200.0, 400.0, 600.0, 800.0, 1000.0},
 	},
 		[]string{endpointLabel, hostLabel, statusCodeLabel, methodLabel})
+
+	verificationCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "verification",
+			Help: "Rekor verification correctness counter",
+		},
+		[]string{verifiedLabel},
+	)
 )
 
 func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, latency int64) {
@@ -61,4 +70,26 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	fmt.Println("Observing ", method, host+endpoint)
 	fmt.Println("Status code: ", statusCode)
 	fmt.Printf("Latency for %s %s: %d\n", method, host+endpoint, latency)
+}
+
+// NewVersionCollector returns a collector that exports metrics about current version
+// information.
+func NewVersionCollector(program string) prometheus.Collector {
+	return prometheus.NewGaugeFunc(
+		prometheus.GaugeOpts{
+			Namespace: program,
+			Name:      "build_info",
+			Help: fmt.Sprintf(
+				"A metric with a constant '1' value labeled by version, revision, branch, and goversion from which %s was built.",
+				program,
+			),
+			ConstLabels: prometheus.Labels{
+				"version":    versionInfo.GitVersion,
+				"revision":   versionInfo.GitCommit,
+				"build_date": versionInfo.BuildDate,
+				"goversion":  versionInfo.GoVersion,
+			},
+		},
+		func() float64 { return 1 },
+	)
 }

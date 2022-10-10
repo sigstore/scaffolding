@@ -24,8 +24,8 @@ variable "project_id" {
 }
 
 variable "cluster_location" {
-  type        = string
   description = "Zone or Region to create cluster in."
+  type        = string
   default     = "us-central1"
 }
 
@@ -40,6 +40,27 @@ variable "cluster_name" {
 variable "fulcio_url" {
   description = "Fulcio URL"
   default     = "fulcio.sigstore.dev"
+}
+
+// URLs for Sigstore services
+variable "prober_url" {
+  description = "Fulcio Prober URL"
+  type        = string
+  default     = ""
+}
+
+// Namespace for monitored service
+variable "gke_namespace" {
+  description = "GKE Namespace"
+  type        = string
+  default     = "fulcio-system"
+}
+
+// Namespace for ct log service
+variable "ctlog_gke_namespace" {
+  description = "CT Log GKE Namespace"
+  type        = string
+  default     = "ctlog-system"
 }
 
 variable "ctlog_url" {
@@ -63,4 +84,10 @@ variable "ca_pool_name" {
   description = "Certificate authority pool name"
   type        = string
   default     = "sigstore"
+}
+
+variable "create_slos" {
+  description = "True to enable SLO creation"
+  type        = bool
+  default     = false
 }

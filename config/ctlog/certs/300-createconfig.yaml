@@ -21,7 +21,11 @@ spec:
       - name: createctconfig
         image: ko://github.com/sigstore/scaffolding/cmd/ctlog/createctconfig
         args: [
-          "--namespace=ctlog-system",
           "--configmap=ctlog-config",
           "--secret=ctlog-secret"
         ]
+        env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace

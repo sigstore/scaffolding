@@ -27,6 +27,12 @@ variable "region" {
   type        = string
 }
 
+variable "bastion_zone" {
+  description = "Bastion zone"
+  type        = string
+  default     = ""
+}
+
 variable "tuf_region" {
   description = "The region in which to create the TUF bucket"
   type        = string
@@ -94,6 +100,12 @@ variable "monitoring" {
     dex_url                  = "oauth2.example.com"
     notification_channel_ids = []
   }
+}
+
+variable "create_slos" {
+  description = "Creates SLOs when true. (Monitoring must be enabled.)"
+  type        = bool
+  default     = false
 }
 
 // Optional values that can be overridden or appended to if desired.
@@ -212,4 +224,32 @@ variable "iam_members_to_roles" {
   description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
   type        = map(set(string))
   default     = {}
+}
+
+variable "oslogin" {
+  type = object({
+    enabled          = bool
+    enabled_with_2fa = bool
+  })
+  default = {
+    enabled          = false
+    enabled_with_2fa = false
+  }
+  description = "oslogin settings for access to VMs"
+}
+
+variable "dns_zone_name" {
+  description = "Name of DNS Zone object in Google Cloud DNS"
+  type        = string
+}
+
+variable "dns_domain_name" {
+  description = "Name of DNS domain name in Google Cloud DNS"
+  type        = string
+}
+
+variable "static_external_ipv4_address" {
+  description = "Static IPv4 Address to request for external services"
+  type        = string
+  default     = ""
 }

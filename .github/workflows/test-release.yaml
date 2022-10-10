@@ -24,10 +24,11 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
+        - v1.25.x
         leg:
         - fulcio rekor ctlog e2e
         go-version:
-        - 1.18
+        - 1.19
 
     env:
       RELEASE_VERSION: "v0.4.6"
@@ -38,7 +39,7 @@ jobs:
     steps:
     - uses: chainguard-dev/actions/setup-mirror@main
 
-    - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
+    - uses: sigstore/cosign-installer@7cc35d7fdbe70d4278a0c96779081e6fac665f88 # v2
 
     - name: Set up Go
       uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
@@ -46,13 +47,12 @@ jobs:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    # Setup ko
-    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+    - uses: imjasonh/setup-ko@v0.6
       with:
-        version: tip
+        version: v0.12.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@9a093941a956fd587ee7a4ecc74edbcbe656a517
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -62,7 +62,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.6.0"
+        version: "latest"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -73,7 +73,7 @@ jobs:
       run: |
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${{ env.RELEASE_VERSION }}/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
-        /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh --release-version ${{ env.RELEASE_VERSION }}
 
         # TODO(vaikas): Figure out how these could be exposed by above.
         REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')

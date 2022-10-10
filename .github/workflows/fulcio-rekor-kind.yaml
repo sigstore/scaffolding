@@ -27,6 +27,7 @@ jobs:
         - v1.22.x
         - v1.23.x
         - v1.24.x
+        - v1.25.x
 
         leg:
         - fulcio rekor ctlog e2e
@@ -36,7 +37,7 @@ jobs:
         - "false"
 
         go-version:
-        - 1.18
+        - 1.19
 
     env:
       GOPATH: ${{ github.workspace }}
@@ -57,7 +58,7 @@ jobs:
         check-latest: true
 
     - name: Check out our repo
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@93ea575cb5d8a053eaa0ac8fa3b40d7e05a33cc8 # v3.0.2
       with:
         path: ./src/github.com/sigstore/scaffolding
 
@@ -74,11 +75,11 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - uses: imjasonh/setup-ko@78eea08f10db87a7a23a666a4a6fe2734f2eeb8d # v0.4
+    - uses: imjasonh/setup-ko@v0.6
       with:
-        version: tip
+        version: v0.12.0
 
-    - uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
+    - uses: sigstore/cosign-installer@7cc35d7fdbe70d4278a0c96779081e6fac665f88 # v2
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@main
@@ -91,7 +92,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.6.0"
+        version: "latest"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

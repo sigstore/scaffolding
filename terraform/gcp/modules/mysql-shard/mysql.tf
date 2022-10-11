@@ -28,8 +28,6 @@ resource "google_sql_database_instance" "trillian" {
   # Set to false to delete this database
   deletion_protection = var.deletion_protection
 
-  depends_on = [google_service_networking_connection.private_vpc_connection]
-
   settings {
     tier              = var.tier
     activation_policy = "ALWAYS"

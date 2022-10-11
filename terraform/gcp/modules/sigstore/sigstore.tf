@@ -310,7 +310,7 @@ module "ctlog_shards" {
 
   for_each = toset(var.ctlog_shards)
 
-  instance_name = format("ctlog-%s", each.key)
+  instance_name = format("%s-ctlog-%s", var.cluster_name, each.key)
 
   project_id = var.project_id
   region     = var.region

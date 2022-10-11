@@ -328,10 +328,11 @@ module "ctlog_shards" {
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
 
-  cluster_name            = var.cluster_name
-  mysql_database_version  = var.mysql_db_version
-  mysql_tier              = var.mysql_tier
-  mysql_availability_type = var.mysql_availability_type
+  cluster_name = var.cluster_name
+  // NB: These are commented out so that we pick up the defaults
+  // for the particular environment consistently.
+  //mysql_database_version  = var.mysql_db_version
+  //mysql_tier              = var.mysql_tier
 
   mysql_replica_zones = var.mysql_replica_zones
   mysql_replica_tier  = var.mysql_replica_tier

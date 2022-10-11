@@ -38,39 +38,3 @@ resource "google_dns_record_set" "A_ctfe" {
 
   rrdatas = [var.load_balancer_ipv4]
 }
-
-// For generating random suffix into the Cloud SQL instance name.
-resource "random_id" "db_name_suffix" {
-  byte_length = 4
-}
-
-// MYSQL for this particular CTLog
-// The name of the DB Instance created should match the name of the
-// shard for the CTLog.
-module "mysql" {
-  source = "../mysql"
-
-  # Disable DB create/modifications if enable_ctlog_sql is false
-  count = var.enable_ctlog_sql ? 1 : 0
-
-  region     = var.region
-  project_id = var.project_id
-
-  cluster_name      = var.cluster_name
-  database_version  = var.mysql_db_version
-  tier              = var.mysql_tier
-  availability_type = var.mysql_availability_type
-
-  replica_zones = var.mysql_replica_zones
-  replica_tier  = var.mysql_replica_tier
-
-  network = var.network
-
-  instance_name = var.mysql_instance_name != "" ? var.mysql_instance_name : format("%s-ctlog-mysql-%s", var.cluster_name, random_id.db_name_suffix.hex)
-  db_name       = var.mysql_db_name
-
-  ipv4_enabled              = var.mysql_ipv4_enabled
-  require_ssl               = var.mysql_require_ssl
-  backup_enabled            = var.mysql_backup_enabled
-  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
-}

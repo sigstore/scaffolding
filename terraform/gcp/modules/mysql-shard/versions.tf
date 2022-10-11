@@ -14,26 +14,21 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type    = string
-  default = ""
-  validation {
-    condition     = length(var.project_id) > 0
-    error_message = "Must specify project_id variable."
+terraform {
+  required_version = ">= 1.1.3, < 1.4.0"
+
+  required_providers {
+    google = {
+      version = ">= 4.11.0, < 4.38.0"
+      source  = "hashicorp/google"
+    }
+    google-beta = {
+      version = ">= 4.11.0, < 4.38.0"
+      source  = "hashicorp/google-beta"
+    }
+    random = {
+      version = ">= 3.1.0, < 3.2.0"
+      source  = "hashicorp/random"
+    }
   }
-}
-
-variable "dns_zone_name" {
-  description = "Name of DNS Zone object in Google Cloud DNS"
-  type        = string
-}
-
-variable "dns_domain_name" {
-  description = "Name of DNS domain name in Google Cloud DNS"
-  type        = string
-}
-
-variable "load_balancer_ipv4" {
-  description = "IPv4 adddress of external load balancer"
-  type        = string
 }

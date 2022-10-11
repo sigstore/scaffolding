@@ -292,13 +292,6 @@ module "ctlog" {
 
   project_id = var.project_id
 
-  // We do not want the old CTLog to have its own Cloud SQL instance. It shares
-  // it with Rekor.
-  enable_ctlog_sql = false
-
-  // Required placeholders even though they are not used for the old ctlog.
-  region = var.region
-
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
@@ -313,20 +306,14 @@ module "ctlog" {
 // ctlog-shards. This will create CTLog shard that has its own Cloud SQL
 // instance for each shard
 module "ctlog_shards" {
-  source = "../ctlog"
+  source = "../mysql-shard"
 
   for_each = toset(var.ctlog_shards)
-  // We want each CTLog shard to have its own Cloud SQL instance
-  enable_ctlog_sql = true
 
-  mysql_instance_name = format("ctlog-%s", each.key)
+  instance_name = format("ctlog-%s", each.key)
 
   project_id = var.project_id
   region     = var.region
-
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
 
   cluster_name = var.cluster_name
   // NB: These are commented out so that we pick up the defaults
@@ -334,21 +321,30 @@ module "ctlog_shards" {
   //mysql_database_version  = var.mysql_db_version
   //mysql_tier              = var.mysql_tier
 
-  mysql_replica_zones = var.mysql_replica_zones
-  mysql_replica_tier  = var.mysql_replica_tier
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
+  // We want to use consistent password across mysql DB instances, because
+  // this is access only at the DB level and access to the DB instance is gated
+  // by the IAM as well as private network.
+  password = module.mysql.mysql_pass
 
   network = module.network.network_self_link
 
-  mysql_db_name = var.mysql_db_name
+  db_name = var.mysql_db_name
 
-  mysql_ipv4_enabled              = var.mysql_ipv4_enabled
-  mysql_require_ssl               = var.mysql_require_ssl
-  mysql_backup_enabled            = var.mysql_backup_enabled
-  mysql_binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    // Need to make sure we have the necessary network, service accounts, and
+    // services.
+    module.mysql
   ]
 }
 

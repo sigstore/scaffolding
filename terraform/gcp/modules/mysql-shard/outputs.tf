@@ -15,7 +15,26 @@
  */
 
 // Used when setting up the GKE cluster to talk to MySQL.
-output "ctlog_mysql_instance" {
+output "mysql_instance" {
   description = "The generated name of the Cloud SQL instance"
-  value       = var.enable_ctlog_sql ? module.mysql.0.mysql_instance : null
+  value       = google_sql_database_instance.trillian.name
+}
+
+// Full connection string for the MySQL DB>
+output "mysql_connection" {
+  description = "The connection string dynamically generated for storage inside the Kubernetes configmap"
+  value       = format("%s:%s:%s", var.project_id, var.region, google_sql_database_instance.trillian.name)
+}
+
+// Mysql DB username.
+output "mysql_user" {
+  description = "The Cloud SQL Instance User name"
+  value       = google_sql_user.trillian.name
+}
+
+// Mysql DB password.
+output "mysql_pass" {
+  sensitive   = true
+  description = "The Cloud SQL Instance Password (Generated)"
+  value       = google_sql_user.trillian.password
 }

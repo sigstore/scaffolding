@@ -21,7 +21,7 @@
 
 // Access to private cluster
 resource "google_compute_global_address" "private_ip_address" {
-  name          = format("%s-%s", var.cluster_name, var.instance_name)
+  name          = format("%s-priv-ip", var.cluster_name)
   project       = var.project_id
   purpose       = "VPC_PEERING"
   address_type  = "INTERNAL"

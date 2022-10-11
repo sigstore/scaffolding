@@ -19,23 +19,6 @@
 # should use this module.
 # Forked from https://github.com/GoogleCloudPlatform/gke-private-cluster-demo/blob/master/terraform/postgres.tf
 
-// Access to private cluster
-resource "google_compute_global_address" "private_ip_address" {
-  name          = format("%s-priv-ip", var.cluster_name)
-  project       = var.project_id
-  purpose       = "VPC_PEERING"
-  address_type  = "INTERNAL"
-  prefix_length = 16
-  network       = var.network
-}
-
-resource "google_service_networking_connection" "private_vpc_connection" {
-  network                 = var.network
-  service                 = "servicenetworking.googleapis.com"
-  reserved_peering_ranges = [google_compute_global_address.private_ip_address.name]
-  depends_on              = [google_compute_global_address.private_ip_address]
-}
-
 resource "google_sql_database_instance" "trillian" {
   project          = var.project_id
   name             = var.instance_name

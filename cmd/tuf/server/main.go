@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"net/http"
@@ -33,7 +34,9 @@ import (
 
 var (
 	dir = flag.String("file-dir", "/var/run/tuf-secrets", "Directory where all the files that need to be added to TUF root live. File names are used to as targets.")
-	// Name of the "secret" initial 1.root.json.
+	// Name of the "secret" where we create two entries, one for:
+	// root = Which holds 1.root.json
+	// repository - Compressed repo, which has been tar/gzipped.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
 
@@ -99,6 +102,15 @@ func main() {
 	// Add the initial 1.root.json to secrets.
 	data := make(map[string][]byte)
 	data["root"] = rootJSON
+
+	// Then compress the root directory and put it into a secret
+	// Secrets have 1MiB and the repository as tested goes to about ~3k, so no
+	// worries here.
+	var compressed bytes.Buffer
+	if err := repo.CompressFS(os.DirFS(dir), &compressed, map[string]bool{"keys": true, "staged": true}); err != nil {
+		logging.FromContext(ctx).Fatalf("Failed to compress the repo: %v", err)
+	}
+	data["repository"] = compressed.Bytes()
 
 	nsSecret := clientset.CoreV1().Secrets(ns)
 	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {

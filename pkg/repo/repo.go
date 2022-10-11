@@ -15,11 +15,16 @@
 package repo
 
 import (
+	"archive/tar"
+	"compress/gzip"
 	"context"
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/theupdateframework/go-tuf"
@@ -99,6 +104,120 @@ func writeStagedTarget(dir, path string, data []byte) error {
 	}
 	if err := ioutil.WriteFile(path, []byte(data), 0644); err != nil {
 		return err
+	}
+	return nil
+}
+
+// CompressFS archives a TUF repository so that it can be written to Secret
+// for later use.
+func CompressFS(fsys fs.FS, buf io.Writer, skipDirs map[string]bool) error {
+	// tar > gzip > buf
+	zr := gzip.NewWriter(buf)
+	tw := tar.NewWriter(zr)
+
+	err := fs.WalkDir(fsys, "repository", func(file string, d fs.DirEntry, err error) error {
+		// Skip the 'keys' and 'staged' directory
+		if d.IsDir() && skipDirs[d.Name()] {
+			return filepath.SkipDir
+		}
+
+		// Stat the file to get the details of it.
+		fi, err := fs.Stat(fsys, file)
+		if err != nil {
+			return fmt.Errorf("fs.Stat %s: %w", file, err)
+		}
+		header, err := tar.FileInfoHeader(fi, file)
+		if err != nil {
+			return fmt.Errorf("FileInfoHeader %s: %w", file, err)
+		}
+		header.Name = filepath.ToSlash(file)
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+		// For files, write the contents.
+		if !d.IsDir() {
+			data, err := fsys.Open(file)
+			if err != nil {
+				return fmt.Errorf("opening %s: %w", file, err)
+			}
+			if _, err := io.Copy(tw, data); err != nil {
+				return fmt.Errorf("copying %s: %w", file, err)
+			}
+		}
+		return nil
+	})
+
+	if err != nil {
+		tw.Close()
+		zr.Close()
+		return fmt.Errorf("WalkDir: %w", err)
+	}
+
+	if err := tw.Close(); err != nil {
+		zr.Close()
+		return fmt.Errorf("tar.NewWriter Close(): %w", err)
+	}
+	return zr.Close()
+}
+
+// check for path traversal and correct forward slashes
+func validRelPath(p string) bool {
+	if p == "" || strings.Contains(p, `\`) || strings.HasPrefix(p, "/") || strings.Contains(p, "../") {
+		return false
+	}
+	return true
+}
+
+// Uncompress takes a TUF repository that's been compressed with Compress and
+// writes to dst directory.
+func Uncompress(src io.Reader, dst string) error {
+	zr, err := gzip.NewReader(src)
+	if err != nil {
+		return err
+	}
+	tr := tar.NewReader(zr)
+
+	// uncompress each element
+	for {
+		header, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+		if err != nil {
+			return err
+		}
+		target := header.Name
+
+		// validate name against path traversal
+		if !validRelPath(header.Name) {
+			return fmt.Errorf("tar contained invalid name error %q\n", target)
+		}
+
+		// add dst + re-format slashes according to system
+		target = filepath.Join(dst, header.Name)
+		// check the type
+		switch header.Typeflag {
+		// Create directories
+		case tar.TypeDir:
+			if _, err := os.Stat(target); err != nil {
+				if err := os.MkdirAll(target, os.ModePerm); err != nil {
+					return err
+				}
+			}
+		// Write out files
+		case tar.TypeReg:
+			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			if err != nil {
+				return err
+			}
+			// copy over contents
+			if _, err := io.Copy(fileToWrite, tr); err != nil {
+				return err
+			}
+			if err := fileToWrite.Close(); err != nil {
+				return fmt.Errorf("failed to close file %s: %w", target, err)
+			}
+		}
 	}
 	return nil
 }

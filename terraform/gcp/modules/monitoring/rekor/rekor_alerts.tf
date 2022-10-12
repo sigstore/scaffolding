@@ -59,7 +59,7 @@ resource "google_monitoring_alert_policy" "rekor_uptime_alerts" {
 
 resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_container" {
   # adding a dependency on the associated metric means that Terraform will 
-  # always try to   apply changes to the metric before this alert
+  # always try to apply changes to the metric before this alert
   depends_on = [google_logging_metric.rekor_k8s_pod_restart_failing_container]
 
   # In the absence of data, incident will auto-close in 7 days
@@ -105,7 +105,7 @@ resource "google_monitoring_alert_policy" "rekor_k8s_pod_restart_failing_contain
 
 resource "google_monitoring_alert_policy" "rekor_k8s_pod_unschedulable" {
   # adding a dependency on the associated metric means that Terraform will 
-  # always try to   apply changes to the metric before this alert
+  # always try to apply changes to the metric before this alert
   depends_on = [google_logging_metric.k8s_pod_unschedulable]
 
   # In the absence of data, incident will auto-close in 7 days

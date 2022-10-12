@@ -179,7 +179,7 @@ resource "google_monitoring_alert_policy" "ca_service_cert_quota" {
 
 resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_container" {
   # adding a dependency on the associated metric means that Terraform will 
-  # always try to   apply changes to the metric before this alert
+  # always try to apply changes to the metric before this alert
   depends_on = [google_logging_metric.fulcio_k8s_pod_restart_failing_container]
 
   # In the absence of data, incident will auto-close in 7 days
@@ -225,7 +225,7 @@ resource "google_monitoring_alert_policy" "fulcio_k8s_pod_restart_failing_contai
 
 resource "google_monitoring_alert_policy" "fulcio_k8s_pod_unschedulable" {
   # adding a dependency on the associated metric means that Terraform will 
-  # always try to   apply changes to the metric before this alert
+  # always try to apply changes to the metric before this alert
   depends_on = [google_logging_metric.k8s_pod_unschedulable]
 
   # In the absence of data, incident will auto-close in 7 days

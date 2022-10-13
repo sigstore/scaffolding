@@ -253,3 +253,9 @@ variable "static_external_ipv4_address" {
   type        = string
   default     = ""
 }
+
+variable "ctlog_shards" {
+  type        = list(string)
+  description = "Array of CTLog shards to create. Entry should be something like [2021, 2022], which would then have 2 independent CTLog shards backed by ctlog-2021 and ctlog-2022 Cloud SQL instances."
+  default     = []
+}

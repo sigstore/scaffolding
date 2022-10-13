@@ -31,6 +31,18 @@ output "mysql_instance" {
   value       = module.mysql.mysql_instance
 }
 
+// Outputs a list of strings for each CTLog Cloud SQL instance.
+output "ctlog_mysql_instances" {
+  description = "Names of the DB instances created for the CTLog shards"
+  value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_instance]
+}
+
+// Outputs a list of connection strings for each CTLog Cloud SQL instance.
+output "ctlog_mysql_connections" {
+  description = "Connection strings of the DB instances created for the CTLog shards"
+  value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_connection]
+}
+
 // Full connection string for the MySQL DB>
 output "mysql_connection" {
   description = "The connection string dynamically generated for storage inside the Kubernetes configmap"

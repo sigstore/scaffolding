@@ -139,7 +139,9 @@ module "gke-cluster" {
   ]
 }
 
-// MYSQL
+// MYSQL. This is the original DB that was used for both Rekor and CTLog.
+// Newer versions of CTLog create their own database instance, so there's
+// one database instance to a single ctlog shard.
 module "mysql" {
   source = "../mysql"
 
@@ -283,7 +285,8 @@ module "oslogin" {
   ]
 }
 
-// ctlog
+// ctlog. This was the original (pre-ga) ctlog that shared the DB instance
+// with Rekor.
 module "ctlog" {
   source = "../ctlog"
 
@@ -297,6 +300,51 @@ module "ctlog" {
     module.gke-cluster,
     module.network,
     module.project_roles
+  ]
+}
+
+// ctlog-shards. This will create CTLog shard that has its own Cloud SQL
+// instance for each shard
+module "ctlog_shards" {
+  source = "../mysql-shard"
+
+  for_each = toset(var.ctlog_shards)
+
+  instance_name = format("%s-ctlog-%s", var.cluster_name, each.key)
+
+  project_id = var.project_id
+  region     = var.region
+
+  cluster_name = var.cluster_name
+  // NB: These are commented out so that we pick up the defaults
+  // for the particular environment consistently.
+  //mysql_database_version  = var.mysql_db_version
+  //mysql_tier              = var.mysql_tier
+
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
+  // We want to use consistent password across mysql DB instances, because
+  // this is access only at the DB level and access to the DB instance is gated
+  // by the IAM as well as private network.
+  password = module.mysql.mysql_pass
+
+  network = module.network.network_self_link
+
+  db_name = var.mysql_db_name
+
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
+
+  depends_on = [
+    module.gke-cluster,
+    module.network,
+    // Need to make sure we have the necessary network, service accounts, and
+    // services.
+    module.mysql
   ]
 }
 

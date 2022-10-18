@@ -21,6 +21,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -37,6 +38,7 @@ import (
 	"google.golang.org/protobuf/types/known/anypb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/signals"
@@ -55,6 +57,7 @@ const (
 var (
 	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
 	configInSecret     = flag.Bool("config-in-secret", false, "If set to true, create the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'")
+	privateKeySecret   = flag.String("private-secret", "", "If there's an existing private key that should be used, read it from this secret, decrypt with the key-password and use it instead of creating a new one.")
 	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
 	pubKeySecretName   = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
@@ -150,7 +153,16 @@ func main() {
 	if existingSecret.Data[privateKey] == nil ||
 		existingSecret.Data[publicKey] == nil ||
 		(existingSecret.Data[configKey] == nil && existingCMConfig == nil) {
-		ctlogConfig, err := createConfigWithKeys(ctx, *keyType)
+		var ctlogConfig *ctlog.CTLogConfig
+		var err error
+		if *privateKeySecret != "" {
+			// We have an existing private key, use it instead of creating
+			// a new one.
+			ctlogConfig, err = createConfigFromExistingSecret(ctx, nsSecret, *privateKeySecret)
+		} else {
+			// Create a fresh private key.
+			ctlogConfig, err = createConfigWithKeys(ctx, *keyType)
+		}
 		if err != nil {
 			logging.FromContext(ctx).Fatalf("Failed to generate keys: %v", err)
 		}
@@ -246,5 +258,25 @@ func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.CTLogConf
 	return &ctlog.CTLogConfig{
 		PrivKey: privKey,
 		PubKey:  signer.Public(),
+	}, nil
+}
+
+// create
+func createConfigFromExistingSecret(ctx context.Context, nsSecret v1.SecretInterface, secretName string) (*ctlog.CTLogConfig, error) {
+	existingSecret, err := nsSecret.Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting an existing private key secret: %w", err)
+	}
+	private := existingSecret.Data[privateKey]
+	if private == nil || len(private) == 0 {
+		return nil, errors.New("secret missing private key entry")
+	}
+	priv, pub, err := ctlog.DecryptExistingPrivateKey(private, *keyPassword)
+	if err != nil {
+		return nil, fmt.Errorf("decrypting existing private key secret: %w", err)
+	}
+	return &ctlog.CTLogConfig{
+		PrivKey: priv,
+		PubKey:  pub,
 	}, nil
 }

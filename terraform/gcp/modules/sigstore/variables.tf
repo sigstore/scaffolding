@@ -259,3 +259,17 @@ variable "ctlog_shards" {
   description = "Array of CTLog shards to create. Entry should be something like [2021, 2022], which would then have 2 independent CTLog shards backed by ctlog-2021 and ctlog-2022 Cloud SQL instances."
   default     = []
 }
+
+
+//  Cluster node pool
+variable "initial_node_count" {
+  type = number
+}
+
+variable "autoscaling_min_node" {
+  type = number
+}
+
+variable "autoscaling_max_node" {
+  type = number
+}

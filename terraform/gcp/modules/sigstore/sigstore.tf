@@ -130,6 +130,10 @@ module "gke-cluster" {
   services_secondary_range_name = module.network.secondary_ip_range.1.range_name
   cluster_network_tag           = var.cluster_network_tag
 
+  initial_node_count   = var.initial_node_count
+  autoscaling_min_node = var.autoscaling_min_node
+  autoscaling_max_node = var.autoscaling_max_node
+
   bastion_ip_address = module.bastion.ip_address
 
   depends_on = [

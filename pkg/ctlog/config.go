@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -216,24 +217,12 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 		return nil, fmt.Errorf("Not a valid PEMKeyFile in proto")
 	}
 
-	privPEM, _ := pem.Decode(private)
-	if privPEM == nil {
-		return nil, fmt.Errorf("did not find valid private PEM data")
-	}
 	ret.PrivKeyPassword = pb.Password
 
-	privatePEMBlock, err := x509.DecryptPEMBlock(privPEM, []byte(pb.Password))
+	ret.PrivKey, _, err = DecryptExistingPrivateKey(private, ret.PrivKeyPassword)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
+		return nil, fmt.Errorf("decrypting existing private key: %w", err)
 	}
-
-	if ret.PrivKey, err = x509.ParsePKCS8PrivateKey(privatePEMBlock); err != nil {
-		// Try it as RSA
-		if ret.PrivKey, err = x509.ParsePKCS1PrivateKey(privatePEMBlock); err != nil {
-			return nil, fmt.Errorf("failed to parse private key PEM: %w", err)
-		}
-	}
-
 	// If there's legacy rootCA entry, check it first.
 	if legacyRoot, ok := in[LegacyRootCAKey]; ok && len(legacyRoot) > 0 {
 		ret.FulcioCerts = append(ret.FulcioCerts, legacyRoot)
@@ -374,4 +363,34 @@ func mustMarshalAny(pb proto.Message) *anypb.Any {
 		panic(fmt.Sprintf("MarshalAny failed: %v", err))
 	}
 	return ret
+}
+
+// DecryptExistingPrivateKey reads in an encrypted private key, decrypts with
+// the given password, and returns private, public keys for it.
+func DecryptExistingPrivateKey(privateKey []byte, password string) (crypto.PrivateKey, crypto.PublicKey, error) {
+	privPEM, _ := pem.Decode(privateKey)
+	if privPEM == nil {
+		return nil, nil, fmt.Errorf("did not find valid private PEM data")
+	}
+	privatePEMBlock, err := x509.DecryptPEMBlock(privPEM, []byte(password))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
+	}
+
+	var priv crypto.PrivateKey
+	if priv, err = x509.ParsePKCS8PrivateKey(privatePEMBlock); err != nil {
+		// Try it as RSA
+		if priv, err = x509.ParsePKCS1PrivateKey(privatePEMBlock); err != nil {
+			if priv, err = x509.ParseECPrivateKey(privatePEMBlock); err != nil {
+				return nil, nil, fmt.Errorf("failed to parse private key PEM: %w", err)
+			}
+		}
+	}
+	var ok bool
+	var signer crypto.Signer
+	if signer, ok = priv.(crypto.Signer); !ok {
+		return nil, nil, errors.New("failed to convert private key to Signer")
+	}
+
+	return priv, signer.Public(), nil
 }

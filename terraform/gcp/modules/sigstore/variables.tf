@@ -263,13 +263,16 @@ variable "ctlog_shards" {
 
 //  Cluster node pool
 variable "initial_node_count" {
-  type = number
+  type    = number
+  default = 3
 }
 
 variable "autoscaling_min_node" {
-  type = number
+  type    = number
+  default = 1
 }
 
 variable "autoscaling_max_node" {
-  type = number
+  type    = number
+  default = 10
 }

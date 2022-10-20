@@ -134,6 +134,9 @@ module "gke-cluster" {
   autoscaling_min_node = var.autoscaling_min_node
   autoscaling_max_node = var.autoscaling_max_node
 
+  resource_limits_resource_cpu_max = var.gke_autoscaling_resource_limits_resource_cpu_max
+  resource_limits_resource_mem_max = var.gke_autoscaling_resource_limits_resource_mem_max
+
   bastion_ip_address = module.bastion.ip_address
 
   depends_on = [

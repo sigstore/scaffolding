@@ -338,7 +338,7 @@ module "ctlog_shards" {
 
   network = module.network.network_self_link
 
-  db_name = var.mysql_db_name
+  db_name = var.ctlog_mysql_db_name
 
   ipv4_enabled              = var.mysql_ipv4_enabled
   require_ssl               = var.mysql_require_ssl

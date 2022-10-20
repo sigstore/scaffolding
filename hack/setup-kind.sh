@@ -34,7 +34,7 @@ done
 
 # Defaults
 K8S_VERSION="v1.24.x"
-KNATIVE_VERSION="1.6.0"
+KNATIVE_VERSION="1.7.0"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"

@@ -276,3 +276,13 @@ variable "autoscaling_max_node" {
   type    = number
   default = 10
 }
+
+variable "gke_autoscaling_resource_limits_resource_cpu_max" {
+  type    = number
+  default = 4
+}
+
+variable "gke_autoscaling_resource_limits_resource_mem_max" {
+  type    = number
+  default = 16
+}

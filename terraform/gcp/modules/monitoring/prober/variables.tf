@@ -67,9 +67,9 @@ variable "fulcio_probed_endpoints" {
 
 locals {
   notification_channels  = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
-  fulcio_endpoint_filter = format("method.labels.endpoint = oneof(\"%s\")", join("\", \"", var.fulcio_probed_endpoints))
-  rekor_endpoint_filter  = format("method.labels.endpoint = oneof(\"%s\")", join("\", \"", var.rekor_probed_endpoints))
-  all_endpoints_filter   = format("method.labels.endpoint = oneof(\"%s\")", join("\", \"", distinct(concat(var.rekor_probed_endpoints, var.fulcio_probed_endpoints))))
+  fulcio_endpoint_filter = format("metric.labels.endpoint = oneof(\"%s\")", join("\", \"", var.fulcio_probed_endpoints))
+  rekor_endpoint_filter  = format("metric.labels.endpoint = oneof(\"%s\")", join("\", \"", var.rekor_probed_endpoints))
+  all_endpoints_filter   = format("metric.labels.endpoint = oneof(\"%s\")", join("\", \"", distinct(concat(var.rekor_probed_endpoints, var.fulcio_probed_endpoints))))
   hosts = [{
     host            = var.fulcio_url
     endpoint_filter = local.fulcio_endpoint_filter

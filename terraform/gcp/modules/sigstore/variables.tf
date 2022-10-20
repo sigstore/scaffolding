@@ -142,6 +142,12 @@ variable "mysql_db_name" {
   default     = "trillian"
 }
 
+variable "ctlog_mysql_db_name" {
+  type        = string
+  description = "Name for MySQL database name for ctlog shards."
+  default     = "trillian"
+}
+
 variable "mysql_db_version" {
   type        = string
   description = "MySQL database version."

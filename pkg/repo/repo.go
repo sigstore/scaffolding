@@ -18,6 +18,7 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/fs"
@@ -31,13 +32,26 @@ import (
 	"knative.dev/pkg/logging"
 )
 
-// CreateRepo creates and initializes a Tuf repo for Sigstore by adding
-// keys to bytes. keys are typically for a basic setup like:
-// "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
-// "ctfe.pub" - CTLog public key in PEM format
-// "rekor.pub" - Rekor public key in PEM format
-// but additional keys can be added here.
-func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
+// TargetWithMetadata describes a TUF target with the given Name, Bytes, and
+// CustomMetadata
+type TargetWithMetadata struct {
+	Name           string
+	Bytes          []byte
+	CustomMetadata []byte
+}
+
+type CustomMetadata struct {
+	Usage  string `json:"usage"`
+	Status string `json:"status"`
+}
+
+type sigstoreCustomMetadata struct {
+	Sigstore CustomMetadata `json:"sigstore"`
+}
+
+// CreateRepoWithMetadata will create a TUF repo for Sigstore by adding targets
+// to the Root with custom metadata.
+func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (tuf.LocalStore, string, error) {
 	// TODO: Make this an in-memory fileystem.
 	tmpDir := os.TempDir()
 	dir := tmpDir + "tuf"
@@ -56,7 +70,6 @@ func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, s
 		return nil, "", fmt.Errorf("failed to NewRepoIndent: %w", err)
 	}
 
-	// Added by vaikas
 	if err := r.Init(false); err != nil {
 		return nil, "", fmt.Errorf("failed to Init repo: %w", err)
 	}
@@ -71,17 +84,15 @@ func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, s
 		}
 	}
 
-	targets := make([]string, 0, len(files))
-	for k, v := range files {
-		logging.FromContext(ctx).Infof("Adding %s file", k)
-		if err := writeStagedTarget(dir, k, v); err != nil {
-			return nil, "", fmt.Errorf("failed to write staged target %s: %w", k, err)
+	for _, t := range targets {
+		logging.FromContext(ctx).Infof("Adding file: %s", t.Name)
+		if err := writeStagedTarget(dir, t.Name, t.Bytes); err != nil {
+			return nil, "", fmt.Errorf("failed to write staged target %s: %w", t.Name, err)
 		}
-		targets = append(targets, k)
-	}
-	err = r.AddTargetsWithExpires(targets, nil, expires)
-	if err != nil {
-		return nil, "", fmt.Errorf("failed to add AddTargetsWithExpires: %w", err)
+		err = r.AddTargetWithExpires(t.Name, t.CustomMetadata, expires)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to add AddTargetWithExpires: %w", err)
+		}
 	}
 
 	// Snapshot, Timestamp, and Publish the repository.
@@ -95,6 +106,43 @@ func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, s
 		return nil, "", fmt.Errorf("failed to Commit: %w", err)
 	}
 	return local, dir, nil
+}
+
+// CreateRepo creates and initializes a Tuf repo for Sigstore by adding
+// keys to bytes. keys are typically for a basic setup like:
+// "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
+// "ctfe.pub" - CTLog public key in PEM format
+// "rekor.pub" - Rekor public key in PEM format
+// but additional keys can be added here.
+//
+// This will also deduce the Usage for the keys based off the filename:
+// if the filename contains:
+//   - `fulcio` = it will get Usage set to `Fulcio`
+//   - `ctfe` = it will get Usage set to `CTFE`
+//   - Anything else will get set to `Rekor`
+func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
+	targets := make([]TargetWithMetadata, 0, len(files))
+	for name, bytes := range files {
+		usage := ""
+		if strings.Contains(name, "fulcio") {
+			usage = "Fulcio"
+		} else if strings.Contains(name, "ctfe") {
+			usage = "CTFE"
+		} else {
+			usage = "Rekor"
+		}
+		scmActive, err := json.Marshal(&sigstoreCustomMetadata{Sigstore: CustomMetadata{Usage: usage, Status: "Active"}})
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to marshal custom metadata for %s: %w", name, err)
+		}
+		targets = append(targets, TargetWithMetadata{
+			Name:           name,
+			Bytes:          bytes,
+			CustomMetadata: scmActive,
+		})
+	}
+
+	return CreateRepoWithMetadata(ctx, targets)
 }
 
 func writeStagedTarget(dir, path string, data []byte) error {

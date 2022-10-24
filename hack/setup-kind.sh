@@ -335,12 +335,13 @@ done
 # Adjust some default values.
 #  - revision-timeout-seconds: reduces the default pod grace period from 5m to 30s
 #   (so that things scale down faster).
+#  - revision-response-start-timeout-seconds: the default is 5m, but setting to 30s as it can't be greater than revision-timeout-seconds
 #  - container-concurrency: sets the default request concurrency to match the default
 #   GRPC concurrent streams: https://github.com/grpc/grpc-go/blob/87eb5b7/internal/transport/defaults.go#L34
 while ! kubectl patch configmap/config-defaults \
   --namespace knative-serving \
   --type merge \
-  --patch '{"data":{"revision-timeout-seconds":"30","container-concurrency":"100"}}'
+  --patch '{"data":{"revision-response-start-timeout-seconds":"30","revision-timeout-seconds":"30","container-concurrency":"100"}}'
 do
     echo Waiting for webhook to be up.
     sleep 1

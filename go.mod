@@ -17,7 +17,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20220929215747-76583552c2be
 	github.com/prometheus/client_golang v1.13.0
 	github.com/sigstore/cosign v1.13.1
-	github.com/sigstore/fulcio v0.6.0
+	github.com/sigstore/fulcio v1.0.0
 	github.com/sigstore/rekor v1.0.0
 	github.com/sigstore/sigstore v1.4.5
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4
@@ -62,7 +62,7 @@ require (
 	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
-	github.com/fsnotify/fsnotify v1.5.4 // indirect
+	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect
 	github.com/go-logr/logr v1.2.3 // indirect
 	github.com/go-openapi/analysis v0.21.4 // indirect

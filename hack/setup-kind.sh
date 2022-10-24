@@ -321,17 +321,6 @@ for x in $(kubectl get deploy --namespace knative-serving -oname); do
   kubectl rollout status --timeout 5m --namespace knative-serving "$x"
 done
 
-# Enable the features we need that are currently feature-flagged in Knative.
-# We do this last to ensure the webhook is up.
-while ! kubectl patch configmap/config-features \
-  --namespace knative-serving \
-  --type merge \
-  --patch '{"data":{"kubernetes.podspec-fieldref":"enabled", "kubernetes.podspec-volumes-emptydir":"enabled", "multicontainer":"enabled"}}'
-do
-    echo Waiting for webhook to be up.
-    sleep 1
-done
-
 # Adjust some default values.
 #  - revision-timeout-seconds: reduces the default pod grace period from 5m to 30s
 #   (so that things scale down faster).
@@ -342,6 +331,17 @@ while ! kubectl patch configmap/config-defaults \
   --namespace knative-serving \
   --type merge \
   --patch '{"data":{"revision-response-start-timeout-seconds":"30","revision-timeout-seconds":"30","container-concurrency":"100"}}'
+do
+    echo Waiting for webhook to be up.
+    sleep 1
+done
+
+# Enable the features we need that are currently feature-flagged in Knative.
+# We do this last to ensure the webhook is up.
+while ! kubectl patch configmap/config-features \
+  --namespace knative-serving \
+  --type merge \
+  --patch '{"data":{"kubernetes.podspec-fieldref":"enabled", "kubernetes.podspec-volumes-emptydir":"enabled", "multicontainer":"enabled"}}'
 do
     echo Waiting for webhook to be up.
     sleep 1

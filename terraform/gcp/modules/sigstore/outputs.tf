@@ -65,7 +65,7 @@ output "mysql_pass" {
 // CTLog MySQL DB name.
 output "ctlog_mysql_database" {
   description = "The CTLog Cloud SQL Database name"
-  value       = element([for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_database], 0)
+  value       = length(var.ctlog_shards) == 0 ? null : element([for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_database], 0)
 }
 
 output "cluster_endpoint" {

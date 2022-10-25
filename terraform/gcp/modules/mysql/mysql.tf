@@ -212,3 +212,31 @@ resource "google_secret_manager_secret_version" "mysql-password" {
   depends_on  = [google_secret_manager_secret.mysql-password]
 }
 
+resource "google_secret_manager_secret" "mysql-user" {
+  secret_id = "mysql-user"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.service]
+}
+
+resource "google_secret_manager_secret_version" "mysql-user" {
+  secret      = google_secret_manager_secret.mysql-user.id
+  secret_data = google_sql_user.trillian.name
+}
+
+resource "google_secret_manager_secret" "mysql-database" {
+  secret_id = "mysql-database"
+
+  replication {
+    automatic = true
+  }
+  depends_on = [google_project_service.service]
+}
+
+resource "google_secret_manager_secret_version" "mysql-database" {
+  secret      = google_secret_manager_secret.mysql-database.id
+  secret_data = google_sql_database.trillian.name
+}
+

@@ -38,3 +38,8 @@ output "mysql_pass" {
   description = "The Cloud SQL Instance Password (Generated)"
   value       = google_sql_user.trillian.password
 }
+
+output "mysql_database" {
+  description = "The Cloud SQL Instance Database name"
+  value       = google_sql_database.trillian.name
+}

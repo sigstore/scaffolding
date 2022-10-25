@@ -65,7 +65,6 @@ output "mysql_pass" {
 // CTLog MySQL DB name.
 output "ctlog_mysql_database" {
   description = "The CTLog Cloud SQL Database name"
-  value       = module.ctlog_shards
   value       = element([for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_database], 0)
 }
 

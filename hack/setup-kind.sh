@@ -67,16 +67,6 @@ done
 # The version map correlated with this version of KinD
 KIND_VERSION="v0.15.0"
 case ${K8S_VERSION} in
-  v1.21.x)
-    K8S_VERSION="1.21.14"
-    KIND_IMAGE_SHA="sha256:f9b4d3d1112f24a7254d2ee296f177f628f9b4c1b32f0006567af11b91c1f301"
-    KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
-    ;;
-  v1.22.x)
-    K8S_VERSION="1.22.13"
-    KIND_IMAGE_SHA="sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
-    KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
-    ;;
   v1.23.x)
     K8S_VERSION="1.23.10"
     KIND_IMAGE_SHA="sha256:f047448af6a656fae7bc909e2fab360c18c487ef3edc93f06d78cdfd864b2d12"

@@ -49,17 +49,23 @@ output "mysql_connection" {
   value       = module.mysql.mysql_connection
 }
 
-// Postgres DB username.
+// MySQL DB username.
 output "mysql_user" {
   description = "The Cloud SQL Instance User name"
   value       = module.mysql.mysql_user
 }
 
-// Postgres DB password.
+// MySQL DB password.
 output "mysql_pass" {
   sensitive   = true
   description = "The Cloud SQL Instance Password (Generated)"
   value       = module.mysql.mysql_pass
+}
+
+// CTLog MySQL DB name.
+output "ctlog_mysql_database" {
+  description = "The CTLog Cloud SQL Database name"
+  value       = length(var.ctlog_shards) == 0 ? null : element([for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_database], 0)
 }
 
 output "cluster_endpoint" {

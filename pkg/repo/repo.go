@@ -43,6 +43,7 @@ type TargetWithMetadata struct {
 type CustomMetadata struct {
 	Usage  string `json:"usage"`
 	Status string `json:"status"`
+	URI    string `json:"uri"`
 }
 
 type sigstoreCustomMetadata struct {
@@ -108,7 +109,7 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 	return local, dir, nil
 }
 
-// CreateRepo creates and initializes a Tuf repo for Sigstore by adding
+// CreateRepo creates and initializes a TUF repo for Sigstore by adding
 // keys to bytes. keys are typically for a basic setup like:
 // "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
 // "ctfe.pub" - CTLog public key in PEM format
@@ -119,7 +120,8 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 // if the filename contains:
 //   - `fulcio` = it will get Usage set to `Fulcio`
 //   - `ctfe` = it will get Usage set to `CTFE`
-//   - Anything else will get set to `Rekor`
+//   - `rekor` = it will get Usage set to `Rekor`
+//   - Anything else will get set to `Unknown`
 func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
 	targets := make([]TargetWithMetadata, 0, len(files))
 	for name, bytes := range files {
@@ -128,8 +130,10 @@ func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, s
 			usage = "Fulcio"
 		} else if strings.Contains(name, "ctfe") {
 			usage = "CTFE"
-		} else {
+		} else if strings.Contains(name, "rekor") {
 			usage = "Rekor"
+		} else {
+			usage = "Unknown"
 		}
 		scmActive, err := json.Marshal(&sigstoreCustomMetadata{Sigstore: CustomMetadata{Usage: usage, Status: "Active"}})
 		if err != nil {

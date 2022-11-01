@@ -122,5 +122,4 @@ func TestCompressUncompressFS(t *testing.T) {
 	if bytes.Compare(files["rekor.pub"], rtRekor) != 0 {
 		t.Errorf("Roundtripped rekor differs:\n%s\n%s", rekorPublicKey, string(rtRekor))
 	}
-
 }

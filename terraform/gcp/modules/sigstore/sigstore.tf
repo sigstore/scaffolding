@@ -257,29 +257,6 @@ module "fulcio" {
   ]
 }
 
-module "timestamp" {
-  source = "../timestamp"
-
-  region       = var.region
-  project_id   = var.project_id
-  cluster_name = var.cluster_name
-
-  // KMS
-  timestamp_keyring_name             = var.timestamp_keyring_name
-  timestamp_encryption_key_name      = var.timestamp_encryption_key_name
-  timestamp_intermediate_ca_key_name = var.timestamp_intermediate_ca_key_name
-
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
-
-  depends_on = [
-    module.gke-cluster,
-    module.network,
-    module.project_roles
-  ]
-}
-
 // Audit
 module "audit" {
   source     = "../audit"

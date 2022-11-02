@@ -226,6 +226,24 @@ variable "rekor_key_name" {
   default     = "rekor-key"
 }
 
+variable "timestamp_keyring_name" {
+  type        = string
+  description = "Name of Timestamp Authority keyring."
+  default     = "timestamp-keyring"
+}
+
+variable "timestamp_encryption_key_name" {
+  type        = string
+  description = "Name of KMS key for encrypting Tink private key for Timestamp Authority."
+  default     = "timestamp-encryption-key"
+}
+
+variable "timestamp_intermediate_ca_key_name" {
+  type        = string
+  description = "Name of KMS key for intermediate CA for Timestamp Authority"
+  default     = "timestamp-intermediate-ca-key"
+}
+
 variable "iam_members_to_roles" {
   description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
   type        = map(set(string))

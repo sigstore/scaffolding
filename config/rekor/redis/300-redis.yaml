@@ -20,7 +20,7 @@ metadata:
     app: redis
 spec:
   containers:
-    - image: docker.io/redis:5.0.10
+    - image: docker.io/redis:6.2
       name: redis
       args: [
         "--bind",

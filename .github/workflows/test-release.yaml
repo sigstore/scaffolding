@@ -51,7 +51,7 @@ jobs:
         version: v0.12.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@9a093941a956fd587ee7a4ecc74edbcbe656a517
+      uses: chainguard-dev/actions/setup-kind@main
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}

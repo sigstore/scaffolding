@@ -196,6 +196,9 @@ jobs:
         OIDC_TOKEN=`curl -s $ISSUER_URL`
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
+
     - name: Sign with cosign from the action using k8s token
       run: |
         cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}

@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"flag"
-	"log"
 	"os"
 
 	"github.com/sigstore/scaffolding/pkg/secret"
@@ -48,9 +47,7 @@ var (
 
 func main() {
 	flag.Parse()
-	if *rekorURL == "" {
-		log.Panic("Need a rekorURL")
-	}
+
 	ns := os.Getenv("NAMESPACE")
 	if ns == "" {
 		panic("env variable NAMESPACE must be set")

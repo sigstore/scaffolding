@@ -67,6 +67,7 @@ fi
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
+kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
 echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
@@ -107,6 +108,8 @@ REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
 export REKOR_URL
 FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
 export FULCIO_URL
+FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+export FULCIO_GRPC_URL
 CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
 export CTLOG_URL
 TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')

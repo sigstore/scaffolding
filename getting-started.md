@@ -117,7 +117,9 @@ To access these services from the cluster, you'd use:
 `fulcio-system` namespace contains [Fulcio](https://github.com/sigstore/fulcio)
 and Fulcio can be accessed in the cluster with:
 
- * `fulcio.fulcio-system.svc`
+ * `fulcio.fulcio-system.svc` for HTTP
+or
+ * `fulcio-grpc.fulcio-system.svc` for GRPC
 
 ## rekor-system namespace
 
@@ -179,6 +181,7 @@ URLs, let's create some up front:
 ```
 export REKOR_URL=http://rekor.rekor-system.svc:8080
 export FULCIO_URL=http://fulcio.fulcio-system.svc:8080
+export FULCIO_GRPC_URL=http://fulcio-grpc.fulcio-system.svc:8080
 export ISSUER_URL=http://gettoken.default.svc:8080
 export TUF_MIRROR=http://tuf.tuf-system.svc:8080
 ```

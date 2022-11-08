@@ -20,13 +20,83 @@ spec:
       # This doesn't actually use Kubernetes credentials, so don't mount them in.
       automountServiceAccountToken: false
       containers:
-      - image: gcr.io/projectsigstore/fulcio@sha256:61081295a8f75ed7537b5d1f8c7320e078dc00e4562c0bf605fbefa062c690de # v0.5.3
+      - image: gcr.io/projectsigstore/fulcio@sha256:27c6e4fe64a72a537c133452d9c8e0518944d1d69aeee5e7ef8a9fbe70b8b5d3 # v1.0.0
         name: fulcio
         ports:
         - containerPort: 5555
         args:
           - "serve"
           - "--port=5555"
+          - "--ca=fileca"
+          - "--fileca-key"
+          - "/var/run/fulcio-secrets/key.pem"
+          - "--fileca-cert"
+          - "/var/run/fulcio-secrets/cert.pem"
+          - "--fileca-key-passwd"
+          - "$(PASSWORD)"
+          - "--ct-log-url=http://ctlog.ctlog-system.svc/sigstorescaffolding"
+        env:
+        - name: PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: fulcio-secret
+              key: password
+        # Force a native go address resolution.
+        - name: GODEBUG
+          value: "netdns=go"
+        volumeMounts:
+        - name: fulcio-config
+          mountPath: /etc/fulcio-config
+        - name: oidc-info
+          mountPath: /var/run/fulcio
+        - name: fulcio-cert
+          mountPath: "/var/run/fulcio-secrets"
+          readOnly: true
+      volumes:
+      - name: fulcio-config
+        configMap:
+          name: fulcio-config
+      - name: fulcio-cert
+        secret:
+          secretName: fulcio-secret
+          items:
+          - key: private
+            path: key.pem
+          - key: cert
+            path: cert.pem
+      - name: oidc-info
+        projected:
+          sources:
+            - configMap:
+                name: kube-root-ca.crt
+                items:
+                - key: ca.crt
+                  path: ca.crt
+                  mode: 0666
+
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  namespace: fulcio-system
+  name: fulcio-grpc
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
+    spec:
+      serviceAccountName: fulcio
+      # This doesn't actually use Kubernetes credentials, so don't mount them in.
+      automountServiceAccountToken: false
+      containers:
+      - image: gcr.io/projectsigstore/fulcio@sha256:27c6e4fe64a72a537c133452d9c8e0518944d1d69aeee5e7ef8a9fbe70b8b5d3 # v1.0.0
+        name: fulcio-grpc
+        ports:
+        - containerPort: 5554
+        args:
+          - "serve"
+          - "--grpc-port=5554"
           - "--ca=fileca"
           - "--fileca-key"
           - "/var/run/fulcio-secrets/key.pem"

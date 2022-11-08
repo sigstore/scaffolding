@@ -145,6 +145,9 @@ jobs:
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
 
+        FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+        echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
+
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 

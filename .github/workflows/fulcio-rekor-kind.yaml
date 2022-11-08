@@ -199,6 +199,9 @@ jobs:
         OIDC_TOKEN=`curl -s $ISSUER_URL`
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
+
     - name: Sign with cosign from the action using k8s token
       run: |
         cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
@@ -230,6 +233,33 @@ jobs:
     #    REPOSITORY=${PWD}/repository
     #    ./cosign initialize --root ${ROOT} --mirror file://${REPOSITORY}
     #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+    - name: Build timestamp-cli
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        go build -o ./timestamp-cli ./cmd/timestamp-cli
+    - name: Exercise TSA
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        echo "myblob" > myblob
+        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+          echo "failed to timestamp artifact"
+          exit =1
+        fi
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --cert-chain ts_chain.pem ; then
+          echo "failed to verify timestamp"
+          exit -1
+        fi
+        if ! ./timestamp-cli inspect --timestamp response.tsr --format json ; then
+          echo "failed to inspect the timestamp"
+          exit -1
+        fi
 
     - name: Collect diagnostics
       if: ${{ failure() }}

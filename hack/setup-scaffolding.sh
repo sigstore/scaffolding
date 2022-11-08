@@ -80,6 +80,16 @@ kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 
+# Install TSA and wait for it to come up
+echo '::group:: Install TSA'
+make ko-apply-tsa
+echo '::endgroup::'
+
+echo '::group:: Wait for TSA ready'
+kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
+kubectl wait --timeout 2m -n tsa-system --for=condition=Ready ksvc tsa
+echo '::endgroup::'
+
 # Install tuf
 echo '::group:: Install TUF'
 make ko-apply-tuf
@@ -89,6 +99,7 @@ make ko-apply-tuf
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n tsa-system get secrets tsa-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 echo '::endgroup::'
 
 # Make sure the tuf jobs complete
@@ -112,5 +123,7 @@ FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.st
 export FULCIO_GRPC_URL
 CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
 export CTLOG_URL
+TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+export TSA_URL
 TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
 export TUF_MIRROR

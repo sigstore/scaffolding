@@ -6,7 +6,7 @@ LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
 # These are the subdirs under config that we'll turn into separate artifacts.
-artifacts := trillian ctlog fulcio rekor tuf prober
+artifacts := trillian ctlog fulcio rekor tsa tuf prober
 
 .PHONY: ko-resolve
 ko-resolve:
@@ -66,6 +66,11 @@ ko-apply-rekor:
 ko-apply-trillian:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -BRf ./config/trillian
+
+.PHONY: ko-apply-tsa
+ko-apply-tsa:
+	LDFLAGS="$(LDFLAGS)" \
+	ko apply -BRf ./config/tsa
 
 .PHONY: ko-apply-tuf
 ko-apply-tuf:

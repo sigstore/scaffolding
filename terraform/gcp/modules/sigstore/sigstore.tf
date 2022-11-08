@@ -181,22 +181,6 @@ module "mysql" {
   ]
 }
 
-// Cluster policies setup.
-module "policy_bindings" {
-  source = "../policy_bindings"
-
-  region     = var.region
-  project_id = var.project_id
-
-  cluster_name = var.cluster_name
-  github_repo  = var.github_repo
-
-  depends_on = [
-    module.network,
-    module.project_roles
-  ]
-}
-
 
 // Rekor
 module "rekor" {
@@ -304,13 +288,11 @@ module "oslogin" {
       zone          = module.bastion.zone
       members = [
         var.tunnel_accessor_sa,
-        module.policy_bindings.gha_serviceaccount_member
       ]
     }
   }
   depends_on = [
     module.bastion,
-    module.policy_bindings,
     module.project_roles
   ]
 }

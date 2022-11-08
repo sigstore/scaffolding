@@ -82,7 +82,7 @@ echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 # this checks if the requested version is > 0.4.12 (and therefore has fulcio-grpc in it)
-if [ "${RELEASE_VERSION}" != "`echo -e "${RELEASE_VERSION}\n0.4.12" | sort -V | head -n1`"]; then
+if [ "${RELEASE_VERSION}" != "`echo -e "${RELEASE_VERSION}\n0.4.12" | sort -V | head -n1`" ]; then
   kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
 fi
 echo '::endgroup::'

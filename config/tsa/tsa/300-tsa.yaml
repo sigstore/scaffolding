@@ -19,9 +19,9 @@ spec:
       serviceAccountName: tsa
       containers:
       - name: tsa
-        # https://github.com/sigstore/timestamp-authority/pkgs/container/timestamp-server/47328709?tag=7053dd7448247db0180a061047ad782b269511ca
-        # Resolved via crane digest 2022-11-08
-        image: ghcr.io/sigstore/timestamp-server@sha256:a7a604ca0c2d26a36db84cd2ebae509ee8d3ed575d90a3599e6e3c77cac741c0
+        # https://github.com/sigstore/timestamp-authority/pkgs/container/timestamp-server/49493548?tag=a8d8d4dbac8c3281862d11b90231cd7bf5144bb7
+        # Resolved via crane digest 2022-11-09 for v0.1.1
+        image: ghcr.io/sigstore/timestamp-server@sha256:dcf2f3a640bfb0a5d17aabafb34b407fe4403363c715718ab305a62b3606540d
         ports:
         - containerPort: 3000
         args: [
@@ -35,7 +35,7 @@ spec:
         - name: SECRET_SIGNING_PWD
           valueFrom:
             secretKeyRef:
-              name: tsa-signing-secret
+              name: tsa-cert-chain
               key: signing-secret-password
         volumeMounts:
         - name: tsa-secrets
@@ -44,7 +44,7 @@ spec:
       volumes:
       - name: tsa-secrets
         secret:
-          secretName: tsa-signing-secret
+          secretName: tsa-cert-chain
           items:
           - key: signing-secret
             path: signing-secret

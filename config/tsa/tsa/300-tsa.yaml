@@ -28,7 +28,8 @@ spec:
           "serve",
           "--timestamp-signer=file",
           "--file-signer-key-path=/var/run/tsa-secrets/signing-secret",
-          "--file-signer-passwd=$(SECRET_SIGNING_PWD)"
+          "--file-signer-passwd=$(SECRET_SIGNING_PWD)",
+          "--certificate-chain-path=/var/run/tsa-secrets/cert-chain"
         ]
         env:
         - name: SECRET_SIGNING_PWD
@@ -47,3 +48,5 @@ spec:
           items:
           - key: signing-secret
             path: signing-secret
+          - key: cert-chain
+            path: cert-chain

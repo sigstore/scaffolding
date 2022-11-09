@@ -178,6 +178,7 @@ runs:
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
       FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+      FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
       CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
       ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
 
@@ -188,6 +189,7 @@ runs:
       # And set the env variables for Github action visibility
       echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
       echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+      echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
       echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
       echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
 

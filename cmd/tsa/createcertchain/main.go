@@ -121,13 +121,9 @@ func main() {
 		logging.FromContext(ctx).Fatalf("Failed to create cert chain: %v", err)
 	}
 
-	chainBytes := []byte{}
-	for _, cert := range chain {
-		certPem, err := cryptoutils.MarshalCertificateToPEM(cert)
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to marshal cert to PEM: %v", err)
-		}
-		chainBytes = append(chainBytes, certPem...)
+	chainBytes, err := cryptoutils.MarshalCertificatesToPEM(chain)
+	if err != nil {
+		logging.FromContext(ctx).Fatalf("Failed to marshal certchain to PEM: %v", err)
 	}
 
 	secretData[certChainKey] = chainBytes

@@ -20,7 +20,7 @@ require (
 	github.com/sigstore/fulcio v1.0.0
 	github.com/sigstore/rekor v1.0.1
 	github.com/sigstore/sigstore v1.4.5
-	github.com/sigstore/timestamp-authority v0.1.1
+	github.com/sigstore/timestamp-authority v0.1.2
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	golang.org/x/crypto v0.2.0

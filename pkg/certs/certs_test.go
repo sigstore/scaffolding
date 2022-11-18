@@ -120,7 +120,7 @@ func TestSplitCertChain(t *testing.T) {
 }
 
 func TestSplitCertChainErrors(t *testing.T) {
-	wantErr := "no valid PEM found in chain"
+	wantErr := "error during PEM decoding"
 	_, err := SplitCertChain([]byte("hello world"), "tsa")
 	if err == nil {
 		t.Fatalf("did not get error when wanted one")

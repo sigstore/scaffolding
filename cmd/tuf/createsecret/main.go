@@ -33,6 +33,7 @@ const (
 	fulcioSecretKey = "cert"
 	ctSecretKey     = "public"
 	rekorSecretKey  = "public"
+	tsaCertChainKey = "cert-chain"
 
 	// These are the fields we create in the secret specified with the
 	// --secret-name flag.
@@ -42,15 +43,15 @@ const (
 	fulcioSecretKeyOut = "fulcio_v1.crt.pem"
 	ctSecretKeyOut     = "ctfe.pub"
 	rekorSecretKeyOut  = "rekor.pub"
+	tsaCertChainOut    = "tsa.certchain.pem"
 )
 
 var (
 	fulcioSecret = flag.String("fulcio-secret", "fulcio-pub-key", "Secret holding Fulcio cert")
-	// URL to Rekor to query for the Rekor public key to include in the trust root.
-	// Could replace with rekor-pubkey, if that can be resolved early enough (don't know)
-	rekorSecret = flag.String("rekor-secret", "rekor-pub-key", "Secret holding Rekor public key")
-	ctlogSecret = flag.String("ctlog-secret", "ctlog-public-key", "Secret holding CTLog public key")
-	secretName  = flag.String("secret-name", "tuf-secrets", "Name of the secret to create holding necessary information to create/run tuf service")
+	rekorSecret  = flag.String("rekor-secret", "rekor-pub-key", "Secret holding Rekor public key")
+	ctlogSecret  = flag.String("ctlog-secret", "ctlog-public-key", "Secret holding CTLog public key")
+	tsaSecret    = flag.String("tsa-secret", "tsa-cert-chain", "Secret holding the TSA certificate chain")
+	secretName   = flag.String("secret-name", "tuf-secrets", "Name of the secret to create holding necessary information to create/run tuf service")
 )
 
 func main() {
@@ -98,14 +99,25 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *rekorSecret, err)
 	}
 	rPub := rs.Data[rekorSecretKey]
-	if cPub == nil || len(cPub) == 0 {
-		logging.FromContext(ctx).Panicf("Ctlog public key %q is missing %s/%s", ctSecretKey, ns, *ctlogSecret)
+	if rPub == nil || len(rPub) == 0 {
+		logging.FromContext(ctx).Panicf("Rekor public key %q is missing %s/%s", rekorSecretKey, ns, *rekorSecret)
+	}
+
+	// Grab the TSA cert chain public key
+	tsa, err := nsSecret.Get(ctx, *tsaSecret, metav1.GetOptions{})
+	if err != nil {
+		logging.FromContext(ctx).Panicf("Failed to get tsa secret %s/%s: %v", ns, *tsaSecret, err)
+	}
+	certChain := tsa.Data[tsaCertChainKey]
+	if certChain == nil || len(certChain) == 0 {
+		logging.FromContext(ctx).Panicf("TSA Cert chain key %q is missing %s/%s", tsaCertChainKey, ns, *tsaSecret)
 	}
 
 	data := map[string][]byte{
 		fulcioSecretKeyOut: fCert,
 		ctSecretKeyOut:     cPub,
 		rekorSecretKeyOut:  rPub,
+		tsaCertChainOut:    certChain,
 	}
 
 	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {

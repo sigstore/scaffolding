@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sigstore/scaffolding/pkg/certs"
 	"github.com/sigstore/scaffolding/pkg/repo"
 	"github.com/sigstore/scaffolding/pkg/secret"
 	"k8s.io/client-go/kubernetes"
@@ -81,7 +82,22 @@ func main() {
 			if err != nil {
 				logging.FromContext(ctx).Fatalf("failed to read file %s/%s: %v", fileName, err)
 			}
-			files[file.Name()] = fileBytes
+			// If it's a TSA file, we need to split it into multiple TUF
+			// targets.
+			if strings.Contains(file.Name(), "tsa") {
+				logging.FromContext(ctx).Infof("Splitting TSA certchain into individual certs")
+
+				certFiles, err := certs.SplitCertChain(fileBytes, "tsa")
+				if err != nil {
+					logging.FromContext(ctx).Fatalf("failed to parse  %s/%s: %v", fileName, err)
+				}
+				for k, v := range certFiles {
+					logging.FromContext(ctx).Infof("Got tsa cert file %s", k)
+					files[k] = v
+				}
+			} else {
+				files[file.Name()] = fileBytes
+			}
 		}
 	}
 

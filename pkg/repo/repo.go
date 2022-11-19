@@ -114,6 +114,9 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 // "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
 // "ctfe.pub" - CTLog public key in PEM format
 // "rekor.pub" - Rekor public key in PEM format
+// "tsa_leaf.crt.pem" - TSA leaf certificate in PEM format
+// "tsa_intermediate_0.crt.pem" - TSA Intermediate certificate in PEM format
+// "tsa_root.crt.pem" - TSA Intermediate certificate in PEM format
 // but additional keys can be added here.
 //
 // This will also deduce the Usage for the keys based off the filename:
@@ -121,6 +124,7 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 //   - `fulcio` = it will get Usage set to `Fulcio`
 //   - `ctfe` = it will get Usage set to `CTFE`
 //   - `rekor` = it will get Usage set to `Rekor`
+//   - `tsa` = it will get Usage set to `tsa`.
 //   - Anything else will get set to `Unknown`
 func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
 	targets := make([]TargetWithMetadata, 0, len(files))
@@ -132,6 +136,8 @@ func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, s
 			usage = "CTFE"
 		} else if strings.Contains(name, "rekor") {
 			usage = "Rekor"
+		} else if strings.Contains(name, "tsa") {
+			usage = "TSA"
 		} else {
 			usage = "Unknown"
 		}

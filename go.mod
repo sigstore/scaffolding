@@ -23,7 +23,7 @@ require (
 	github.com/sigstore/timestamp-authority v0.1.2
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
-	golang.org/x/crypto v0.2.0
+	golang.org/x/crypto v0.3.0
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c
 	google.golang.org/grpc v1.50.1
 	google.golang.org/protobuf v1.28.1

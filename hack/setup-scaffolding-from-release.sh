@@ -42,7 +42,8 @@ TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}
 
 # Since things that we install vary based on the release version, parse out
 # MAJOR, MINOR, and PATCH
-MAJOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 1 | sed -e 's/v//')
+# We don't use MAJOR yet, but add it here for future.
+# MAJOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 1 | sed -e 's/v//')
 MINOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 2)
 PATCH=$(echo "$RELEASE_VERSION" | cut -d '.' -f 3)
 

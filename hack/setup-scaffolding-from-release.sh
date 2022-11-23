@@ -132,6 +132,10 @@ kubectl apply -f "${TUF}"
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+
+if [ "${INSTALL_TSA}" == "true" ]; then
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+fi
 echo '::endgroup::'
 
 if [ "${INSTALL_TSA}" == "true" ]; then

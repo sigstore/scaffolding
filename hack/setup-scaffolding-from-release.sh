@@ -55,8 +55,8 @@ kubectl apply -f "${TRILLIAN}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-server
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-signer
+kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
+kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
 echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
@@ -66,7 +66,7 @@ echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
 kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
-kubectl wait --timeout 2m -n rekor-system --for=condition=Ready ksvc rekor
+kubectl wait --timeout 5m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up

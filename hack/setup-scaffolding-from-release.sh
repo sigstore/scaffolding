@@ -121,7 +121,6 @@ if [ "${INSTALL_TSA}" == "true" ]; then
 kubectl apply -f "${TSA}"
 kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n tsa-system --for=condition=Ready ksvc tsa
-kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 fi
 
 # Install tuf
@@ -134,6 +133,10 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 echo '::endgroup::'
+
+if [ "${INSTALL_TSA}" == "true" ]; then
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+fi
 
 # Make sure the tuf jobs complete
 echo '::group:: Wait for TUF ready'

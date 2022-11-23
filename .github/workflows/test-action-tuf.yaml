@@ -42,7 +42,6 @@ jobs:
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
-        legacy-variables: "false"
 
     # Install cosign
     - name: Install cosign
@@ -101,7 +100,7 @@ jobs:
         echo "myblob" > myblob
         if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
           echo "failed to timestamp artifact"
-          exit =1
+          exit -1
         fi
         if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --cert-chain ts_chain.pem ; then
           echo "failed to verify timestamp"

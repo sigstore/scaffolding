@@ -30,7 +30,7 @@ jobs:
         - 1.19
 
     env:
-      RELEASE_VERSION: "v0.4.13"
+      RELEASE_VERSION: "v0.5.0"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
       COSIGN_EXPERIMENTAL: "true"
@@ -77,9 +77,10 @@ jobs:
         # TODO(vaikas): Figure out how these could be exposed by above.
         REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
-        #FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+        FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+        TSA_URL=$(kubectl -n tsa-system get tsa tuf -ojsonpath='{.status.url}')
 
         # Set the endopints
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
@@ -87,6 +88,7 @@ jobs:
         #echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
@@ -130,6 +132,33 @@ jobs:
     - name: Verify with cosign from the action using k8s token
       run: |
         cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+    - name: Build timestamp-cli
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        go build -o ./timestamp-cli ./cmd/timestamp-cli
+    - name: Exercise TSA
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        echo "myblob" > myblob
+        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+          echo "failed to timestamp artifact"
+          exit =1
+        fi
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --cert-chain ts_chain.pem ; then
+          echo "failed to verify timestamp"
+          exit -1
+        fi
+        if ! ./timestamp-cli inspect --timestamp response.tsr --format json ; then
+          echo "failed to inspect the timestamp"
+          exit -1
+        fi
 
     - name: Collect diagnostics
       if: ${{ failure() }}

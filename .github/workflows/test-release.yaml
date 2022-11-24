@@ -80,7 +80,7 @@ jobs:
         FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
-        TSA_URL=$(kubectl -n tsa-system get tsa tuf -ojsonpath='{.status.url}')
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
 
         # Set the endopints
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV

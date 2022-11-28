@@ -101,7 +101,7 @@ echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 # this checks if the requested version is > 0.4.12 (and therefore has fulcio-grpc in it)
-if [ "${PATCH}" -ge 12 ] || [ "${MINOR}" -ge 5 ]; then
+if [ "${PATCH}" -gt 12 ] || [ "${MINOR}" -ge 5 ]; then
   kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
 fi
 echo '::endgroup::'
@@ -132,6 +132,10 @@ kubectl apply -f "${TUF}"
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+
+if [ "${INSTALL_TSA}" == "true" ]; then
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+fi
 echo '::endgroup::'
 
 if [ "${INSTALL_TSA}" == "true" ]; then

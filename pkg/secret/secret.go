@@ -43,15 +43,15 @@ func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byt
 		update := false
 		for k := range data {
 			if bytes.Compare(data[k], existingSecret.Data[k]) != 0 {
-				logging.FromContext(ctx).Infof("%s missing or different than expected, updating", k)
+				logging.FromContext(ctx).Infof("secret key %q missing or different than expected, updating", k)
+				existingSecret.Data[k] = data[k]
 				update = true
 			}
 		}
 		if update {
-			existingSecret.Data = data
 			_, err = nsSecret.Update(ctx, existingSecret, metav1.UpdateOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to udpate secret %s/%s: %w", ns, name, err)
+				return fmt.Errorf("failed to update secret %s/%s: %w", ns, name, err)
 			}
 			logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, name)
 		}

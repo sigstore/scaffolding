@@ -68,6 +68,7 @@ require (
 	github.com/docker/docker v20.10.20+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.7.0 // indirect
 	github.com/emicklei/go-restful/v3 v3.8.0 // indirect
+	github.com/evanphx/json-patch v4.12.0+incompatible // indirect
 	github.com/fatih/color v1.13.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible // indirect

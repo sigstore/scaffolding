@@ -73,7 +73,6 @@ func TestUpdateSecret(t *testing.T) {
 			if tt.existing != nil {
 				objs = append(objs, secret(tt.existing))
 			}
-			//client := fake.NewSimpleClientset(secret(tt.existing))
 			client := fake.NewSimpleClientset(objs...)
 			err := ReconcileSecret(context.Background(), name, ns, tt.in, client.CoreV1().Secrets(ns))
 			if err != nil {

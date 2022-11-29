@@ -52,4 +52,6 @@ git push upstream v0.5.2
 
 ### Once the `Release` action has been completed successfully, find your draft release at the [releases page](https://github.com/sigstore/scaffolding/releases)
 
+### Update the release notes by clicking on the `Generate release notes` button
+
 ### Click the green "Publish release" button

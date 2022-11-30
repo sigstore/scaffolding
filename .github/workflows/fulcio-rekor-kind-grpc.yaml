@@ -136,15 +136,17 @@ jobs:
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
-    - name: Run signing job in k8s using kubernetes tokens in the cluster
-      run: |
-        make ko-apply-sign-job
-        kubectl wait --for=condition=Complete --timeout=90s job/sign-job
+    # DO NOT Merge before uncommenting these...
+    #- name: Run signing job in k8s using kubernetes tokens in the cluster
+    #  run: |
+    #    make ko-apply-sign-job
+    #    kubectl wait --for=condition=Complete --timeout=90s job/sign-job
 
-    - name: Verify the image with cosign using kubernetes tokens in the cluster
-      run: |
-        make ko-apply-verify-job
-        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+    # DO NOT Merge before uncommenting these...
+    #- name: Verify the image with cosign using kubernetes tokens in the cluster
+    #  run: |
+    #    make ko-apply-verify-job
+    #    kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
     - name: Install a Knative service for fetch tokens off the cluster
       run: |
@@ -174,16 +176,15 @@ jobs:
         TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
         echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
-    # DO NOT MERGE THESE, they use images
-    #- name: Sign with cosign that we just built using k8s token
-    #  working-directory: ./src/github.com/sigstore/cosign
-    #  run: |
-    #    ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+    - name: Sign with cosign that we just built using k8s token
+      working-directory: ./src/github.com/sigstore/cosign
+      run: |
+        ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
-    #- name: Verify with cosign from the action using k8s token
-    #  working-directory: ./src/github.com/sigstore/cosign
-    #  run: |
-    #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+    - name: Verify with cosign from the action using k8s token
+      working-directory: ./src/github.com/sigstore/cosign
+      run: |
+        ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     # Test with cosign in 'airgapped mode'
     # Uncomment these once modified cosign goes in.

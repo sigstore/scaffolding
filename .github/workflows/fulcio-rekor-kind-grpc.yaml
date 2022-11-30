@@ -85,10 +85,6 @@ jobs:
       working-directory: ./src/github.com/sigstore/cosign
       run: |
         go build -o ./cosign ./cmd/cosign/main.go
-    - name: Copy cosign
-      run: |
-        cp ./src/github.com/sigstore/cosign/cosign .
-        chmod u+x ./cosign
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6
@@ -128,6 +124,7 @@ jobs:
         ./hack/setup-scaffolding.sh
 
     - name: Initialize cosign with our custom tuf root and make root copy
+      working-directory: ./src/github.com/sigstore/cosign
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
         # Also grab the compressed repository for airgap testing.
@@ -177,11 +174,13 @@ jobs:
         TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
         echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
-    - name: Sign with cosign from the action using k8s token
+    - name: Sign with cosign that we just built using k8s token
+      working-directory: ./src/github.com/sigstore/cosign
       run: |
         ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
+      working-directory: ./src/github.com/sigstore/cosign
       run: |
         ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 

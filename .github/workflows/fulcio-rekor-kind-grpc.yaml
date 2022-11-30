@@ -85,7 +85,10 @@ jobs:
       working-directory: ./src/github.com/sigstore/cosign
       run: |
         go build -o ./cosign ./cmd/cosign/main.go
+    - name: Copy cosign
+      run: |
         cp ./src/github.com/sigstore/cosign/cosign .
+        chmod u+x ./cosign
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6

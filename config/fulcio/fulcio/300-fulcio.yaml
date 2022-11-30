@@ -20,13 +20,17 @@ spec:
       # This doesn't actually use Kubernetes credentials, so don't mount them in.
       automountServiceAccountToken: false
       containers:
-      - image: gcr.io/projectsigstore/fulcio@sha256:27c6e4fe64a72a537c133452d9c8e0518944d1d69aeee5e7ef8a9fbe70b8b5d3 # v1.0.0
+      # DO NOT MERGE.
+      # Just pulling a pre-built image instead of pulling it in, and then
+      # having to customize iet, etc. in the tests.
+      - image: gcr.io/priya-chainguard/fulcio-bd4d600f674b081a535a886a15cb8d9a@sha256:587e4a75b2f3eecb153815556a3990ce7df7b4b4a90853fcbd8ac49d149dcc10
         name: fulcio
         ports:
-        - containerPort: 5555
+        - containerPort: 8080
+          name: h2c
         args:
           - "serve"
-          - "--port=5555"
+          - "--port=8080"
           - "--ca=fileca"
           - "--fileca-key"
           - "/var/run/fulcio-secrets/key.pem"

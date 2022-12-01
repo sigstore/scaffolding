@@ -23,7 +23,7 @@ spec:
       # DO NOT MERGE.
       # Just pulling a pre-built image instead of pulling it in, and then
       # having to customize iet, etc. in the tests.
-      - image: gcr.io/priya-chainguard/fulcio-bd4d600f674b081a535a886a15cb8d9a@sha256:587e4a75b2f3eecb153815556a3990ce7df7b4b4a90853fcbd8ac49d149dcc10
+      - image: gcr.io/priya-chainguard/fulcio-bd4d600f674b081a535a886a15cb8d9a@sha256:e182621aa741b8fd8c799d8a0cf90cc8dff5eb8ae809df379315c42457c22ae7
         name: fulcio
         ports:
         - containerPort: 8080

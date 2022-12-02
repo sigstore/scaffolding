@@ -178,8 +178,10 @@ jobs:
 
     - name: Sign with cosign that we just built using k8s token
       working-directory: ./src/github.com/sigstore/cosign
+      # Note we have to use --allow-insecure-fulcio because there's not TLS
+      # termination in the GHA.
       run: |
-        ./cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        ./cosign sign --allow-insecure-fulcio --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       working-directory: ./src/github.com/sigstore/cosign

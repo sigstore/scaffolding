@@ -138,10 +138,6 @@ kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/n
 fi
 echo '::endgroup::'
 
-if [ "${INSTALL_TSA}" == "true" ]; then
-kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-fi
-
 # Make sure the tuf jobs complete
 echo '::group:: Wait for TUF ready'
 kubectl wait --timeout 4m -n tuf-system --for=condition=Complete jobs --all

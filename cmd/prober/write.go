@@ -100,6 +100,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		fmt.Printf("error requesting cert: %v\n", err.Error())
 	}
+	defer resp.Body.Close()
 
 	// Export data to prometheus
 	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
@@ -128,17 +129,13 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	retryableClient.RetryMax = int(retries)
 	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 	if err != nil {
 		return fmt.Errorf("error adding entry: %w", err)
 	}
+	defer resp.Body.Close()
+	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
 	// If entry was added successfully, we should verify it
-	rekorClient, err := rclient.GetRekorClient(rekorURL, rclient.WithUserAgent(fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion)))
-	if err != nil {
-		return fmt.Errorf("creating rekor client: %w", err)
-	}
-	defer resp.Body.Close()
 	var logEntry models.LogEntry
 	err = json.NewDecoder(resp.Body).Decode(&logEntry)
 	if err != nil {
@@ -150,6 +147,10 @@ func rekorWriteEndpoint(ctx context.Context) error {
 		break
 	}
 	verified := "true"
+	rekorClient, err := rclient.GetRekorClient(rekorURL, rclient.WithUserAgent(fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion)))
+	if err != nil {
+		return fmt.Errorf("creating rekor client: %w", err)
+	}
 	if err = cosign.VerifyTLogEntry(ctx, rekorClient, &logEntryAnon); err != nil {
 		verified = "false"
 	}

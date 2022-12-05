@@ -7,51 +7,65 @@ You should be part of the `scaffolding-codeowners` or `sigstore-oncall` groups, 
 
 ## Steps
 
-### Make sure your local branch is up-to-date from the upstream, for example:
+### Sync tags
+
+Ensure that sure your local branch is up-to-date from the upstream:
 
 ```shell
 git pull upstream main --tags
 ```
 
-### Verify the correct version you're about to tag:
+### Pick a new version number
+
+The scaffolding repo uses [semver](https://semver.org/). Your first step is to determine the latest tag used.
+
+List the latest tags in date order:
 
 ```shell
-git tag
+git tag | tail
 ```
 
-This will list all the tags, so the latest (at the time of this writing), was:
-`v0.5.1`
+Example output:
+
+```
+...
+v0.0.0
+v0.1.0
+```
+
+Show a list of changes since the latest version (v0.1.0):
 
 ```shell
-vaikas@villes-mbp scaffolding % git tag
-v0.1-alpha
-v0.1.1-alpha
-v0.1.10-alpha
-v0.1.11-alpha
-<SNIPPED FOR READABILITY>
-v0.4.9
-v0.5.0
-v0.5.1
+git log v0.1.0..
 ```
 
-So, I will release `v0.5.2`
+If the commits include a new feature or breaking change, bump the minor version. If it only includes bug fixes, bump the patch version.
 
-### Tag the release with the new version number, for instance `v0.5.2`
+### Tagging
+
+Once you have a version number in mind, tag it locally:
 
 ```shell
-git tag -a v0.5.2 -m "v0.5.2"
+git tag -a v0.2.0 -m v0.2.0
 ```
 
-### Push the tag
+Then push the tag upstream:
 
 ```shell
-git push upstream v0.5.2
+git push upstream v0.2.0
 ```
 
-### Monitor the [`Release` action](https://github.com/sigstore/scaffolding/actions/workflows/release.yaml), which generates the remaining release artifacts
+### Monitor the release automation
 
-### Once the `Release` action has been completed successfully, find your draft release at the [releases page](https://github.com/sigstore/scaffolding/releases)
+Once the tag is pushed, the [`Release` action](https://github.com/sigstore/scaffolding/actions/workflows/release.yaml) will generate the appropriate release artifacts and create a draft release.
 
-### Update the release notes by clicking on the `Generate release notes` button
+Be sure to see how long recent runs have taken. At the time of this writing, the release job takes 30 to 40 minutes to execute.
 
-### Click the green "Publish release" button
+### Publish
+
+Once the `Release` action has been completed successfully:
+
+1. Find your draft release on the [releases page](https://github.com/sigstore/scaffolding/releases)
+2. Click the `Generate release notes` button to fill in the "What's Changed" section
+3. Click the green `Publish release` button
+4. 🎉

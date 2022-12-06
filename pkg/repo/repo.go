@@ -19,10 +19,10 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -60,7 +60,7 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create tmp TUF dir: %w", err)
 	}
-	dir = dir + "/"
+	dir += "/"
 	logging.FromContext(ctx).Infof("Creating the FS in %q", dir)
 	local := tuf.FileSystemStore(dir, nil)
 
@@ -129,16 +129,17 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
 	targets := make([]TargetWithMetadata, 0, len(files))
 	for name, bytes := range files {
-		usage := ""
-		if strings.Contains(name, "fulcio") {
+		var usage string
+		switch {
+		case strings.Contains(name, "fulcio"):
 			usage = "Fulcio"
-		} else if strings.Contains(name, "ctfe") {
+		case strings.Contains(name, "ctfe"):
 			usage = "CTFE"
-		} else if strings.Contains(name, "rekor") {
+		case strings.Contains(name, "rekor"):
 			usage = "Rekor"
-		} else if strings.Contains(name, "tsa") {
+		case strings.Contains(name, "tsa"):
 			usage = "TSA"
-		} else {
+		default:
 			usage = "Unknown"
 		}
 		scmActive, err := json.Marshal(&sigstoreCustomMetadata{Sigstore: CustomMetadata{Usage: usage, Status: "Active"}})
@@ -160,7 +161,8 @@ func writeStagedTarget(dir, path string, data []byte) error {
 	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
 		return err
 	}
-	if err := ioutil.WriteFile(path, []byte(data), 0644); err != nil {
+	/* #nosec G306 */
+	if err := os.WriteFile(path, data, 0644); err != nil {
 		return err
 	}
 	return nil
@@ -180,26 +182,26 @@ func CompressFS(fsys fs.FS, buf io.Writer, skipDirs map[string]bool) error {
 		}
 
 		// Stat the file to get the details of it.
-		fi, err := fs.Stat(fsys, file)
-		if err != nil {
-			return fmt.Errorf("fs.Stat %s: %w", file, err)
+		fi, err2 := fs.Stat(fsys, file)
+		if err2 != nil {
+			return fmt.Errorf("fs.Stat %s: %w", file, err2)
 		}
-		header, err := tar.FileInfoHeader(fi, file)
-		if err != nil {
-			return fmt.Errorf("FileInfoHeader %s: %w", file, err)
+		header, err2 := tar.FileInfoHeader(fi, file)
+		if err2 != nil {
+			return fmt.Errorf("FileInfoHeader %s: %w", file, err2)
 		}
 		header.Name = filepath.ToSlash(file)
-		if err := tw.WriteHeader(header); err != nil {
+		if err2 := tw.WriteHeader(header); err2 != nil {
 			return err
 		}
 		// For files, write the contents.
 		if !d.IsDir() {
-			data, err := fsys.Open(file)
-			if err != nil {
-				return fmt.Errorf("opening %s: %w", file, err)
+			data, err2 := fsys.Open(file)
+			if err2 != nil {
+				return fmt.Errorf("opening %s: %w", file, err2)
 			}
-			if _, err := io.Copy(tw, data); err != nil {
-				return fmt.Errorf("copying %s: %w", file, err)
+			if _, err2 := io.Copy(tw, data); err2 != nil {
+				return fmt.Errorf("copying %s: %w", file, err2)
 			}
 		}
 		return nil
@@ -238,7 +240,7 @@ func Uncompress(src io.Reader, dst string) error {
 	// uncompress each element
 	for {
 		header, err := tr.Next()
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			break // End of archive
 		}
 		if err != nil {
@@ -248,11 +250,17 @@ func Uncompress(src io.Reader, dst string) error {
 
 		// validate name against path traversal
 		if !validRelPath(header.Name) {
-			return fmt.Errorf("tar contained invalid name error %q\n", target)
+			return fmt.Errorf("tar contained invalid name error %q", target)
 		}
 
 		// add dst + re-format slashes according to system
+		// #nosec G305
+		// mitigated below
 		target = filepath.Join(dst, header.Name)
+		// this check is to mitigate gosec G305 (zip slip vulnerability)
+		if !strings.HasPrefix(target, filepath.Clean(dst)) {
+			return fmt.Errorf("%s: %s", "content filepath is tainted", header.Name)
+		}
 		// check the type
 		switch header.Typeflag {
 		// Create directories
@@ -269,8 +277,14 @@ func Uncompress(src io.Reader, dst string) error {
 				return err
 			}
 			// copy over contents
-			if _, err := io.Copy(fileToWrite, tr); err != nil {
-				return err
+			for {
+				_, err := io.CopyN(fileToWrite, tr, 1024)
+				if err != nil {
+					if errors.Is(err, io.EOF) {
+						break
+					}
+					return err
+				}
 			}
 			if err := fileToWrite.Close(); err != nil {
 				return fmt.Errorf("failed to close file %s: %w", target, err)

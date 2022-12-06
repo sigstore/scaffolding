@@ -205,7 +205,7 @@ func rekorEntryRequest() ([]byte, error) {
 	return json.Marshal(pe)
 }
 
-func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {
+func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
 	priv, err := cosign.GeneratePrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("generating cert: %w", err)

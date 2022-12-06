@@ -140,7 +140,7 @@ func TestUnmarshal(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
 		t.Logf("Got: %s", config.String())
-		if len(config.FulcioCerts) != 1 || bytes.Compare(config.FulcioCerts[0], []byte(existingRootCert)) != 0 {
+		if len(config.FulcioCerts) != 1 || !bytes.Equal(config.FulcioCerts[0], []byte(existingRootCert)) {
 			t.Errorf("Fulciosecrets differ")
 		}
 	}
@@ -166,7 +166,7 @@ func TestRoundTrip(t *testing.T) {
 		if signer, ok = v.(crypto.Signer); !ok {
 			t.Errorf("failed to convert to Signer")
 		}
-		configIn := &CTLogConfig{
+		configIn := &Config{
 			PrivKey:         v,
 			PrivKeyPassword: "mytestpassword",
 			PubKey:          signer.Public(),
@@ -184,7 +184,7 @@ func TestRoundTrip(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
 		if !reflect.DeepEqual(configIn, configOut) {
-			t.Errorf("Things differ=%s", cmp.Diff(configIn, configOut, cmpopts.IgnoreUnexported(CTLogConfig{})))
+			t.Errorf("Things differ=%s", cmp.Diff(configIn, configOut, cmpopts.IgnoreUnexported(Config{})))
 		}
 	}
 }
@@ -206,7 +206,9 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create a test certificate: %v", err)
 		}
-		config.AddFulcioRoot(ctx, newFulcioCert)
+		if err := config.AddFulcioRoot(ctx, newFulcioCert); err != nil {
+			t.Fatalf("Failed to add fulcio root: %v", err)
+		}
 		marshaled, err := config.MarshalConfig(context.Background())
 		if err != nil {
 			t.Fatalf("Failed to MarshalConfig: %v", err)
@@ -219,13 +221,18 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		validateFulcioEntries(ctx, marshaled, expected, t)
 
 		newConfig, err := Unmarshal(ctx, marshaled)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal new configuration before removal: %v", err)
+		}
 		if len(newConfig.FulcioCerts) != 2 {
 			t.Fatalf("Unexpected number of FulcioCerts, got %d", len(newConfig.FulcioCerts))
 		}
 
 		// Now for our next trick, pretend we're rotating, so take out the
 		// existing entry from the trusted certs.
-		newConfig.RemoveFulcioRoot(ctx, []byte(existingRootCert))
+		if err := newConfig.RemoveFulcioRoot(ctx, []byte(existingRootCert)); err != nil {
+			t.Fatalf("Failed to remove fulcio root: %v", err)
+		}
 		marshaledNew, err := newConfig.MarshalConfig(context.Background())
 		if err != nil {
 			t.Fatalf("Failed to marshal new configuration after removal: %v", err)
@@ -234,7 +241,7 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		// Now test that we have configuration that trusts only the new Fulcio
 		// root, simulating that the old one has been spun down.
 		expected = make([][]byte, 0)
-		expected = append(expected, []byte(newFulcioCert))
+		expected = append(expected, newFulcioCert)
 		validateFulcioEntries(ctx, marshaledNew, expected, t)
 	}
 }
@@ -261,7 +268,7 @@ func createBaseConfig(t *testing.T, tc testConfig) (map[string][]byte, error) {
 	}, nil
 }
 
-func createTestCert(t *testing.T) ([]byte, error) {
+func createTestCert(_ *testing.T) ([]byte, error) {
 	// Generate x509 Root CA
 	rootCA, rootKey, err := testutils.GenerateRootCa()
 	if err != nil {
@@ -283,7 +290,7 @@ func createTestCert(t *testing.T) ([]byte, error) {
 // that it has only the fulcioCerts specified as well as matching number
 // of fulcio-%d entries in both the CTLog configuration as well as in the
 // passed in map (that gets mounted as secret).
-func validateFulcioEntries(ctx context.Context, config map[string][]byte, fulcioCerts [][]byte, t *testing.T) {
+func validateFulcioEntries(_ context.Context, config map[string][]byte, fulcioCerts [][]byte, t *testing.T) {
 	t.Helper()
 	// This keeps track of if we've seen a file entry in the CTLog config
 	// for fulcio-%d entry. There should be one for each fulcioCerts
@@ -298,7 +305,7 @@ func validateFulcioEntries(ctx context.Context, config map[string][]byte, fulcio
 	for k, v := range config {
 		if strings.HasPrefix(k, "fulcio-") {
 			for i, fulcioCert := range fulcioCerts {
-				if bytes.Compare(v, fulcioCert) == 0 {
+				if bytes.Equal(v, fulcioCert) {
 					foundPEM[i] = true
 				}
 			}

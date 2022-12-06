@@ -35,14 +35,14 @@ import (
 func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byte, nsSecret v1.SecretInterface) error {
 	existingSecret, err := nsSecret.Get(ctx, name, metav1.GetOptions{})
 	if err != nil && !apierrs.IsNotFound(err) {
-		return fmt.Errorf("failed to get secret %s/%s: %v", ns, name, err)
+		return fmt.Errorf("failed to get secret %s/%s: %w", ns, name, err)
 	}
 
 	// If we found the secret, just make sure all the fields are there.
 	if err == nil && existingSecret != nil {
 		update := false
 		for k := range data {
-			if bytes.Compare(data[k], existingSecret.Data[k]) != 0 {
+			if !bytes.Equal(data[k], existingSecret.Data[k]) {
 				logging.FromContext(ctx).Infof("secret key %q missing or different than expected, updating", k)
 				existingSecret.Data[k] = data[k]
 				update = true

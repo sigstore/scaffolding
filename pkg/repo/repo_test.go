@@ -110,7 +110,7 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read the roundtripped root %v", err)
 	}
-	if bytes.Compare(root, rtRoot) != 0 {
+	if !bytes.Equal(root, rtRoot) {
 		t.Errorf("Roundtripped root differs:\n%s\n%s", string(root), string(rtRoot))
 	}
 
@@ -119,7 +119,7 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read the roundtripped rekor %v", err)
 	}
-	if bytes.Compare(files["rekor.pub"], rtRekor) != 0 {
+	if !bytes.Equal(files["rekor.pub"], rtRekor) {
 		t.Errorf("Roundtripped rekor differs:\n%s\n%s", rekorPublicKey, string(rtRekor))
 	}
 }

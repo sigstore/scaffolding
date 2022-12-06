@@ -16,15 +16,12 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net/url"
 	"os"
 	"strings"
 
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/scaffolding/pkg/ctlog"
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
@@ -42,12 +39,11 @@ const (
 )
 
 var (
-	cmname           = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives. if configInSecret is false, ctlog config gets added here also.")
-	configInSecret   = flag.Bool("config-in-secret", false, "If set to true, fetch / update the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'.")
-	secretName       = flag.String("secret", "ctlog-secrets", "Name of the secret to fetch private key for CTLog.")
-	pubKeySecretName = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to fetch public key from.")
-	fulcioURL        = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from.")
-	operation        = flag.String("operation", "", "Operation to perform for the specified fulcio [add,remove]")
+	cmname         = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives. if configInSecret is false, ctlog config gets added here also.")
+	configInSecret = flag.Bool("config-in-secret", false, "If set to true, fetch / update the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'.")
+	secretName     = flag.String("secret", "ctlog-secrets", "Name of the secret to fetch private key for CTLog.")
+	fulcioURL      = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from.")
+	operation      = flag.String("operation", "", "Operation to perform for the specified fulcio [add,remove]")
 )
 
 type ctRootOp string
@@ -138,9 +134,13 @@ func main() {
 		logging.FromContext(ctx).Fatalf("Failed to unmarshal: %s", err)
 	}
 	if op == Add {
-		conf.AddFulcioRoot(ctx, root.ChainPEM)
+		if err = conf.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
+			logging.FromContext(ctx).Infof("Failed to add Fulcio root: %v", err)
+		}
 	} else {
-		conf.RemoveFulcioRoot(ctx, root.ChainPEM)
+		if err = conf.RemoveFulcioRoot(ctx, root.ChainPEM); err != nil {
+			logging.FromContext(ctx).Infof("Failed to remove Fulcio root: %v", err)
+		}
 	}
 
 	// Marshal it and update configuration
@@ -150,8 +150,7 @@ func main() {
 	}
 	if !*configInSecret {
 		cm.BinaryData[configKey] = newConfig[configKey]
-		cm, err = clientset.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{})
-		if err != nil {
+		if _, err = clientset.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{}); err != nil {
 			logging.FromContext(ctx).Fatalf("Failed to update configmap %s/%s: %v", ns, *cmname, err)
 		}
 	}
@@ -162,12 +161,4 @@ func main() {
 		logging.FromContext(ctx).Fatalf("Failed to udpate secret %s/%s: %v", ns, *secretName, err)
 	}
 	logging.FromContext(ctx).Infof("Config updated")
-}
-
-func mustMarshalAny(pb proto.Message) *anypb.Any {
-	ret, err := anypb.New(pb)
-	if err != nil {
-		panic(fmt.Sprintf("MarshalAny failed: %v", err))
-	}
-	return ret
 }

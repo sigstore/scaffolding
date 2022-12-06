@@ -173,7 +173,9 @@ func TestRoundTrip(t *testing.T) {
 			LogID:           2022,
 			LogPrefix:       "2022-ctlog",
 		}
-		configIn.AddFulcioRoot(context.Background(), []byte(existingRootCert))
+		if err := configIn.AddFulcioRoot(context.Background(), []byte(existingRootCert)); err != nil {
+			t.Logf("Failed to add fulcio root: %v", err)
+		}
 
 		marshaledConfig, err := configIn.MarshalConfig(context.Background())
 		if err != nil {

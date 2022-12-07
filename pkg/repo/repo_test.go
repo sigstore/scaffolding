@@ -93,7 +93,9 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err = CompressFS(fsys, &buf, map[string]bool{"keys": true, "staged": true}); err != nil {
 		t.Fatalf("Failed to compress: %v", err)
 	}
-	os.WriteFile("/tmp/newcompressed", buf.Bytes(), os.ModePerm)
+	if err := os.WriteFile(filepath.Join(t.TempDir(), "newcompressed"), buf.Bytes(), os.ModePerm); err != nil {
+		t.Fatalf("Failed to write compressed output")
+	}
 	dstDir := t.TempDir()
 	if err = Uncompress(&buf, dstDir); err != nil {
 		t.Fatalf("Failed to uncompress: %v", err)
@@ -110,7 +112,7 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read the roundtripped root %v", err)
 	}
-	if bytes.Compare(root, rtRoot) != 0 {
+	if !bytes.Equal(root, rtRoot) {
 		t.Errorf("Roundtripped root differs:\n%s\n%s", string(root), string(rtRoot))
 	}
 
@@ -119,7 +121,7 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err != nil {
 		t.Errorf("Failed to read the roundtripped rekor %v", err)
 	}
-	if bytes.Compare(files["rekor.pub"], rtRekor) != 0 {
+	if !bytes.Equal(files["rekor.pub"], rtRekor) {
 		t.Errorf("Roundtripped rekor differs:\n%s\n%s", rekorPublicKey, string(rtRekor))
 	}
 }

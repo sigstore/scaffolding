@@ -40,10 +40,13 @@ const (
 	// These are the target names that are created, so the field names
 	// are the names of the files that then get mounted onto the container, so
 	// we can then just slurp them in and create TUF root out of.
+	/* #nosec G101 */
 	fulcioSecretKeyOut = "fulcio_v1.crt.pem"
-	ctSecretKeyOut     = "ctfe.pub"
-	rekorSecretKeyOut  = "rekor.pub"
-	tsaCertChainOut    = "tsa.certchain.pem"
+	/* #nosec G101 */
+	ctSecretKeyOut = "ctfe.pub"
+	/* #nosec G101 */
+	rekorSecretKeyOut = "rekor.pub"
+	tsaCertChainOut   = "tsa.certchain.pem"
 )
 
 var (
@@ -81,7 +84,7 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *fulcioSecret, err)
 	}
 	fCert := fs.Data[fulcioSecretKey]
-	if fCert == nil || len(fCert) == 0 {
+	if len(fCert) == 0 {
 		logging.FromContext(ctx).Panicf("Fulcio cert key %q is missing %s/%s", fulcioSecretKey, ns, *fulcioSecret)
 	}
 	// Grab the ctlog public key
@@ -90,7 +93,7 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *ctlogSecret, err)
 	}
 	cPub := cs.Data[ctSecretKey]
-	if cPub == nil || len(cPub) == 0 {
+	if len(cPub) == 0 {
 		logging.FromContext(ctx).Panicf("Ctlog public key %q is missing %s/%s", ctSecretKey, ns, *ctlogSecret)
 	}
 	// Grab the rekor public key
@@ -99,7 +102,7 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get secret %s/%s: %v", ns, *rekorSecret, err)
 	}
 	rPub := rs.Data[rekorSecretKey]
-	if rPub == nil || len(rPub) == 0 {
+	if len(rPub) == 0 {
 		logging.FromContext(ctx).Panicf("Rekor public key %q is missing %s/%s", rekorSecretKey, ns, *rekorSecret)
 	}
 
@@ -109,7 +112,7 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to get tsa secret %s/%s: %v", ns, *tsaSecret, err)
 	}
 	certChain := tsa.Data[tsaCertChainKey]
-	if certChain == nil || len(certChain) == 0 {
+	if len(certChain) == 0 {
 		logging.FromContext(ctx).Panicf("TSA Cert chain key %q is missing %s/%s", tsaCertChainKey, ns, *tsaSecret)
 	}
 

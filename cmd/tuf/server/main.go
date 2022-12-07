@@ -139,6 +139,7 @@ func main() {
 	fs := http.FileServer(http.Dir(serveDir))
 	http.Handle("/", fs)
 
+	/* #nosec G114 */
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}

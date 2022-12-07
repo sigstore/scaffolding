@@ -41,7 +41,7 @@ func SplitCertChain(chain []byte, prefix string) (map[string][]byte, error) {
 	}
 	if len(certs) < 2 {
 		// Need at least a root and leaf
-		return nil, fmt.Errorf("Cert Chain must contain at least root and leaf, but got only %d certs", len(certs))
+		return nil, fmt.Errorf("cert chain must contain at least root and leaf, but got only %d certs", len(certs))
 	}
 	// handle leaf
 	leaf, err := cryptoutils.MarshalCertificateToPEM(certs[0])

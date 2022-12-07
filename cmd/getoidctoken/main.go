@@ -16,9 +16,9 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/kelseyhightower/envconfig"
 	"sigs.k8s.io/release-utils/version"
@@ -33,8 +33,8 @@ func tokenWriter(filename string) func(http.ResponseWriter, *http.Request) {
 		getToken(filename, w, req)
 	}
 }
-func getToken(tokenFile string, w http.ResponseWriter, req *http.Request) {
-	content, err := ioutil.ReadFile(tokenFile)
+func getToken(tokenFile string, w http.ResponseWriter, _ *http.Request) {
+	content, err := os.ReadFile(tokenFile)
 	if err != nil {
 		log.Print("failed to read token file", err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -57,6 +57,7 @@ func main() {
 	log.Printf("running get_oidc_token Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
 	http.HandleFunc("/", tokenWriter(env.FileName))
+	/* #nosec G114 */
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}

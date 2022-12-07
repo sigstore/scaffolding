@@ -49,7 +49,6 @@ type CertResponse struct {
 }
 
 func main() {
-
 	flag.Var(&fulcioList, "fulcio", "List of fulcios which must be in the list")
 	var ctlogURL = flag.String("ctlog-url", "ctlog.ctlog-system.svc", "CTLog to check Fulcios against.")
 	var ctlogPrefix = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the gtlogURL url. This is basically the name of the log.")
@@ -68,6 +67,7 @@ func main() {
 
 	// First grab the certs that CTLog has.
 	ctlog := fmt.Sprintf("%s/%s/ct/v1/get-roots", *ctlogURL, *ctlogPrefix)
+	/* #nosec G107 */
 	ctlogResponse, err := http.Get(ctlog)
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to get trusted certs from ctlog: %v", err)
@@ -112,7 +112,7 @@ func main() {
 		fulcioRootPEM := []byte(base64.StdEncoding.EncodeToString(block.Bytes))
 		for j := range certs.Certificates {
 			logging.FromContext(ctx).Infof("Checking ctlog root cert %s", certs.Certificates[j])
-			if bytes.Compare(fulcioRootPEM, []byte(certs.Certificates[j])) == 0 {
+			if bytes.Equal(fulcioRootPEM, []byte(certs.Certificates[j])) {
 				logging.FromContext(ctx).Infof("Found a matching root cert for fulcio Root cert %s cert: %w", fulcio.String(), err)
 				certsFound[i] = true
 			}

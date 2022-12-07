@@ -55,23 +55,23 @@ func init() {
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
 
-	var rekorRequestsJson string
-	flag.StringVar(&rekorRequestsJson, "rekor-requests", "[]", "Additional rekor requests (JSON array.)")
+	var rekorRequestsJSON string
+	flag.StringVar(&rekorRequestsJSON, "rekor-requests", "[]", "Additional rekor requests (JSON array.)")
 
-	var fulcioRequestsJson string
-	flag.StringVar(&fulcioRequestsJson, "fulcio-requests", "[]", "Additional fulcio requests (JSON array.)")
+	var fulcioRequestsJSON string
+	flag.StringVar(&fulcioRequestsJSON, "fulcio-requests", "[]", "Additional fulcio requests (JSON array.)")
 
 	flag.UintVar(&retries, "retry", 4, "maximum number of retries before marking HTTP request as failed")
 
 	flag.Parse()
 
 	var rekorFlagRequests []ReadProberCheck
-	if err := json.Unmarshal([]byte(rekorRequestsJson), &rekorFlagRequests); err != nil {
+	if err := json.Unmarshal([]byte(rekorRequestsJSON), &rekorFlagRequests); err != nil {
 		log.Fatal("Failed to parse rekor-requests: ", err)
 	}
 
 	var fulcioFlagRequests []ReadProberCheck
-	if err := json.Unmarshal([]byte(fulcioRequestsJson), &fulcioFlagRequests); err != nil {
+	if err := json.Unmarshal([]byte(fulcioRequestsJSON), &fulcioFlagRequests); err != nil {
 		log.Fatal("Failed to parse fulcio-requests: ", err)
 	}
 
@@ -99,6 +99,7 @@ func main() {
 		},
 	))
 	fmt.Printf("Starting Server on port %s", addr)
+	/* #nosec G114 */
 	log.Fatal(http.ListenAndServe(addr, nil))
 }
 
@@ -139,7 +140,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 			}
 		}
 
-		time.Sleep(time.Duration(frequency) * time.Second)
+		time.Sleep(time.Duration(freq) * time.Second)
 	}
 }
 

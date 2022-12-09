@@ -102,7 +102,7 @@ jobs:
           echo "failed to timestamp artifact"
           exit -1
         fi
-        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --cert-chain ts_chain.pem ; then
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --certificate-chain ts_chain.pem ; then
           echo "failed to verify timestamp"
           exit -1
         fi

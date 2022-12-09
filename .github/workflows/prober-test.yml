@@ -30,4 +30,4 @@ jobs:
 
       - name: Prober test
         id: prober-test
-        run: go run ./cmd/prober --one-time --write-prober
+        run: go run ./cmd/prober --one-time --write-prober --logStyle dev

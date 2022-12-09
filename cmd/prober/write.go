@@ -93,12 +93,11 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	setHeaders(req, tok)
 
 	t := time.Now()
-	retryableClient := retryablehttp.NewClient()
-	retryableClient.RetryMax = int(retries)
 	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
-		fmt.Printf("error requesting cert: %v\n", err.Error())
+		Logger.Errorf("error requesting cert: %v", err)
+		return err
 	}
 	defer resp.Body.Close()
 
@@ -125,8 +124,6 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	setHeaders(req, "")
 
 	t := time.Now()
-	retryableClient := retryablehttp.NewClient()
-	retryableClient.RetryMax = int(retries)
 	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {

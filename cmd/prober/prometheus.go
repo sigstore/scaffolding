@@ -17,8 +17,10 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus"
+	"go.uber.org/zap"
 )
 
 var (
@@ -67,9 +69,7 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	endpointLatenciesSummary.With(labels).Observe(float64(latency))
 	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
 
-	fmt.Println("Observing ", method, host+endpoint)
-	fmt.Println("Status code: ", statusCode)
-	fmt.Printf("Latency for %s %s: %d\n", method, host+endpoint, latency)
+	Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v", method, host+endpoint)
 }
 
 // NewVersionCollector returns a collector that exports metrics about current version

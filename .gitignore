@@ -5,3 +5,4 @@ release-*.yaml
 testrelease.yaml
 kind.yaml
 .vscode/*
+prober

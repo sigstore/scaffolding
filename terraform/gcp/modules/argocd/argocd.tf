@@ -92,7 +92,7 @@ resource "helm_release" "argocd" {
   ]
 }
 
-resource "helm_release" "argocd_apss" {
+resource "helm_release" "argocd_apps" {
   name       = "argocd-apps"
   namespace  = "argocd"
   chart      = "argocd-apps"

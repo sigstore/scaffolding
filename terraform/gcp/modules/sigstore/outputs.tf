@@ -43,6 +43,18 @@ output "ctlog_mysql_connections" {
   value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_connection]
 }
 
+// Outputs a list of strings for each Standalone Cloud SQL instance.
+output "standalone_mysql_instances" {
+  description = "Names of the DB instances created for the standalone MySQLs"
+  value       = [for standalone in module.standalone_mysqls : standalone.mysql_instance]
+}
+
+// Outputs a list of connection strings for each Standalone Cloud SQL instance.
+output "standalone_mysql_connections" {
+  description = "Connection strings of the DB instances created for the standalone MySQLs"
+  value       = [for standalone in module.standalone_mysqls : standalone.mysql_connection]
+}
+
 // Full connection string for the MySQL DB>
 output "mysql_connection" {
   description = "The connection string dynamically generated for storage inside the Kubernetes configmap"

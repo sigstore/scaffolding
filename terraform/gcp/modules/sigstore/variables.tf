@@ -284,6 +284,17 @@ variable "ctlog_shards" {
   default     = []
 }
 
+variable "standalone_mysqls" {
+  type        = list(string)
+  description = "Array of Standalone mysql instances to create. Entry should be something like [postfix-1, postfix-2], which would then have 2 independent mysql instances created like <projectid>-<environment>-postfix-1 and  <projectid>-<environment>-postfix-2 Cloud SQL instances. For example running in staging with [rekor-ctlog-2022] would create sigstore-staging-standalone-rekor-ctlog-2022"
+  default     = []
+}
+
+variable "standalone_mysql_tier" {
+  type        = string
+  description = "Machine tier for Standalone MySQL instance."
+  default     = "db-n1-standard-4"
+}
 
 //  Cluster node pool
 variable "initial_node_count" {

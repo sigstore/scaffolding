@@ -360,6 +360,56 @@ module "ctlog_shards" {
   ]
 }
 
+// standalone-mysql. This will create a MySQL database that is not part of
+// something else. This is used to bring a database up with the appropriate
+// permissions / connections so that it can be used then by manually wiring
+// it to places where it's needed. This was initially created to bring up
+// a different version of a database that we needed to migrate to.
+
+module "standalone_mysqls" {
+  source = "../mysql-shard"
+
+  for_each = toset(var.standalone_mysqls)
+
+  instance_name = format("%s-standalone-%s", var.cluster_name, each.key)
+
+  project_id = var.project_id
+  region     = var.region
+
+  cluster_name = var.cluster_name
+  // NB: This is commented out so that we pick up the defaults
+  // for the particular environment consistently.
+  //mysql_database_version  = var.mysql_db_version
+
+  tier = var.standalone_mysql_tier
+
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
+  // We want to use consistent password across mysql DB instances, because
+  // this is access only at the DB level and access to the DB instance is gated
+  // by the IAM as well as private network.
+  password = module.mysql.mysql_pass
+
+  network = module.network.network_self_link
+
+  db_name = var.mysql_db_name
+
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
+
+  depends_on = [
+    module.gke-cluster,
+    module.network,
+    // Need to make sure we have the necessary network, service accounts, and
+    // services.
+    module.mysql
+  ]
+}
+
 // dex
 module "dex" {
   source = "../dex"

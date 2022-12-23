@@ -116,7 +116,7 @@ func main() {
 		logging.FromContext(ctx).Fatalf("Failed to create signer: %v", err)
 	}
 
-	chain, err := signer.NewTimestampingCertWithChain(ctx, s)
+	chain, err := signer.NewTimestampingCertWithChain(s)
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to create cert chain: %v", err)
 	}

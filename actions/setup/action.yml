@@ -72,7 +72,7 @@ runs:
       # greater than v0.5.0 and install it.
       # the install process, so check to see if we are running >=5
       MINOR=$(echo $tag | cut -d '.' -f 2)
-      if [[ -z "${DEPLOY_ENV}" ]]; then
+      if [[ -z "${INSTALL_TSA}" ]]; then
         INSTALL_TSA="false"
         if [ ${MINOR} -ge 5 ]; then
           INSTALL_TSA="true"

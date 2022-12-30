@@ -53,7 +53,7 @@ if [ "${MINOR}" -lt 4 ]; then
 fi
 
 # We introduced TSA in release v0.5.0
-if [[ -z "${DEPLOY_ENV}" ]]; then
+if [[ -z "${INSTALL_TSA}" ]]; then
   INSTALL_TSA="false"
   if [ "${MINOR}" -ge 5 ]; then
     INSTALL_TSA="true"

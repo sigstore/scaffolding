@@ -50,10 +50,6 @@ inputs:
     description: 'kubernetes version to install (v1.23.x, v1.24.x, v1.25.x), default: v1.24.x'
     required: true
     default: 'v1.24.x'
-  install-tsa:
-    description: 'If not set, will auto-detect whether to install TSA, or "true" or "false" to explictly force install or not of TSA.'
-    required: false
-    default: ''
 runs:
   using: "composite"
   steps:

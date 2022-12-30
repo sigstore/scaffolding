@@ -76,16 +76,10 @@ runs:
       # greater than v0.5.0 and install it.
       # the install process, so check to see if we are running >=5
       MINOR=$(echo $tag | cut -d '.' -f 2)
-      INSTALL_TSA="false"
-      if [ ${MINOR} -ge 5 ]; then
-        INSTALL_TSA="true"
-      fi
-      if [ ${{ inputs.install-tsa }} != "" ]; then
-        echo "overriding INSTALL_TSA with input ${{ inputs.install-tsa }}"
-        INSTALL_TSA=${{ inputs.install-tsa }}
-        if [ ${MINOR} -lt 5 ]; then
-          echo "unable to install TSA on version < 0.5.0"
-          exit 1
+      if [[ -z "${DEPLOY_ENV}" ]]; then
+        INSTALL_TSA="false"
+        if [ ${MINOR} -ge 5 ]; then
+          INSTALL_TSA="true"
         fi
       fi
       # Anything older than 0.4.0 is not supported.

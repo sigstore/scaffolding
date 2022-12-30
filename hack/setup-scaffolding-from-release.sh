@@ -53,9 +53,11 @@ if [ "${MINOR}" -lt 4 ]; then
 fi
 
 # We introduced TSA in release v0.5.0
-INSTALL_TSA="false"
-if [ "${MINOR}" -ge 5 ]; then
-  INSTALL_TSA="true"
+if [[ -z "${DEPLOY_ENV}" ]]; then
+  INSTALL_TSA="false"
+  if [ "${MINOR}" -ge 5 ]; then
+    INSTALL_TSA="true"
+  fi
 fi
 
 # Since the behaviour on oidc is different on k8s <1.23, check to see if we

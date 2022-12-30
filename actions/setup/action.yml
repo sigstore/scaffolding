@@ -50,6 +50,10 @@ inputs:
     description: 'kubernetes version to install (v1.23.x, v1.24.x, v1.25.x), default: v1.24.x'
     required: true
     default: 'v1.24.x'
+  install-tsa:
+    description: 'If not set, will auto-detect whether to install TSA, or "true" or "false" to explictly force install or not of TSA.'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
@@ -75,6 +79,14 @@ runs:
       INSTALL_TSA="false"
       if [ ${MINOR} -ge 5 ]; then
         INSTALL_TSA="true"
+      fi
+      if [ ${{ inputs.install-tsa }} != "" ]; then
+        echo "overriding INSTALL_TSA with input ${{ inputs.install-tsa }}"
+        INSTALL_TSA=${{ inputs.install-tsa }}
+        if [ ${MINOR} -lt 5 ]; then
+          echo "unable to install TSA on version < 0.5.0"
+          exit 1
+        fi
       fi
       # Anything older than 0.4.0 is not supported.
       if [ ${MINOR} -lt 4 ]; then

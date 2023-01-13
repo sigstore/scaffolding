@@ -24,6 +24,8 @@ import (
 
 	"database/sql"
 
+	"chainguard.dev/exitdir"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"knative.dev/pkg/logging"
@@ -208,6 +210,11 @@ var (
 )
 
 func main() {
+	// Signal via exitdir we are finished.
+	defer func() {
+		_ = exitdir.Exit()
+	}()
+
 	flag.Parse()
 	if *mysqlURI == "" {
 		log.Panicf("Need to specify mysql_uri to know where to connect to")
@@ -215,6 +222,7 @@ func main() {
 	if *dbName == "" {
 		log.Panicf("Need to specify database name")
 	}
+
 	connStr := fmt.Sprintf("%s/%s", strings.TrimSuffix(*mysqlURI, "/"), *dbName)
 	ctx := signals.NewContext()
 	db, err := sql.Open("mysql", connStr)

@@ -1,5 +1,7 @@
 ---
 defaultBaseImage: cgr.dev/chainguard/alpine-base:latest
+baseImageOverrides:
+  github.com/sigstore/scaffolding/cmd/cloudsqlproxy: gcr.io/cloudsql-docker/gce-proxy:1.32.0-alpine
 
 builds:
   - id: ctlog-createctconfig
@@ -137,6 +139,20 @@ builds:
       - -extldflags "-static"
       - "{{ .Env.LDFLAGS }}"
 
+  - id: cloudsqlproxy
+    dir: .
+    main: ./cmd/cloudsqlproxy
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
   - id: getoidctoken
     dir: .

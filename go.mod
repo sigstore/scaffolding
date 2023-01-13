@@ -3,6 +3,7 @@ module github.com/sigstore/scaffolding
 go 1.19
 
 require (
+	chainguard.dev/exitdir v0.0.1
 	github.com/go-openapi/strfmt v0.21.3
 	github.com/go-openapi/swag v0.22.3
 	github.com/go-sql-driver/mysql v1.7.0

@@ -30,7 +30,7 @@ func main() {
 	ctx := exitdir.Aware(signals.NewContext())
 
 	log.Printf("Starting the cloud sql proxy")
-	cmd := exec.CommandContext(ctx, "/cloud_sql_proxy", os.Args[1:]...)
+	cmd := exec.CommandContext(ctx, "/cloud_sql_proxy", os.Args[1:]...) //nolint: gosec
 	cmd.Env = os.Environ()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

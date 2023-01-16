@@ -20,7 +20,7 @@ require (
 	github.com/sigstore/fulcio v1.0.0
 	github.com/sigstore/rekor v1.0.1
 	github.com/sigstore/sigstore v1.5.0
-	github.com/sigstore/timestamp-authority v0.2.0
+	github.com/sigstore/timestamp-authority v0.2.1
 	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.uber.org/zap v1.24.0
@@ -178,7 +178,7 @@ require (
 	github.com/prometheus/common v0.37.0 // indirect
 	github.com/prometheus/procfs v0.8.0 // indirect
 	github.com/prometheus/prometheus v2.5.0+incompatible // indirect
-	github.com/rs/cors v1.8.2 // indirect
+	github.com/rs/cors v1.8.3 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sassoftware/relic v0.0.0-20210427151427-dfb082b79b74 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.4.0 // indirect

@@ -34,10 +34,9 @@ import (
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
-	"github.com/sigstore/cosign/pkg/cosign"
-	"github.com/sigstore/cosign/pkg/providers"
+	"github.com/sigstore/cosign/v2/pkg/cosign"
+	"github.com/sigstore/cosign/v2/pkg/providers"
 	"github.com/sigstore/fulcio/pkg/api"
-	rclient "github.com/sigstore/rekor/pkg/client"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -45,7 +44,7 @@ import (
 	"github.com/sigstore/sigstore/pkg/signature"
 
 	// Loads OIDC providers
-	"github.com/sigstore/cosign/pkg/providers/all"
+	"github.com/sigstore/cosign/v2/pkg/providers/all"
 )
 
 const (
@@ -144,11 +143,11 @@ func rekorWriteEndpoint(ctx context.Context) error {
 		break
 	}
 	verified := "true"
-	rekorClient, err := rclient.GetRekorClient(rekorURL, rclient.WithUserAgent(fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion)))
+	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
 	if err != nil {
-		return fmt.Errorf("creating rekor client: %w", err)
+		return fmt.Errorf("getting rekor public keys: %w", err)
 	}
-	if err = cosign.VerifyTLogEntry(ctx, rekorClient, &logEntryAnon); err != nil {
+	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys); err != nil {
 		verified = "false"
 	}
 	verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()

@@ -30,7 +30,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"sigs.k8s.io/release-utils/version"
 
-	_ "github.com/sigstore/cosign/pkg/providers/all"
+	_ "github.com/sigstore/cosign/v2/pkg/providers/all"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

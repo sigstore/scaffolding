@@ -1,3 +1,5 @@
+chainguard.dev/exitdir v0.0.1 h1:gYH0OCCE5mbHKNTkTzmeqX2pa8f7txAcTeNLmoOZGGE=
+chainguard.dev/exitdir v0.0.1/go.mod h1:qs/nTdekhJH7TvwwOsY+dyJW8jXVowlaqTsi/i23SbY=
 cloud.google.com/go v0.26.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.34.0/go.mod h1:aQUYkXzVsufM+DwF1aE+0xfcU+56JwCaLick0ClmMTw=
 cloud.google.com/go v0.38.0/go.mod h1:990N+gfupTy94rShfmMCWGDn0LpTmnzTp2qbd1dvSRU=

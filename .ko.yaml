@@ -1,182 +1,200 @@
+---
 defaultBaseImage: cgr.dev/chainguard/alpine-base:latest
+baseImageOverrides:
+  github.com/sigstore/scaffolding/cmd/cloudsqlproxy: gcr.io/cloudsql-docker/gce-proxy:1.33.1-alpine
 
 builds:
-- id: ctlog-createctconfig
-  dir: .
-  main: ./cmd/ctlog/createctconfig
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: ctlog-createctconfig
+    dir: .
+    main: ./cmd/ctlog/createctconfig
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: ctlog-managectroots
-  dir: .
-  main: ./cmd/ctlog/managectroots
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: ctlog-managectroots
+    dir: .
+    main: ./cmd/ctlog/managectroots
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: ctlog-verifyfulcio
-  dir: .
-  main: ./cmd/ctlog/verifyfulcio
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: ctlog-verifyfulcio
+    dir: .
+    main: ./cmd/ctlog/verifyfulcio
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: fulcio-createcerts
-  dir: .
-  main: ./cmd/fulcio/createcerts
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: fulcio-createcerts
+    dir: .
+    main: ./cmd/fulcio/createcerts
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: tuf-createsecret
-  dir: .
-  main: ./cmd/tuf/createsecret
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: tuf-createsecret
+    dir: .
+    main: ./cmd/tuf/createsecret
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: tuf-server
-  dir: .
-  main: ./cmd/tuf/server
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: tuf-server
+    dir: .
+    main: ./cmd/tuf/server
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: trillian-createtree
-  dir: .
-  main: ./cmd/trillian/createtree
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: trillian-createtree
+    dir: .
+    main: ./cmd/trillian/createtree
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: trillian-createdb
-  dir: .
-  main: ./cmd/trillian/createdb
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: trillian-createdb
+    dir: .
+    main: ./cmd/trillian/createdb
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: trillian-updatetree
-  dir: .
-  main: ./cmd/trillian/updatetree
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: trillian-updatetree
+    dir: .
+    main: ./cmd/trillian/updatetree
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: getoidctoken
-  dir: .
-  main: ./cmd/getoidctoken
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: cloudsqlproxy
+    dir: .
+    main: ./cmd/cloudsqlproxy
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: prober
-  dir: .
-  main: ./cmd/prober
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: getoidctoken
+    dir: .
+    main: ./cmd/getoidctoken
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
 
-- id: rekor-createsecret
-  dir: .
-  main: ./cmd/rekor/createsecret
-  env:
-  - CGO_ENABLED=0
-  flags:
-  - -trimpath
-  - -tags
-  - nostackdriver
-  ldflags:
-  - -s
-  - -w
-  - -extldflags "-static"
-  - "{{ .Env.LDFLAGS }}"
+  - id: prober
+    dir: .
+    main: ./cmd/prober
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"
+
+  - id: rekor-createsecret
+    dir: .
+    main: ./cmd/rekor/createsecret
+    env:
+      - CGO_ENABLED=0
+    flags:
+      - -trimpath
+      - -tags
+      - nostackdriver
+    ldflags:
+      - -s
+      - -w
+      - -extldflags "-static"
+      - "{{ .Env.LDFLAGS }}"

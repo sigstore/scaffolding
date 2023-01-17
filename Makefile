@@ -15,6 +15,9 @@ ko-resolve:
 	ko resolve --tags $(GIT_TAG),latest -BRf ./config/$(artifact) \
 	--platform=all \
 	--image-refs imagerefs-$(artifact) > release-$(artifact).yaml )) \
+	# "Building cloudsqlproxy wrapper"
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./cmd/cloudsqlproxy
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
@@ -32,6 +35,7 @@ sign-release-images: sign-test-images
 	$(foreach artifact,$(artifacts), \
 		echo "Signing $(artifact)"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$(artifact); ./scripts/sign-release-images.sh \
 	)
+	echo "Signing cloudsqlproxy"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-cloudsqlproxy; ./scripts/sign-release-images.sh \
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata

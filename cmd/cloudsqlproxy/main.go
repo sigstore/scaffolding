@@ -18,6 +18,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strings"
 
 	"chainguard.dev/exitdir"
 	"knative.dev/pkg/signals"
@@ -29,15 +30,18 @@ func main() {
 	// Leverage exitdir to use file based lifecycle management.
 	ctx := exitdir.Aware(signals.NewContext())
 
-	log.Printf("Starting the cloud sql proxy")
+	log.Println("Starting the cloud sql proxy...")
 	cmd := exec.CommandContext(ctx, "/cloud_sql_proxy", os.Args[1:]...) //nolint: gosec
 	cmd.Env = os.Environ()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
+	err := cmd.Run()
+	if err != nil && strings.Contains(err.Error(), "signal: killed") {
+		log.Println("Got signal to shutdown")
+	} else if err != nil {
 		log.Panic(err)
 	}
 
 	<-ctx.Done()
-	log.Println("Exiting")
+	log.Println("Exiting cloud sql proxy...")
 }

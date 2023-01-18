@@ -64,7 +64,7 @@ docker rm -f b1e3f3238f7a
 
 ## From the release
 ```shell
-curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-scaffolding-from-release.sh
+curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-scaffolding-from-release.sh
 chmod u+x /tmp/setup-scaffolding-from-release.sh
 /tmp/setup-scaffolding-from-release.sh
 ```

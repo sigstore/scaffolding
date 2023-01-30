@@ -361,3 +361,39 @@ func TestDecrypteExistingPrivateKey(t *testing.T) {
 		t.Fatalf("got back a nil public key")
 	}
 }
+
+func TestDedupeUnmarshaling(t *testing.T) {
+	for k, v := range testConfigs {
+		t.Logf("testing with: %s", k)
+		cm, err := createBaseConfig(t, v)
+		if err != nil {
+			t.Fatalf("Failed to create base config: %v", err)
+		}
+		// Override the legacy rootca entry with our own for ease of testing. It
+		// doesn't really matter what it is for this test.
+		cm["fulcio-0"] = []byte("this is a test cert")
+		cm["fulcio-1"] = []byte("this is a test cert")
+		cm["fulcio-99"] = []byte("this is a different test cert")
+		config, err := Unmarshal(context.Background(), cm)
+		if err != nil {
+			t.Fatalf("failed to Unmarshal: %v", err)
+		}
+		// We should have original root cert, 0&1 deduped into one and fulcio-99
+		if len(config.FulcioCerts) != 3 {
+			t.Errorf("wanted 3 fulcio certs, got: %d", len(config.FulcioCerts))
+		}
+		checkContains(t, config.FulcioCerts, []byte("this is a test cert"))
+		checkContains(t, config.FulcioCerts, []byte("this is a different test cert"))
+		checkContains(t, config.FulcioCerts, cm["rootca"])
+	}
+}
+
+func checkContains(t *testing.T, fulcioCerts [][]byte, cert []byte) {
+	t.Helper()
+	for i := range fulcioCerts {
+		if bytes.Equal(fulcioCerts[i], cert) {
+			return
+		}
+	}
+	t.Errorf("did not find %s in fulcioCerts", string(cert))
+}

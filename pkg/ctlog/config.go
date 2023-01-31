@@ -218,15 +218,27 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*Config, error) {
 	if err != nil {
 		return nil, fmt.Errorf("decrypting existing private key: %w", err)
 	}
-	// If there's legacy rootCA entry, check it first.
+	// Make sure to dedupe along the way just to make sure we do not have
+	// duplicate entries.
+	uniqueFulcioCerts := map[string][]byte{}
+
+	// If there's legacy rootCA entry, check it first. This will get converted
+	// to fulcio-0 when marshaling, but we just want to make sure it's there
+	// when we're converting from ConfigMap based configuration into secret
+	// based one.
 	if legacyRoot, ok := in[LegacyRootCAKey]; ok && len(legacyRoot) > 0 {
-		ret.FulcioCerts = append(ret.FulcioCerts, legacyRoot)
+		uniqueFulcioCerts[string(legacyRoot)] = legacyRoot
 	}
-	// Then loop through Fulcio roots
+
 	for k, v := range in {
 		if strings.HasPrefix(k, "fulcio-") {
-			ret.FulcioCerts = append(ret.FulcioCerts, v)
+			uniqueFulcioCerts[string(v)] = v
 		}
+	}
+
+	// Then loop through Fulcio roots that have been deduped above
+	for _, v := range uniqueFulcioCerts {
+		ret.FulcioCerts = append(ret.FulcioCerts, v)
 	}
 	return &ret, nil
 }
@@ -244,7 +256,7 @@ func (c *Config) MarshalConfig(ctx context.Context) (map[string][]byte, error) {
 	// of files containing them for the RootsPemFile. Names don't matter
 	// so we just call them fulcio-%
 	// What matters however is to ensure that the filenames match the keys
-	// in the configmap / secret that we construc so they get properly mounted.
+	// in the configmap / secret that we construct so they get properly mounted.
 	rootPems := make([]string, 0, len(c.FulcioCerts))
 	for i := range c.FulcioCerts {
 		rootPems = append(rootPems, fmt.Sprintf("%sfulcio-%d", rootsPemFileDir, i))

@@ -21,7 +21,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -36,7 +35,6 @@ import (
 
 	"github.com/sigstore/cosign/v2/pkg/cosign"
 	"github.com/sigstore/cosign/v2/pkg/providers"
-	"github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -51,7 +49,7 @@ const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
 	defaultOIDCClientID = "sigstore"
 
-	fulcioEndpoint = "/api/v1/signingCert"
+	fulcioEndpoint = "/api/v2/signingCert"
 	rekorEndpoint  = "/api/v1/log/entries"
 )
 
@@ -66,7 +64,7 @@ func setHeaders(req *retryablehttp.Request, token string) {
 }
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
-// which is "/api/v1/signingCert", which requests a cert from Fulcio
+// which is "/api/v2/signingCert", which requests a cert from Fulcio
 func fulcioWriteEndpoint(ctx context.Context) error {
 	if !all.Enabled(ctx) {
 		return fmt.Errorf("no auth provider for fulcio is enabled")
@@ -206,7 +204,7 @@ func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("generating cert: %w", err)
 	}
-	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubBytesPEM, err := cryptoutils.MarshalPublicKeyToPEM(priv.Public())
 	if err != nil {
 		return nil, err
 	}
@@ -223,13 +221,27 @@ func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
 		return nil, err
 	}
 
-	cr := api.CertificateRequest{
-		PublicKey: api.Key{
-			Algorithm: "ecdsa",
-			Content:   pubBytes,
+	req := SigningCertificateRequest{
+		PublicKeyRequest: PublicKeyRequest{
+			PublicKey: PublicKey{
+				Content: string(pubBytesPEM),
+			},
+			ProofOfPossession: proof,
 		},
-		SignedEmailAddress: proof,
 	}
 
-	return json.Marshal(cr)
+	return json.Marshal(req)
+}
+
+type SigningCertificateRequest struct {
+	PublicKeyRequest PublicKeyRequest `json:"publicKeyRequest"`
+}
+
+type PublicKeyRequest struct {
+	PublicKey         PublicKey `json:"publicKey"`
+	ProofOfPossession []byte    `json:"proofOfPossession"`
+}
+
+type PublicKey struct {
+	Content string `json:"content"`
 }

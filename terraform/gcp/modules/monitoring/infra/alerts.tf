@@ -246,3 +246,89 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
   notification_channels = local.notification_channels
   project               = var.project_id
 }
+
+### Kubernetes Alerts
+
+# Kubernetes Container Memory Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_memory_utilization" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"kubernetes.io/container/memory/request_utilization\" resource.type=\"k8s_container\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Container - Memory utilization [MEAN]"
+  }
+
+  display_name = "Kubernetes Container Memory Utilization > 90%"
+
+  documentation {
+    content   = "Kubernetes Container Memory Utilization is >90%. Please increase requested memory."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+# Kubernetes Container CPU Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_cpu_utilization" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"kubernetes.io/container/cpu/request_utilization\" resource.type=\"k8s_container\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Container - CPU utilization [MEAN]"
+  }
+
+  display_name = "Kubernetes Container CPU Utilization > 90%"
+
+  documentation {
+    content   = "Kubernetes Container CPU Utilization is >90%. Please increase requested CPU."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}

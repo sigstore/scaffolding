@@ -36,7 +36,7 @@ done
 K8S_VERSION="v1.24.x"
 KNATIVE_VERSION="1.6.0"
 REGISTRY_NAME="registry.local"
-REGISTRY_PORT="5000"
+REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"
 
 while [[ $# -ne 0 ]]; do
@@ -253,8 +253,11 @@ echo '::endgroup::'
 echo '::group:: Setup container registry'
 
 
-docker run -d --restart=always \
-       -p "$REGISTRY_PORT:$REGISTRY_PORT" --name "$REGISTRY_NAME" registry:2
+if [ "$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]; then
+  docker run \
+    -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" --name "${REGISTRY_NAME}" \
+    -e REGISTRY_HTTP_ADDR="0.0.0.0:${REGISTRY_PORT}" registry:2
+fi
 
 # Connect the registry to the KinD network.
 docker network connect "kind" "$REGISTRY_NAME"

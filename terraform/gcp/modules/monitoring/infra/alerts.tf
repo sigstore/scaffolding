@@ -249,8 +249,8 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
 
 ### Kubernetes Alerts
 
-# Kubernetes Container Memory Utilization > 90%
-resource "google_monitoring_alert_policy" "k8s_container_memory_utilization" {
+# Kubernetes Node Memory Allocatable Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_memory_allocatable_utilization" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -267,7 +267,7 @@ resource "google_monitoring_alert_policy" "k8s_container_memory_utilization" {
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "metric.type=\"kubernetes.io/container/memory/request_utilization\" resource.type=\"k8s_container\""
+      filter          = "metric.type=\"kubernetes.io/node/memory/allocatable_utilization\" resource.type=\"k8s_container\""
       threshold_value = "0.9"
 
       trigger {
@@ -276,13 +276,13 @@ resource "google_monitoring_alert_policy" "k8s_container_memory_utilization" {
       }
     }
 
-    display_name = "Kubernetes Container - Memory utilization [MEAN]"
+    display_name = "Kubernetes Node - Memory Allocatable Utilization [MEAN]"
   }
 
-  display_name = "Kubernetes Container Memory Utilization > 90%"
+  display_name = "Kubernetes Node Memory Allocatable Utilization > 90%"
 
   documentation {
-    content   = "Kubernetes Container Memory Utilization is >90%. Please increase requested memory."
+    content   = "Kubernetes Node using >90% of allocatable memory. Please investigate possible memory leak."
     mime_type = "text/markdown"
   }
 
@@ -291,8 +291,8 @@ resource "google_monitoring_alert_policy" "k8s_container_memory_utilization" {
   project               = var.project_id
 }
 
-# Kubernetes Container CPU Utilization > 90%
-resource "google_monitoring_alert_policy" "k8s_container_cpu_utilization" {
+# Kubernetes Node CPU Allocatable Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_cpu_allocatable_utilization" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -309,7 +309,7 @@ resource "google_monitoring_alert_policy" "k8s_container_cpu_utilization" {
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "metric.type=\"kubernetes.io/container/cpu/request_utilization\" resource.type=\"k8s_container\""
+      filter          = "metric.type=\"kubernetes.io/node/cpu/allocatable_utilization\" resource.type=\"k8s_container\""
       threshold_value = "0.9"
 
       trigger {
@@ -318,13 +318,13 @@ resource "google_monitoring_alert_policy" "k8s_container_cpu_utilization" {
       }
     }
 
-    display_name = "Kubernetes Container - CPU utilization [MEAN]"
+    display_name = "Kubernetes Node - CPU Allocatable Utilization [MEAN]"
   }
 
-  display_name = "Kubernetes Container CPU Utilization > 90%"
+  display_name = "Kubernetes Node CPU Allocatable Utilization > 90%"
 
   documentation {
-    content   = "Kubernetes Container CPU Utilization is >90%. Please increase requested CPU."
+    content   = "Kubernetes Node using >90% of allocatable CPU. Please investigate running processes."
     mime_type = "text/markdown"
   }
 

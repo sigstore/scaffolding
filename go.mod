@@ -17,12 +17,12 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.14.0
-	github.com/sigstore/cosign/v2 v2.0.0-rc.0.0.20230117182108-e69e19027327
+	github.com/sigstore/cosign/v2 v2.0.0
 	github.com/sigstore/fulcio v1.1.0
 	github.com/sigstore/rekor v1.0.1
 	github.com/sigstore/sigstore v1.5.1
 	github.com/sigstore/timestamp-authority v0.2.1
-	github.com/theupdateframework/go-tuf v0.5.2-0.20220930112810-3890c1e7ace4
+	github.com/theupdateframework/go-tuf v0.5.2
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.6.0
@@ -123,7 +123,7 @@ require (
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic v0.5.7-v3refs // indirect
-	github.com/google/go-containerregistry v0.12.1 // indirect
+	github.com/google/go-containerregistry v0.13.1-0.20230203223142-b3c23b4c3f28 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
@@ -145,7 +145,7 @@ require (
 	github.com/hashicorp/vault/api v1.8.2 // indirect
 	github.com/hashicorp/vault/sdk v0.6.1 // indirect
 	github.com/hashicorp/yamux v0.1.1 // indirect
-	github.com/in-toto/in-toto-golang v0.5.0 // indirect
+	github.com/in-toto/in-toto-golang v0.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20211028175153-1c139d1cc84b // indirect
 	github.com/jellydator/ttlcache/v2 v2.11.1 // indirect

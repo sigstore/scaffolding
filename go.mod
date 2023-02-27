@@ -10,7 +10,7 @@ require (
 	github.com/golang/glog v1.0.0
 	github.com/google/certificate-transparency-go v1.1.4
 	github.com/google/go-cmp v0.5.9
-	github.com/google/trillian v1.5.1-0.20220819043421-0a389c4bb8d9
+	github.com/google/trillian v1.5.1
 	github.com/google/uuid v1.3.0
 	github.com/hashicorp/go-retryablehttp v0.7.2
 	github.com/hashicorp/hcl v1.0.0

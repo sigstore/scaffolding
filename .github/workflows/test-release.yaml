@@ -49,7 +49,7 @@ jobs:
     - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6
+      uses: chainguard-dev/actions/setup-kind@main
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}

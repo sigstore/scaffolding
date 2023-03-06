@@ -111,7 +111,7 @@ func updateTree(ctx context.Context) (*trillian.Tree, error) {
 			time.Sleep(100 * time.Millisecond)
 			continue
 		}
-		return nil, fmt.Errorf("failed to UpdateTree(%+v): %T %w", req, err, err)
+		return nil, fmt.Errorf("failed to UpdateTree(%+v): %T %w", req, err, err) //nolint: errorlint
 	}
 }
 

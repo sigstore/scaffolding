@@ -248,6 +248,10 @@ module "timestamp" {
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
+  // Disable module entirely if timestamp
+  // is disabled
+  count = var.timestamp.enabled ? 1 : 0
+
   // KMS
   timestamp_keyring_name             = var.timestamp_keyring_name
   timestamp_encryption_key_name      = var.timestamp_encryption_key_name

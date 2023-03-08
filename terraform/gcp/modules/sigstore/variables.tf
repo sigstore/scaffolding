@@ -226,6 +226,16 @@ variable "rekor_key_name" {
   default     = "rekor-key"
 }
 
+variable "timestamp" {
+  type = object({
+    enabled = bool
+  })
+  default = {
+    enabled = true
+  }
+  description = "global enable/disable for timestamp resources"
+}
+
 variable "timestamp_keyring_name" {
   type        = string
   description = "Name of Timestamp Authority keyring."

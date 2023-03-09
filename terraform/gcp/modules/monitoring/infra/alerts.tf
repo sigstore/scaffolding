@@ -140,7 +140,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   display_name = "Cloud Sql Disk Utilization > 98%"
 
   documentation {
-    content   = "Cloud SQL disk utilization is > 98%. Please increase capacity. "
+    content   = "Cloud SQL disk utilization is > 98%. Please increase capacity. Note that autoresize should be enabled for the database. Ensure there is no issue with the autoresize process."
     mime_type = "text/markdown"
   }
 

@@ -267,7 +267,7 @@ resource "google_monitoring_alert_policy" "k8s_container_memory_allocatable_util
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "metric.type=\"kubernetes.io/node/memory/allocatable_utilization\" resource.type=\"k8s_container\""
+      filter          = "metric.type=\"kubernetes.io/node/memory/allocatable_utilization\" resource.type=\"k8s_node\""
       threshold_value = "0.9"
 
       trigger {
@@ -309,7 +309,7 @@ resource "google_monitoring_alert_policy" "k8s_container_cpu_allocatable_utiliza
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "metric.type=\"kubernetes.io/node/cpu/allocatable_utilization\" resource.type=\"k8s_container\""
+      filter          = "metric.type=\"kubernetes.io/node/cpu/allocatable_utilization\" resource.type=\"k8s_node\""
       threshold_value = "0.9"
 
       trigger {

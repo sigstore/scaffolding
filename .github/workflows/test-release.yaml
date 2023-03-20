@@ -41,7 +41,7 @@ jobs:
     - uses: sigstore/cosign-installer@9becc617647dfa20ae7b1151972e9b3a2c338a2b # v2
 
     - name: Set up Go
-      uses: actions/setup-go@6edd4406fa81c3da01a34fa6f6343087c207a568 # v3.3.0
+      uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v3.3.0
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true

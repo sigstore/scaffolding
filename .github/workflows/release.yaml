@@ -44,7 +44,7 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check out code onto GOPATH
-      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.0.2
+      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
       with:
         fetch-depth: 1
         path: ./src/github.com/${{ github.repository }}

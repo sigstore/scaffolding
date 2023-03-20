@@ -36,7 +36,7 @@ jobs:
 
     steps:
     - name: Checkout the current action
-      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.0.2
+      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
     - name: Test running the action
       uses: ./actions/setup
       with:
@@ -83,7 +83,7 @@ jobs:
         cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
-      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.0.2
+      uses: actions/checkout@24cb9080177205b6e8c946b17badbe402adc938f # v3.4.0
       with:
         repository: sigstore/timestamp-authority
         path: ./src/github.com/sigstore/timestamp-authority

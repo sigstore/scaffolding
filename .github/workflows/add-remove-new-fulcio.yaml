@@ -73,7 +73,7 @@ jobs:
     - uses: sigstore/cosign-installer@9becc617647dfa20ae7b1151972e9b3a2c338a2b # v2
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6
+      uses: chainguard-dev/actions/setup-kind@cc7afeaca6e5871be191ecc1b8bce10274bc1ee4
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -83,7 +83,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.7.x"
+        version: "1.8.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

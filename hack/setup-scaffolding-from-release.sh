@@ -58,7 +58,7 @@ if [ "${MINOR}" -ge 5 ]; then
   INSTALL_TSA="true"
 fi
 
-# Since the behaviour on oidc is different on k8s <1.23, check to see if we
+# Since the behaviour on oidc is different on certain k8s versions, check to see if we
 # need to do some mucking with the Fulcio config
 NEED_TO_UPDATE_FULCIO_CONFIG="false"
 K8S_SERVER_VERSION=$(kubectl version -ojson | yq '.serverVersion.minor' -)

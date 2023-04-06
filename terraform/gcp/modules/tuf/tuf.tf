@@ -57,6 +57,13 @@ resource "google_storage_bucket" "tuf" {
       days_since_noncurrent_time = 730
     }
   }
+
+  dynamic "logging" {
+    for_each = var.gcs_logging_enabled ? [1] : []
+    content {
+      log_bucket = var.gcs_logging_bucket
+    }
+  }
 }
 
 resource "google_storage_bucket_iam_member" "public_tuf_member" {
@@ -94,6 +101,13 @@ resource "google_storage_bucket" "tuf_preprod" {
     }
     condition {
       days_since_noncurrent_time = 730
+    }
+  }
+
+  dynamic "logging" {
+    for_each = var.gcs_logging_enabled ? [1] : []
+    content {
+      log_bucket = var.gcs_logging_bucket
     }
   }
 }

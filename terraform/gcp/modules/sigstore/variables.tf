@@ -331,3 +331,15 @@ variable "gke_autoscaling_resource_limits_resource_mem_max" {
   type    = number
   default = 16
 }
+
+variable "gcs_logging_enabled" {
+  type        = bool
+  description = "enable/disable logging of GCS bucket traffic"
+  default     = false
+}
+
+variable "gcs_logging_bucket" {
+  description = "name of GCS bucket where storage logs will be written"
+  type        = string
+  default     = ""
+}

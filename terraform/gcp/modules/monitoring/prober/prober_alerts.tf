@@ -204,7 +204,7 @@ resource "google_monitoring_alert_policy" "prober_verification" {
 
       comparison      = "COMPARISON_GT"
       duration        = "0s"
-      filter          = "resource.type = \"k8s_container\" AND metric.type = \"external.googleapis.com/prometheus/verification\" AND metric.labels.verified = \"false\""
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown\" AND metric.labels.verified = \"false\""
       threshold_value = "0"
 
       trigger {
@@ -213,7 +213,7 @@ resource "google_monitoring_alert_policy" "prober_verification" {
       }
     }
 
-    display_name = "Kubernetes Container - external/prometheus/verification"
+    display_name = "Kubernetes Container - prometheus/verification"
   }
 
   documentation {

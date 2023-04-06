@@ -60,9 +60,11 @@ module "tuf" {
   region     = var.tuf_region == "" ? var.region : var.tuf_region
   project_id = var.project_id
 
-  tuf_bucket         = var.tuf_bucket
-  tuf_preprod_bucket = var.tuf_preprod_bucket
-  storage_class      = var.tuf_storage_class
+  tuf_bucket          = var.tuf_bucket
+  tuf_preprod_bucket  = var.tuf_preprod_bucket
+  gcs_logging_enabled = var.gcs_logging_enabled
+  gcs_logging_bucket  = var.gcs_logging_bucket
+  storage_class       = var.tuf_storage_class
 
   depends_on = [
     module.project_roles
@@ -199,9 +201,11 @@ module "rekor" {
   kms_location       = "global"
 
   // Storage
-  attestation_bucket = var.attestation_bucket
-  attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
-  storage_class      = var.attestation_storage_class
+  attestation_bucket  = var.attestation_bucket
+  attestation_region  = var.attestation_region == "" ? var.region : var.attestation_region
+  gcs_logging_enabled = var.gcs_logging_enabled
+  gcs_logging_bucket  = var.gcs_logging_bucket
+  storage_class       = var.attestation_storage_class
 
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name

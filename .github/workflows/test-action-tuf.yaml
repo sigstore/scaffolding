@@ -47,7 +47,7 @@ jobs:
 
     # Install cosign
     - name: Install cosign
-      uses: sigstore/cosign-installer@9becc617647dfa20ae7b1151972e9b3a2c338a2b # v2
+      uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v2
 
     - name: Set up Go
       uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0

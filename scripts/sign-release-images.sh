@@ -28,4 +28,4 @@ fi
 
 echo "Signing images with Keyless..."
 readarray -t file_args < <(cat "$ARTIFACT")
-cosign sign --timeout 5m --force -a GIT_HASH="$GIT_HASH" -a GIT_VERSION="$GIT_VERSION" "${file_args[@]}"
+cosign sign --timeout 5m --yes -a GIT_HASH="$GIT_HASH" -a GIT_VERSION="$GIT_VERSION" "${file_args[@]}"

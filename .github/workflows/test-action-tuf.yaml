@@ -47,7 +47,7 @@ jobs:
 
     # Install cosign
     - name: Install cosign
-      uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v2
+      uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v3.0.2
 
     - name: Set up Go
       uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
@@ -78,11 +78,14 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
+        --allow-insecure-registry "${{ env.demoimage }}" \
+        --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
+        --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
 
     - name: Checkout TSA for testing.
       uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab # v3.5.2

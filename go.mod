@@ -16,7 +16,7 @@ require (
 	github.com/hashicorp/hcl v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
-	github.com/prometheus/client_golang v1.14.0
+	github.com/prometheus/client_golang v1.15.0
 	github.com/sigstore/cosign/v2 v2.0.1
 	github.com/sigstore/fulcio v1.2.0
 	github.com/sigstore/rekor v1.1.0

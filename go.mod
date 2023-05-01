@@ -8,7 +8,7 @@ require (
 	github.com/go-openapi/swag v0.22.3
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/glog v1.1.1
-	github.com/google/certificate-transparency-go v1.1.4
+	github.com/google/certificate-transparency-go v1.1.5
 	github.com/google/go-cmp v0.5.9
 	github.com/google/trillian v1.5.1
 	github.com/google/uuid v1.3.0
@@ -166,7 +166,7 @@ require (
 	github.com/prometheus/common v0.42.0 // indirect
 	github.com/prometheus/procfs v0.9.0 // indirect
 	github.com/prometheus/prometheus v2.5.0+incompatible // indirect
-	github.com/rs/cors v1.8.3 // indirect
+	github.com/rs/cors v1.9.0 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.5.0 // indirect

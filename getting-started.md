@@ -19,6 +19,11 @@ You need to install `yq`. You can do this like so:
 ```
 go install github.com/mikefarah/yq/v4@latest
 ```
+You also need [ko](https://ko.build/) a tool for building lighter, more secure container images.
+```
+go install github.com/google/ko@latest
+```
+There are further install options on the [ko website](https://ko.build/).
 
 # Running locally on KinD
 

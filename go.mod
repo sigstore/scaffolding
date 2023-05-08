@@ -18,7 +18,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.15.0
 	github.com/sigstore/cosign/v2 v2.0.2
-	github.com/sigstore/fulcio v1.2.0
+	github.com/sigstore/fulcio v1.3.1
 	github.com/sigstore/rekor v1.1.1
 	github.com/sigstore/sigstore v1.6.3
 	github.com/sigstore/timestamp-authority v1.0.0
@@ -35,8 +35,8 @@ require (
 	k8s.io/apimachinery v0.27.1
 	k8s.io/client-go v0.27.1
 	k8s.io/code-generator v0.27.1
-	knative.dev/hack v0.0.0-20230113013652-c7cfcb062de9
-	knative.dev/pkg v0.0.0-20230125083639-408ad0773f47
+	knative.dev/hack v0.0.0-20230330174700-1421f120c36b
+	knative.dev/pkg v0.0.0-20230404101938-ee73c9355c9d
 	sigs.k8s.io/release-utils v0.7.3
 )
 
@@ -192,11 +192,11 @@ require (
 	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0 // indirect
 	go.mongodb.org/mongo-driver v1.11.3 // indirect
 	go.opencensus.io v0.24.0 // indirect
-	go.opentelemetry.io/otel v1.14.0 // indirect
-	go.opentelemetry.io/otel/trace v1.14.0 // indirect
+	go.opentelemetry.io/otel v1.15.0 // indirect
+	go.opentelemetry.io/otel/trace v1.15.0 // indirect
 	go.step.sm/crypto v0.29.3 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
-	go.uber.org/multierr v1.9.0 // indirect
+	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20230124195608-d38c7dcee874 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.9.0 // indirect
@@ -207,7 +207,7 @@ require (
 	golang.org/x/text v0.9.0 // indirect
 	golang.org/x/time v0.3.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
-	google.golang.org/api v0.119.0 // indirect
+	google.golang.org/api v0.120.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -215,7 +215,7 @@ require (
 	k8s.io/gengo v0.0.0-20221011193443-fad74ee6edd9 // indirect
 	k8s.io/klog/v2 v2.90.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20230308215209-15aac26d736a // indirect
-	k8s.io/utils v0.0.0-20230209194617-a36077c30491 // indirect
+	k8s.io/utils v0.0.0-20230406110748-d93618cff8a2 // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.2.3 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect

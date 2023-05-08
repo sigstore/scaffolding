@@ -73,7 +73,7 @@ jobs:
 
     - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
-    - uses: sigstore/cosign-installer@9e9de2292db7abb3f51b7f4808d98f0d347a8919 # v3.0.2
+    - uses: sigstore/cosign-installer@204a51a57a74d190b284a0ce69b44bc37201f343 # v3.0.3
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@cc7afeaca6e5871be191ecc1b8bce10274bc1ee4

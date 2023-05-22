@@ -33,7 +33,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.27.2
 	k8s.io/apimachinery v0.27.2
-	k8s.io/client-go v0.27.1
+	k8s.io/client-go v0.27.2
 	k8s.io/code-generator v0.27.2
 	knative.dev/hack v0.0.0-20230330174700-1421f120c36b
 	knative.dev/pkg v0.0.0-20230404101938-ee73c9355c9d

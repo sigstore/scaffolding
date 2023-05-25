@@ -332,3 +332,89 @@ resource "google_monitoring_alert_policy" "k8s_container_cpu_allocatable_utiliza
   notification_channels = local.notification_channels
   project               = var.project_id
 }
+
+### Redis Alerts
+
+# Redis Memory Usage > 90%
+resource "google_monitoring_alert_policy" "redis_memory_usage" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"redis.googleapis.com/stats/memory/usage_ratio\" resource.type=\"redis_instance\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Redis - Memory Usage [MEAN]"
+  }
+
+  display_name = "Redis Memory Usage > 90%"
+
+  documentation {
+    content   = "Redis using >90% of max memory. You may need to allocate more."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+# Redis OOM
+resource "google_monitoring_alert_policy" "redis_out_of_memory" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"redis.googleapis.com/stats/memory/usage_ratio\" resource.type=\"redis_instance\""
+      threshold_value = "0.999"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Redis - Out of Memory [MEAN]"
+  }
+
+  display_name = "Redis Out of Memory"
+
+  documentation {
+    content   = "Redis is out of memory. Please investigate and allocate more."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}

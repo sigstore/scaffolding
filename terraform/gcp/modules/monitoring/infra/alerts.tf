@@ -58,8 +58,9 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
   project               = var.project_id
 
   user_labels = {
-    uptime  = "ssl_cert_expiration"
-    version = "1"
+    uptime   = "ssl_cert_expiration"
+    version  = "1"
+    severity = "warning"
   }
 }
 
@@ -370,6 +371,10 @@ resource "google_monitoring_alert_policy" "redis_memory_usage" {
   documentation {
     content   = "Redis using >90% of max memory. You may need to allocate more."
     mime_type = "text/markdown"
+  }
+
+  user_labels = {
+    severity = "warning"
   }
 
   enabled               = "true"

@@ -58,8 +58,8 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
   project               = var.project_id
 
   user_labels = {
-    uptime  = "ssl_cert_expiration"
-    version = "1"
+    uptime   = "ssl_cert_expiration"
+    version  = "1"
     severity = "warning"
   }
 }

@@ -130,6 +130,10 @@ resource "google_monitoring_alert_policy" "ca_service_cert_expiration_alert" {
     mime_type = "text/markdown"
   }
 
+  user_labels = {
+    severity = "warning"
+  }
+
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id

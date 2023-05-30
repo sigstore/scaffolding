@@ -100,3 +100,58 @@ ko-apply-verify-job:
 ko-apply-gettoken:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -f ./testdata/config/gettoken
+
+.PHONY: build
+build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-ctlog-managectroots build-ctlog-verifyfulcio build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
+
+.PHONY: build-cloudsqlproxy
+build-cloudsqlproxy:
+	go build -trimpath ./cmd/cloudsqlproxy
+
+.PHONY: build-ctlog-createctconfig
+build-ctlog-createctconfig:
+	go build -trimpath ./cmd/ctlog/createctconfig
+
+.PHONY: build-ctlog-managectroots
+build-ctlog-managectroots:
+	go build -trimpath ./cmd/ctlog/managectroots
+
+.PHONY: build-ctlog-verifyfulcio
+build-ctlog-verifyfulcio:
+	go build -trimpath ./cmd/ctlog/verifyfulcio
+
+.PHONY: build-fulcio-createcerts
+build-fulcio-createcerts:
+	go build -trimpath ./cmd/fulcio/createcerts
+
+.PHONY: build-getoidctoken
+build-getoidctoken:
+	go build -trimpath ./cmd/getoidctoken
+
+.PHONY: build-rekor-createsecret
+build-rekor-createsecret:
+	go build -trimpath ./cmd/rekor/createsecret
+
+.PHONY: build-trillian-createdb
+build-trillian-createdb:
+	go build -trimpath ./cmd/trillian/createdb
+
+.PHONY: build-trillian-createtree
+build-trillian-createtree:
+	go build -trimpath ./cmd/trillian/createtree
+
+.PHONY: build-trillian-updatetree
+build-trillian-updatetree:
+	go build -trimpath ./cmd/trillian/updatetree
+
+.PHONY: build-tsa-createcertchain
+build-tsa-createcertchain:
+	go build -trimpath ./cmd/tsa/createcertchain
+
+.PHONY: build-tuf-createsecret
+build-tuf-createsecret:
+	go build -trimpath ./cmd/tuf/createsecret
+
+.PHONY: build-tuf-server
+build-tuf-server:
+	go build -trimpath ./cmd/tuf/server

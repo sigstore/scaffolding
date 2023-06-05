@@ -159,7 +159,7 @@ func (c *Config) String() string {
 // and secrets and constructs a CTLogConfig.
 // Note however that because we do not update public/private keys once set
 // we do not roundtrip these into their original forms.
-func Unmarshal(ctx context.Context, in map[string][]byte) (*Config, error) {
+func Unmarshal(_ context.Context, in map[string][]byte) (*Config, error) {
 	var config, private, public []byte
 	var ok bool
 	if config, ok = in[ConfigKey]; !ok {

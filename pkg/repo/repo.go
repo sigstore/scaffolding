@@ -162,10 +162,7 @@ func writeStagedTarget(dir, path string, data []byte) error {
 		return err
 	}
 	/* #nosec G306 */
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return err
-	}
-	return nil
+	return os.WriteFile(path, data, 0644)
 }
 
 // CompressFS archives a TUF repository so that it can be written to Secret

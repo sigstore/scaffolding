@@ -2,6 +2,8 @@ name: verify
 
 on:
   push:
+    branches:
+      - main
   pull_request:
 
 permissions: read-all
@@ -45,5 +47,4 @@ jobs:
         uses: golangci/golangci-lint-action@5f1fec7010f6ae3b84ea4f7b2129beb8639b564f # v3.5.0
         with:
           # Required: the version of golangci-lint is required and must be specified without patch version: we always use the latest patch version.
-          version: v1.51
-          args: --timeout=5m
+          version: v1.53

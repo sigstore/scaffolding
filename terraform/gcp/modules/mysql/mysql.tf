@@ -78,7 +78,7 @@ resource "google_service_account_iam_member" "gke_sa_iam_member_trillian_logserv
 }
 
 resource "google_project_iam_member" "logserver_iam" {
-  # // Give trillian logserver permission to export metrics to Stackdriver
+  // Give trillian logserver permission to export metrics to Stackdriver
   for_each = toset([
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter",
@@ -98,17 +98,20 @@ resource "google_service_account_iam_member" "gke_sa_iam_member_trillian_logsign
   depends_on         = [google_service_account.dbuser_trillian]
 }
 
-resource "random_id" "db_name_suffix" {
-  byte_length = 4
-}
+// Many of the following resources are conditionally created using:
+// `count = var.instance_name != "" ? 1 : 0`
+// See https://github.com/sigstore/public-good-instance/issues/1397 for context.
 
 resource "google_sql_database_instance" "trillian" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   project          = var.project_id
-  name             = var.instance_name != "" ? var.instance_name : format("%s-mysql-%s", var.cluster_name, random_id.db_name_suffix.hex)
+  name             = var.instance_name
   database_version = var.database_version
   region           = var.region
 
-  # Set to false to delete this database
+  // Set to false to delete this database
   deletion_protection = var.deletion_protection
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
@@ -143,7 +146,8 @@ resource "google_sql_database_instance" "trillian" {
 }
 
 resource "google_sql_database_instance" "read_replica" {
-  for_each = toset(var.replica_zones)
+  // only create if instance_name is not empty
+  for_each = var.instance_name != "" ? toset(var.replica_zones) : {}
 
   name                 = "${google_sql_database_instance.trillian.name}-replica-${each.key}"
   master_instance_name = google_sql_database_instance.trillian.name
@@ -172,6 +176,9 @@ resource "google_sql_database_instance" "read_replica" {
 }
 
 resource "google_sql_database" "trillian" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   name       = var.db_name
   project    = var.project_id
   instance   = google_sql_database_instance.trillian.name
@@ -180,6 +187,9 @@ resource "google_sql_database" "trillian" {
 }
 
 resource "random_id" "user-password" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   keepers = {
     name = google_sql_database_instance.trillian.name
   }
@@ -189,6 +199,9 @@ resource "random_id" "user-password" {
 }
 
 resource "google_sql_user" "trillian" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   name       = "trillian"
   project    = var.project_id
   instance   = google_sql_database_instance.trillian.name
@@ -207,6 +220,9 @@ resource "google_secret_manager_secret" "mysql-password" {
 }
 
 resource "google_secret_manager_secret_version" "mysql-password" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   secret      = google_secret_manager_secret.mysql-password.id
   secret_data = google_sql_user.trillian.password
   depends_on  = [google_secret_manager_secret.mysql-password]
@@ -222,6 +238,9 @@ resource "google_secret_manager_secret" "mysql-user" {
 }
 
 resource "google_secret_manager_secret_version" "mysql-user" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   secret      = google_secret_manager_secret.mysql-user.id
   secret_data = google_sql_user.trillian.name
 }
@@ -236,7 +255,9 @@ resource "google_secret_manager_secret" "mysql-database" {
 }
 
 resource "google_secret_manager_secret_version" "mysql-database" {
+  // only create if instance_name is not empty
+  count = var.instance_name != "" ? 1 : 0
+
   secret      = google_secret_manager_secret.mysql-database.id
   secret_data = google_sql_database.trillian.name
 }
-

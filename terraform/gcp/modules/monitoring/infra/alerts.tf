@@ -115,9 +115,10 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
     auto_close = "604800s"
   }
 
-  combiner = "OR"
+  combiner = "AND"
 
   conditions {
+    # < 20GiB disk space free
     condition_monitoring_query_language {
       duration = "0s"
       query    = <<-EOT
@@ -130,6 +131,24 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
         | group_by [resource.database_id], [free_space: sub(mean(q_mean), mean(b_mean))]
         | condition free_space < 20 'GiBy'
       EOT
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    # AND disk utilization > 98%
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"cloudsql.googleapis.com/database/disk/utilization\" resource.type=\"cloudsql_database\""
+      threshold_value = "0.98"
+
       trigger {
         count   = "1"
         percent = "0"

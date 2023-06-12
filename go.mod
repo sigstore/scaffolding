@@ -5,7 +5,7 @@ go 1.20
 require (
 	chainguard.dev/exitdir v0.0.1
 	github.com/go-openapi/strfmt v0.21.7
-	github.com/go-openapi/swag v0.22.3
+	github.com/go-openapi/swag v0.22.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/glog v1.1.1
 	github.com/google/certificate-transparency-go v1.1.6
@@ -17,8 +17,8 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sigstore/cosign/v2 v2.0.3-0.20230602182343-f254dcdf16c0
-	github.com/sigstore/fulcio v1.3.1
+	github.com/sigstore/cosign/v2 v2.0.2
+	github.com/sigstore/fulcio v1.2.0
 	github.com/sigstore/rekor v1.2.1
 	github.com/sigstore/sigstore v1.6.5
 	github.com/sigstore/timestamp-authority v1.1.1

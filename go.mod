@@ -12,13 +12,13 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/google/trillian v1.5.2
 	github.com/google/uuid v1.3.0
-	github.com/hashicorp/go-retryablehttp v0.7.2
+	github.com/hashicorp/go-retryablehttp v0.7.4
 	github.com/hashicorp/hcl v1.0.0
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sigstore/cosign/v2 v2.0.3-0.20230611092134-429394225203
-	github.com/sigstore/fulcio v1.3.1
+	github.com/sigstore/cosign/v2 v2.0.2
+	github.com/sigstore/fulcio v1.2.0
 	github.com/sigstore/rekor v1.2.1
 	github.com/sigstore/sigstore v1.6.6-0.20230602075123-c74dd4383337
 	github.com/sigstore/timestamp-authority v1.1.1

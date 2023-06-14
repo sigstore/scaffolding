@@ -115,7 +115,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
     auto_close = "604800s"
   }
 
-  combiner = "AND"
+  combiner = "OR"
 
   # Disk has less that 20GiB free
   conditions {
@@ -125,12 +125,13 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       query    = <<-EOT
         fetch cloudsql_database
         | { bytes: metric 'cloudsql.googleapis.com/database/disk/bytes_used'
-          ; quota: metric 'cloudsql.googleapis.com/database/disk/quota' }
+          ; quota: metric 'cloudsql.googleapis.com/database/disk/quota'
+          ; utilization: metric 'cloudsql.googleapis.com/database/disk/utilization' }
         | join
-        | group_by 5m, [q_mean: mean(value.quota), b_mean: mean(value.bytes_used)]
+        | group_by 5m, [q_mean: mean(value.quota), b_mean: mean(value.bytes_used), u_mean: mean(value.utilization)]
         | every 5m
-        | group_by [resource.database_id], [free_space: sub(mean(q_mean), mean(b_mean))]
-        | condition free_space < 20 'GiBy'
+        | group_by [resource.database_id], [free_space: sub(mean(q_mean), mean(b_mean)), u: mean(u_mean)]
+        | condition and(free_space < 20 'GiBy', u > 0.98)
       EOT
       trigger {
         count   = "1"
@@ -138,30 +139,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       }
     }
 
-    display_name = "Cloud SQL Database - Disk free space [MEAN]"
-  }
-
-
-  # AND disk utilization > 98%
-  conditions {
-    condition_threshold {
-      aggregations {
-        alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN"
-      }
-
-      comparison      = "COMPARISON_GT"
-      duration        = "0s"
-      filter          = "metric.type=\"cloudsql.googleapis.com/database/disk/utilization\" resource.type=\"cloudsql_database\""
-      threshold_value = "0.98"
-
-      trigger {
-        count   = "1"
-        percent = "0"
-      }
-    }
-
-    display_name = "Cloud SQL Database - Disk utilization [MEAN]"
+    display_name = "Cloud SQL Database - Disk free space and utilization [MEAN]"
   }
 
   display_name = "Cloud SQL Database Disk has < 20GiB Free and Utilization > 98%"

@@ -117,6 +117,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
 
   combiner = "AND"
 
+  # Disk has less that 20GiB free
   conditions {
     # < 20GiB disk space free
     condition_monitoring_query_language {
@@ -137,7 +138,12 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       }
     }
 
-    # AND disk utilization > 98%
+    display_name = "Cloud SQL Database - Disk free space [MEAN]"
+  }
+
+
+  # AND disk utilization > 98%
+  conditions {
     condition_threshold {
       aggregations {
         alignment_period   = "300s"
@@ -155,10 +161,10 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       }
     }
 
-    display_name = "Cloud SQL Database - Disk free space [MEAN]"
+    display_name = "Cloud SQL Database - Disk utilization [MEAN]"
   }
 
-  display_name = "Cloud SQL Database Disk has < 20GiB Free"
+  display_name = "Cloud SQL Database Disk has < 20GiB Free and Utilization > 98%"
 
   documentation {
     content   = "Cloud SQL disk has less than 20GiB free space remaining. Please increase capacity. Note that autoresize should be enabled for the database. Ensure there is no issue with the autoresize process."

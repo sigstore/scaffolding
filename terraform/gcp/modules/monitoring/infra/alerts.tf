@@ -142,7 +142,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   }
 
 
-    # AND disk utilization > 98%
+  # AND disk utilization > 98%
   conditions {
     condition_threshold {
       aggregations {

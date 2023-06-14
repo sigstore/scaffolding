@@ -108,16 +108,36 @@ resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization" {
   project               = var.project_id
 }
 
-# Cloud SQL Database Disk Utilization > 98%
+# Cloud SQL Database Disk has < 20GiB Free
 resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
   }
 
-  combiner = "OR"
+  combiner = "AND"
 
   conditions {
+    # < 20GiB disk space free
+    condition_monitoring_query_language {
+      duration = "0s"
+      query    = <<-EOT
+        fetch cloudsql_database
+        | { bytes: metric 'cloudsql.googleapis.com/database/disk/bytes_used'
+          ; quota: metric 'cloudsql.googleapis.com/database/disk/quota' }
+        | join
+        | group_by 5m, [q_mean: mean(value.quota), b_mean: mean(value.bytes_used)]
+        | every 5m
+        | group_by [resource.database_id], [free_space: sub(mean(q_mean), mean(b_mean))]
+        | condition free_space < 20 'GiBy'
+      EOT
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    # AND disk utilization > 98%
     condition_threshold {
       aggregations {
         alignment_period   = "300s"
@@ -135,13 +155,13 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
       }
     }
 
-    display_name = "Cloud SQL Database - Disk utilization [MEAN]"
+    display_name = "Cloud SQL Database - Disk free space [MEAN]"
   }
 
-  display_name = "Cloud Sql Disk Utilization > 98%"
+  display_name = "Cloud SQL Database Disk has < 20GiB Free"
 
   documentation {
-    content   = "Cloud SQL disk utilization is > 98%. Please increase capacity. Note that autoresize should be enabled for the database. Ensure there is no issue with the autoresize process."
+    content   = "Cloud SQL disk has less than 20GiB free space remaining. Please increase capacity. Note that autoresize should be enabled for the database. Ensure there is no issue with the autoresize process."
     mime_type = "text/markdown"
   }
 

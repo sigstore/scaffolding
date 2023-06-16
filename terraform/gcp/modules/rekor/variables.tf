@@ -101,3 +101,9 @@ variable "load_balancer_ipv4" {
   description = "IPv4 adddress of external load balancer"
   type        = string
 }
+
+variable "redis_cluster_memory_size_gb" {
+  description = "size of redis cluster expressed in whole GB"
+  type        = number
+  default     = 30
+}

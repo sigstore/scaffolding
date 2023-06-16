@@ -37,7 +37,8 @@ module "redis" {
   region     = var.region
   project_id = var.project_id
 
-  cluster_name = var.cluster_name
+  cluster_name   = var.cluster_name
+  memory_size_gb = var.redis_cluster_memory_size_gb
 
   network = var.network
 }

@@ -211,6 +211,8 @@ module "rekor" {
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
 
+  redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
+
   depends_on = [
     module.network,
     module.gke-cluster,

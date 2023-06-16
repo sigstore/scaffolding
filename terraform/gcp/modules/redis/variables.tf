@@ -38,3 +38,9 @@ variable "cluster_name" {
   type    = string
   default = ""
 }
+
+variable "memory_size_gb" {
+  type        = number
+  default     = 30
+  description = "size of memory allocated to redis cluster in whole GB"
+}

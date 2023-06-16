@@ -343,3 +343,9 @@ variable "gcs_logging_bucket" {
   type        = string
   default     = ""
 }
+
+variable "redis_cluster_memory_size_gb" {
+  description = "size of redis cluster (for rekor) expressed in whole GB"
+  type        = number
+  default     = 30
+}

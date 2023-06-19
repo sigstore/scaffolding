@@ -17,8 +17,8 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sigstore/cosign/v2 v2.0.3-0.20230611092134-429394225203
-	github.com/sigstore/fulcio v1.3.1
+	github.com/sigstore/cosign/v2 v2.0.2
+	github.com/sigstore/fulcio v1.2.0
 	github.com/sigstore/rekor v1.2.1
 	github.com/sigstore/sigstore v1.6.6-0.20230602075123-c74dd4383337
 	github.com/sigstore/timestamp-authority v1.1.1
@@ -27,7 +27,7 @@ require (
 	go.uber.org/zap v1.24.0
 	golang.org/x/crypto v0.9.0
 	google.golang.org/genproto v0.0.0-20230530153820-e85fd2cbaebc
-	google.golang.org/grpc v1.55.0
+	google.golang.org/grpc v1.56.0
 	google.golang.org/protobuf v1.30.0
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v2 v2.4.0

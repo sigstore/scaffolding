@@ -17,8 +17,8 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.15.1
-	github.com/sigstore/cosign/v2 v2.0.3-0.20230611092134-429394225203
-	github.com/sigstore/fulcio v1.3.1
+	github.com/sigstore/cosign/v2 v2.0.2
+	github.com/sigstore/fulcio v1.2.0
 	github.com/sigstore/rekor v1.2.1
 	github.com/sigstore/sigstore v1.6.6-0.20230602075123-c74dd4383337
 	github.com/sigstore/timestamp-authority v1.1.1
@@ -34,7 +34,7 @@ require (
 	k8s.io/api v0.27.2
 	k8s.io/apimachinery v0.27.2
 	k8s.io/client-go v0.27.2
-	k8s.io/code-generator v0.27.2
+	k8s.io/code-generator v0.27.3
 	knative.dev/hack v0.0.0-20230330174700-1421f120c36b
 	knative.dev/pkg v0.0.0-20230404101938-ee73c9355c9d
 	sigs.k8s.io/release-utils v0.7.4

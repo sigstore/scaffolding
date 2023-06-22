@@ -21,8 +21,21 @@ resource "google_compute_security_policy" "fulcio" {
   type    = "CLOUD_ARMOR"
 
   rule {
-    action   = "throttle"
+    action   = "deny(502)"
     priority = "1"
+
+    match {
+      expr {
+        expression = "int(request.headers['content-length']) > 1048576"
+      }
+    }
+    description = "Block all incoming requests > 1MB"
+  }
+
+
+  rule {
+    action   = "throttle"
+    priority = "2"
     match {
       versioned_expr = "SRC_IPS_V1"
       config {

@@ -56,6 +56,18 @@ variable "storage_class" {
   default     = "REGIONAL"
 }
 
+variable "gcs_logging_enabled" {
+  type        = bool
+  description = "enable/disable logging of GCS bucket traffic"
+  default     = false
+}
+
+variable "gcs_logging_bucket" {
+  description = "name of GCS bucket where storage logs will be written"
+  type        = string
+  default     = ""
+}
+
 // KMS
 variable "rekor_keyring_name" {
   type        = string
@@ -88,4 +100,10 @@ variable "dns_domain_name" {
 variable "load_balancer_ipv4" {
   description = "IPv4 adddress of external load balancer"
   type        = string
+}
+
+variable "redis_cluster_memory_size_gb" {
+  description = "size of redis cluster expressed in whole GB"
+  type        = number
+  default     = 30
 }

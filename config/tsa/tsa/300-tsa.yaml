@@ -1,0 +1,51 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tsa
+  namespace: tsa-system
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  namespace: tsa-system
+  name: tsa
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
+    spec:
+      serviceAccountName: tsa
+      containers:
+      - name: tsa
+        # Resolved via crane digest 2022-12-16 for v0.2.0
+        image: ghcr.io/sigstore/timestamp-server@sha256:ae393a33a6d85c7764ae3bc858fb6e0d09e979312d11bc57e5fc3f7cdaa9c47c
+        ports:
+        - containerPort: 3000
+        args: [
+          "serve",
+          "--timestamp-signer=file",
+          "--file-signer-key-path=/var/run/tsa-secrets/signing-secret",
+          "--file-signer-passwd=$(SECRET_SIGNING_PWD)",
+          "--certificate-chain-path=/var/run/tsa-secrets/cert-chain"
+        ]
+        env:
+        - name: SECRET_SIGNING_PWD
+          valueFrom:
+            secretKeyRef:
+              name: tsa-cert-chain
+              key: signing-secret-password
+        volumeMounts:
+        - name: tsa-secrets
+          mountPath: "/var/run/tsa-secrets"
+          readOnly: true
+      volumes:
+      - name: tsa-secrets
+        secret:
+          secretName: tsa-cert-chain
+          items:
+          - key: signing-secret
+            path: signing-secret
+          - key: cert-chain
+            path: cert-chain

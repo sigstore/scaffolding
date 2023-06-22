@@ -38,10 +38,6 @@ inputs:
     description: 'Name of the registry to install (registry.local)'
     required: true
     default: 'registry.local'
-  legacy-variables:
-    description: 'When set, will install legacy variables.'
-    required: true
-    default: 'true'
   registry-port:
     description: 'Port to run registry on, default 5000'
     required: true
@@ -51,7 +47,7 @@ inputs:
     required: true
     default: 'cluster.local'
   k8s-version:
-    description: 'kubernetes version to install (v1.21.x, v1.22.x), default: v1.24.x'
+    description: 'kubernetes version to install (v1.23.x, v1.24.x, v1.25.x, v1.26.x), default: v1.24.x'
     required: true
     default: 'v1.24.x'
 runs:
@@ -72,12 +68,18 @@ runs:
         tag="${{ inputs.version }}"
       esac
 
-      # At release v0.4.0 we added support for TUF, and rejiggered
-      # the install process, so check to see if we are running >=4
+      # At release v0.5.0 we added support for TSA. Check if we're running
+      # greater than v0.5.0 and install it.
+      # the install process, so check to see if we are running >=5
       MINOR=$(echo $tag | cut -d '.' -f 2)
-      INSTALL_TUF="false"
-      if [ ${MINOR} -ge 4 ]; then
-        INSTALL_TUF="true"
+      INSTALL_TSA="false"
+      if [ ${MINOR} -ge 5 ]; then
+        INSTALL_TSA="true"
+      fi
+      # Anything older than 0.4.0 is not supported.
+      if [ ${MINOR} -lt 4 ]; then
+        echo Unsupported version, only support versions >= 0.4.0
+        exit 1
       fi
 
       if [ ${{ inputs.sigstore-only }} == "false" ]; then
@@ -98,88 +100,32 @@ runs:
       fi
 
       echo "Installing sigstore scaffolding @ ${tag}"
-      if [ $INSTALL_TUF == "false" ]; then
-        echo "This version does not have support for TUF. This is deprecated"
-        kubectl apply -f https://github.com/sigstore/scaffolding/releases/download/${tag}/release.yaml
+      curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+      chmod u+x /tmp/setup-scaffolding-from-release.sh
+      /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+      echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+      # Grab the trusted root
+      kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${{ inputs.working-directory }}/root.json
 
-        # Wait for all the scaffolding pieces to be up.
-        echo "waiting for all the knative services to be up and running"
-        kubectl wait --timeout 10m -A --for=condition=Ready ksvc --all
+      # Make copy of the tuf root in the default namespace for tests
+      kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
-        # Grab the secret from the ctlog-system namespace and make a copy
-        # in our namespace so we can get access to the CT Log public key
-        # so we can verify the SCT coming from there.
-        kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
+      echo "Installing and running scaffolding tests to verify we are up and running"
+      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
 
-        # Also grab the secret from the fulcio-system namespace and make a copy
-        # in our namespace so we can get access to the Fulcio public key
-        # so we can verify against it.
-        kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
-        echo "Installing and running scaffolding tests to be up and running"
-        curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
-
-        kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-        kubectl wait --for=condition=Complete --timeout=180s job/checktree
-        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
-
-        kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/ctlog-public.pem
-        echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
-
-        kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ${{ inputs.working-directory }}/fulcio-root.pem
-        echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
-
-        # And also grab the rekor pub key.
-        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
-        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-        curl -s $REKOR_URL/api/v1/log/publicKey > ${{ inputs.working-directory }}/rekor-public.pem
-        echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
-      else
-        echo "This version does have support for TUF"
-        curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
-        chmod u+x /tmp/setup-scaffolding-from-release.sh
-        /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
-        # We set this here because the other leg doesn't have it.
-        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
-        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
-        # Grab the trusted root
-        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${{ inputs.working-directory }}/root.json
-
-        # Make copy of the tuf root in the default namespace for tests
-        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
-
-        echo "Installing and running scaffolding tests to be up and running"
-        curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
-
-        kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-        kubectl wait --for=condition=Complete --timeout=180s job/verify-job
-
-        if [ ${{ inputs.legacy-variables }} == "true" ]; then
-          echo "Installing legacy env variables"
-          # For backward compatibility, add in the old env variables
-          kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
-          # Also grab the secret from the fulcio-system namespace and make a copy
-          # in our namespace so we can get access to the Fulcio public key
-          # so we can verify against it.
-          kubectl -n fulcio-system get secrets fulcio-secret -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl apply -f -
-
-          # And also grab the rekor pub key.
-          kubectl -n rekor-system get secrets rekor-pub-key -ojsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/rekor-public.pem
-          echo "SIGSTORE_REKOR_PUBLIC_KEY=./rekor-public.pem" >> $GITHUB_ENV
-
-          kubectl -n ctlog-system get secrets ctlog-public-key -o=jsonpath='{.data.public}' | base64 -d > ${{ inputs.working-directory }}/ctlog-public.pem
-          echo "SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=./ctlog-public.pem" >> $GITHUB_ENV
-
-          kubectl -n fulcio-system get secrets fulcio-secret -ojsonpath='{.data.cert}' | base64 -d > ${{ inputs.working-directory }}/fulcio-root.pem
-          echo "SIGSTORE_ROOT_FILE=./fulcio-root.pem" >> $GITHUB_ENV
-        fi
-      fi
+      kubectl wait --for=condition=Complete --timeout=180s job/sign-job
+      kubectl wait --for=condition=Complete --timeout=180s job/verify-job
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
       FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+      FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
       CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
       ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
+      if [ $INSTALL_TSA == "true" ] ; then
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
+      fi
 
       # Grab an OIDC token too.
       OIDC_TOKEN=$(curl -s $ISSUER_URL)
@@ -188,6 +134,8 @@ runs:
       # And set the env variables for Github action visibility
       echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
       echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+      echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
       echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
       echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+
 

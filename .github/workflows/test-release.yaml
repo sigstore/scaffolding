@@ -21,17 +21,18 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.22.x
-        - v1.23.x
-        - v1.24.x
-        - v1.25.x
+          - v1.23.x
+          - v1.24.x
+          - v1.25.x
+          # TODO: enable after next release.
+          # - 1.26.x
         leg:
-        - fulcio rekor ctlog e2e
+          - fulcio rekor ctlog e2e
         go-version:
-        - 1.19
+          - 1.20.x
 
     env:
-      RELEASE_VERSION: "v0.4.6"
+      RELEASE_VERSION: "v0.5.1"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
       COSIGN_EXPERIMENTAL: "true"
@@ -39,20 +40,19 @@ jobs:
     steps:
     - uses: chainguard-dev/actions/setup-mirror@main
 
-    - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
+    - uses: sigstore/cosign-installer@dd6b2e2b610a11fd73dd187a43d57cc1394e35f9 # v3.0.5
 
     - name: Set up Go
-      uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+      uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    - uses: imjasonh/setup-ko@v0.6
-      with:
-        version: v0.12.0
+    - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@9a093941a956fd587ee7a4ecc74edbcbe656a517
+      # TODO: update after next release.
+      uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -62,7 +62,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "latest"
+        version: "1.8.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -78,14 +78,18 @@ jobs:
         # TODO(vaikas): Figure out how these could be exposed by above.
         REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
 
         # Set the endopints
         echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
         # Make copy of the tuf root in the default namespace for tests
         kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
@@ -124,11 +128,41 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
+        --allow-insecure-registry "${{ env.demoimage }}" \
+        --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
+        --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
+
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+    - name: Build timestamp-cli
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        go build -o ./timestamp-cli ./cmd/timestamp-cli
+    - name: Exercise TSA
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        echo "myblob" > myblob
+        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+          echo "failed to timestamp artifact"
+          exit -1
+        fi
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --certificate-chain ts_chain.pem ; then
+          echo "failed to verify timestamp"
+          exit -1
+        fi
+        if ! ./timestamp-cli inspect --timestamp response.tsr --format json ; then
+          echo "failed to inspect the timestamp"
+          exit -1
+        fi
 
     - name: Collect diagnostics
       if: ${{ failure() }}

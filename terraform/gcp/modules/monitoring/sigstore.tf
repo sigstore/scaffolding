@@ -37,6 +37,10 @@ module "rekor" {
   project_id               = var.project_id
   notification_channel_ids = var.notification_channel_ids
   rekor_url                = var.rekor_url
+  cluster_name             = var.cluster_name
+  cluster_location         = var.cluster_location
+  prober_url               = var.prober_rekor_url
+  create_slos              = var.create_slos
 
   depends_on = [
     google_project_service.service
@@ -51,6 +55,10 @@ module "fulcio" {
   notification_channel_ids = var.notification_channel_ids
   ctlog_url                = var.ctlog_url
   fulcio_url               = var.fulcio_url
+  cluster_name             = var.cluster_name
+  cluster_location         = var.cluster_location
+  prober_url               = var.prober_fulcio_url
+  create_slos              = var.create_slos
 
   depends_on = [
     google_project_service.service
@@ -63,6 +71,9 @@ module "dex" {
 
   project_id               = var.project_id
   notification_channel_ids = var.notification_channel_ids
+  cluster_name             = var.cluster_name
+  cluster_location         = var.cluster_location
+  create_slos              = var.create_slos
 
   dex_url = var.dex_url
 

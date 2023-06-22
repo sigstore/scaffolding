@@ -14,32 +14,13 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type    = string
-  default = ""
-  validation {
-    condition     = length(var.project_id) > 0
-    error_message = "Must specify project_id variable."
-  }
-}
+resource "google_dns_record_set" "A_timestamp" {
+  name = "timestamp.${var.dns_domain_name}"
+  type = "A"
+  ttl  = 60
 
-variable "region" {
-  type        = string
-  description = "GCP region"
-  default     = "us-west1"
-}
+  project      = var.project_id
+  managed_zone = var.dns_zone_name
 
-variable "cluster_name" {
-  type    = string
-  default = ""
-}
-
-variable "github_repo" {
-  type    = string
-  default = ""
-}
-
-variable "subnetwork" {
-  type    = string
-  default = "default"
+  rrdatas = [var.load_balancer_ipv4]
 }

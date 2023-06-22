@@ -5,3 +5,16 @@ release-*.yaml
 testrelease.yaml
 kind.yaml
 .vscode/*
+prober
+/cloudsqlproxy
+/createcertchain
+/createcerts
+/createctconfig
+/createdb
+/createsecret
+/createtree
+/getoidctoken
+/managectroots
+/server
+/updatetree
+/verifyfulcio

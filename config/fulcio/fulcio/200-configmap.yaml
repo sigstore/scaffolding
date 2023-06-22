@@ -9,7 +9,7 @@ data:
     {
       "OIDCIssuers": {
         "https://kubernetes.default.svc.cluster.local": {
-          "IssuerURL": "https://kubernetes.default.svc.cluster.local",
+          "IssuerURL": "https://kubernetes.default.svc",
           "ClientID": "sigstore",
           "Type": "kubernetes"
         },

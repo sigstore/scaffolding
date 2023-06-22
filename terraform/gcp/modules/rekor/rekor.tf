@@ -37,7 +37,8 @@ module "redis" {
   region     = var.region
   project_id = var.project_id
 
-  cluster_name = var.cluster_name
+  cluster_name   = var.cluster_name
+  memory_size_gb = var.redis_cluster_memory_size_gb
 
   network = var.network
 }
@@ -51,16 +52,4 @@ resource "google_dns_record_set" "A_rekor" {
   managed_zone = var.dns_zone_name
 
   rrdatas = [var.load_balancer_ipv4]
-}
-
-// api.$dns_domain_name was a previous reference for rekor early on, and may be used by some clients
-resource "google_dns_record_set" "CNAME_api_sigstore_dev" {
-  name = "api.${var.dns_domain_name}"
-  type = "CNAME"
-  ttl  = 3600
-
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-
-  rrdatas = ["rekor.${var.dns_domain_name}"]
 }

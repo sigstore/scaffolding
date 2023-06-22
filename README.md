@@ -83,7 +83,26 @@ Here’s a high level overview of the components in play that we would like to b
 able to spin up with the lines depicting dependencies. Later on in the document
 we will cover each of these components in detail, starting from the “bottom up”.
 
-![alt_text](./sigstore-architecture.png "image_tooltip")
+```mermaid
+graph TD
+    Client --> Rekor
+    Client --> Fulcio
+    Client --> TUF
+    Client --> TimeStampAuthority
+    Fulcio --> CTLog[Certificate Transparency Log]
+    Rekor --> |Rekor TreeID|Trillian
+    CTLog --> |CTLog TreeID|Trillian
+    Trillian --> MySQL
+    subgraph k8s
+      Fulcio
+      TUF
+      Rekor
+      CTLog
+      Trillian
+      MySQL
+      TimeStampAuthority
+    end
+```
 
 ## [Trillian](https://github.com/google/trillian)
 
@@ -365,6 +384,18 @@ Also, the reason why the public key was created in a different secret is because
 clients will need access to this key because they need that public key to verify
 the SCT returned by the Fulcio to ensure it actually was properly signed.
 
+## [TimeStamp Authority](https://github.com/sigstore/timestamp-authority)
+
+TimeStamp Authority (TSA) is a service for issuing
+[RFC 3161](https://datatracker.ietf.org/doc/html/rfc3161) timestamps.
+
+We first create a [createcertchain](./cmd/tsa/createcertchain/main.go) job which
+will create a Certificate Chain suitable for TSA. For example, the certificate
+must have usage set to `Time Stamping`. The jobs creates a secret called
+`tsa-cert-chain` in the `tsa-system` namespace, and as you may have guessed
+the TSA Server mounts that secret and again won't start until the secret has
+been created.
+
 ## TUF
 
 Ok, so I lied. We also need to set up a tuf root so that cosign will trust all
@@ -392,6 +423,8 @@ enough information to construct the tuf root:
   - public - Holds the public key for CTLog
 * rekor-system/rekor-pub-key
   - public - Holds the public key for Rekor
+* tsa-system/tsa-cert-chain
+  - cert-chain - Holds the certificate chain for TimeStamp Authority
 
 Once we have all that information in one place, we can construct a tuf root out
 of it that can be used by tools like `cosign` and `policy-controller`.

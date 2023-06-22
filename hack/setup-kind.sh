@@ -36,7 +36,7 @@ done
 K8S_VERSION="v1.24.x"
 KNATIVE_VERSION="1.6.0"
 REGISTRY_NAME="registry.local"
-REGISTRY_PORT="5000"
+REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"
 
 while [[ $# -ne 0 ]]; do
@@ -67,29 +67,24 @@ done
 # The version map correlated with this version of KinD
 KIND_VERSION="v0.15.0"
 case ${K8S_VERSION} in
-  v1.21.x)
-    K8S_VERSION="1.21.14"
-    KIND_IMAGE_SHA="sha256:f9b4d3d1112f24a7254d2ee296f177f628f9b4c1b32f0006567af11b91c1f301"
-    KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
-    ;;
-  v1.22.x)
-    K8S_VERSION="1.22.13"
-    KIND_IMAGE_SHA="sha256:4904eda4d6e64b402169797805b8ec01f50133960ad6c19af45173a27eadf959"
-    KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
-    ;;
   v1.23.x)
-    K8S_VERSION="1.23.10"
-    KIND_IMAGE_SHA="sha256:f047448af6a656fae7bc909e2fab360c18c487ef3edc93f06d78cdfd864b2d12"
+    K8S_VERSION="1.23.13"
+    KIND_IMAGE_SHA="sha256:ef453bb7c79f0e3caba88d2067d4196f427794086a7d0df8df4f019d5e336b61"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.24.x)
-    K8S_VERSION="1.24.4"
-    KIND_IMAGE_SHA="sha256:adfaebada924a26c2c9308edd53c6e33b3d4e453782c0063dc0028bdebaddf98"
+    K8S_VERSION="1.24.7"
+    KIND_IMAGE_SHA="sha256:577c630ce8e509131eab1aea12c022190978dd2f745aac5eb1fe65c0807eb315"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.25.x)
-    K8S_VERSION="1.25.0"
-    KIND_IMAGE_SHA="sha256:428aaa17ec82ccde0131cb2d1ca6547d13cf5fdabcc0bbecf749baa935387cbf"
+    K8S_VERSION="1.25.3"
+    KIND_IMAGE_SHA="sha256:f52781bc0d7a19fb6c405c2af83abfeb311f130707a0e219175677e366cc45d1"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
+  v1.26.x)
+    K8S_VERSION="1.26.0"
+    KIND_IMAGE_SHA="sha256:691e24bd2417609db7e589e1a479b902d2e209892a10ce375fab60a8407c7352"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;
@@ -263,8 +258,11 @@ echo '::endgroup::'
 echo '::group:: Setup container registry'
 
 
-docker run -d --restart=always \
-       -p "$REGISTRY_PORT:$REGISTRY_PORT" --name "$REGISTRY_NAME" registry:2
+if [ "$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]; then
+  docker run \
+    -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" --name "${REGISTRY_NAME}" \
+    -e REGISTRY_HTTP_ADDR="0.0.0.0:${REGISTRY_PORT}" registry:2
+fi
 
 # Connect the registry to the KinD network.
 docker network connect "kind" "$REGISTRY_NAME"

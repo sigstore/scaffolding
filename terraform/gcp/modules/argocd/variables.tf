@@ -19,8 +19,18 @@ variable "argocd_chart_version" {
   type        = string
 }
 
+variable "argocd_apps_chart_version" {
+  description = "Version of ArgoCD-Apps Helm chart. Versions listed here https://artifacthub.io/packages/helm/argo/argocd-apps"
+  type        = string
+}
+
 variable "argo_chart_values_yaml_path" {
   description = "Path to ArgoCD Helm chart value yaml."
+  type        = string
+}
+
+variable "argo_apps_chart_values_yaml_path" {
+  description = "Path to ArgoCD-Apps Helm chart value yaml."
   type        = string
 }
 

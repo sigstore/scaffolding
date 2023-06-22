@@ -66,7 +66,7 @@ resource "google_redis_instance" "index" {
   display_name   = "Rekor Index Instance"
   name           = "rekor-index"
   tier           = "STANDARD_HA"
-  memory_size_gb = 3 // Usage as of 2022/03/16 is 120 MiB
+  memory_size_gb = var.memory_size_gb
   redis_version  = "REDIS_6_X"
 
   region                  = var.region // Used for naming, location determined by location_id

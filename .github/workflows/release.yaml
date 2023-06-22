@@ -20,42 +20,42 @@ jobs:
       COSIGN_EXPERIMENTAL: "true"
 
     steps:
-    - uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+    - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
       with:
-        go-version: 1.19
+        go-version: '1.20'
         check-latest: true
 
     - name: Install ko
-      uses: imjasonh/setup-ko@v0.6
+      uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
     - name: Install cosign
-      uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
+      uses: sigstore/cosign-installer@dd6b2e2b610a11fd73dd187a43d57cc1394e35f9 # v3.0.5
 
     - name: Install GoReleaser
-      uses: goreleaser/goreleaser-action@ff11ca24a9b39f2d36796d1fbd7a4e39c182630a # v3.1.0
+      uses: goreleaser/goreleaser-action@336e29918d653399e599bfca99fadc1d7ffbc9f7 # v3.1.0
       with:
         install-only: true
 
     - name: Log into ghcr.io
-      uses: docker/login-action@49ed152c8eca782a232dede0303416e8f356c37b # v2.0.0
+      uses: docker/login-action@465a07811f14bebb1938fbed4728c6a1ff8901fc # v2.0.0
       with:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Check out code onto GOPATH
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         fetch-depth: 1
         path: ./src/github.com/${{ github.repository }}
 
     - name: Get TAG
       id: get_tag
-      run: echo ::set-output name=TAG::${GITHUB_REF#refs/tags/}
+      run: echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
     - name: Run goreleaser
       working-directory: ./src/github.com/${{ github.repository }}
-      run: goreleaser release --rm-dist --timeout 120m
+      run: goreleaser release --clean --timeout 120m
       env:
         GIT_TAG: ${{ steps.get_tag.outputs.TAG }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -58,8 +58,9 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
   project               = var.project_id
 
   user_labels = {
-    uptime  = "ssl_cert_expiration"
-    version = "1"
+    uptime   = "ssl_cert_expiration"
+    version  = "1"
+    severity = "warning"
   }
 }
 
@@ -107,7 +108,7 @@ resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization" {
   project               = var.project_id
 }
 
-# Cloud SQL Database Disk Utilization > 95%
+# Cloud SQL Database Disk has < 20GiB Free
 resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -116,31 +117,35 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
 
   combiner = "OR"
 
+  # Disk has less that 20GiB free
   conditions {
-    condition_threshold {
-      aggregations {
-        alignment_period   = "300s"
-        per_series_aligner = "ALIGN_MEAN"
-      }
-
-      comparison      = "COMPARISON_GT"
-      duration        = "0s"
-      filter          = "metric.type=\"cloudsql.googleapis.com/database/disk/utilization\" resource.type=\"cloudsql_database\""
-      threshold_value = "0.95"
-
+    # < 20GiB disk space free
+    condition_monitoring_query_language {
+      duration = "0s"
+      query    = <<-EOT
+        fetch cloudsql_database
+        | { bytes: metric 'cloudsql.googleapis.com/database/disk/bytes_used'
+          ; quota: metric 'cloudsql.googleapis.com/database/disk/quota'
+          ; utilization: metric 'cloudsql.googleapis.com/database/disk/utilization' }
+        | join
+        | group_by 5m, [q_mean: mean(value.quota), b_mean: mean(value.bytes_used), u_mean: mean(value.utilization)]
+        | every 5m
+        | group_by [resource.database_id], [free_space: sub(mean(q_mean), mean(b_mean)), u: mean(u_mean)]
+        | condition and(free_space < 20 'GiBy', u > 0.98)
+      EOT
       trigger {
         count   = "1"
         percent = "0"
       }
     }
 
-    display_name = "Cloud SQL Database - Disk utilization [MEAN]"
+    display_name = "Cloud SQL Database - Disk free space and utilization [MEAN]"
   }
 
-  display_name = "Cloud Sql Disk Utilization > 95%"
+  display_name = "Cloud SQL Database Disk has < 20GiB Free and Utilization > 98%"
 
   documentation {
-    content   = "Cloud SQL disk utilization is > 95%. Please increase capacity. "
+    content   = "Cloud SQL disk has less than 20GiB free space remaining. Please increase capacity. Note that autoresize should be enabled for the database. Ensure there is no issue with the autoresize process."
     mime_type = "text/markdown"
   }
 
@@ -239,6 +244,182 @@ resource "google_monitoring_alert_policy" "kms_crypto_request_alert" {
 
   documentation {
     content   = "KMS Crypto Requests Above Quota, please see playbook for help."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+### Kubernetes Alerts
+
+# Kubernetes Node Memory Allocatable Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_memory_allocatable_utilization" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"kubernetes.io/node/memory/allocatable_utilization\" resource.type=\"k8s_node\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Node - Memory Allocatable Utilization [MEAN]"
+  }
+
+  display_name = "Kubernetes Node Memory Allocatable Utilization > 90%"
+
+  documentation {
+    content   = "Kubernetes Node using >90% of allocatable memory. Please investigate possible memory leak."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+# Kubernetes Node CPU Allocatable Utilization > 90%
+resource "google_monitoring_alert_policy" "k8s_container_cpu_allocatable_utilization" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"kubernetes.io/node/cpu/allocatable_utilization\" resource.type=\"k8s_node\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Node - CPU Allocatable Utilization [MEAN]"
+  }
+
+  display_name = "Kubernetes Node CPU Allocatable Utilization > 90%"
+
+  documentation {
+    content   = "Kubernetes Node using >90% of allocatable CPU. Please investigate running processes."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+### Redis Alerts
+
+# Redis Memory Usage > 90%
+resource "google_monitoring_alert_policy" "redis_memory_usage" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"redis.googleapis.com/stats/memory/usage_ratio\" resource.type=\"redis_instance\""
+      threshold_value = "0.9"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Redis - Memory Usage [MEAN]"
+  }
+
+  display_name = "Redis Memory Usage > 90%"
+
+  documentation {
+    content   = "Redis using >90% of max memory. You may need to allocate more."
+    mime_type = "text/markdown"
+  }
+
+  user_labels = {
+    severity = "warning"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+# Redis OOM
+resource "google_monitoring_alert_policy" "redis_out_of_memory" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"redis.googleapis.com/stats/memory/usage_ratio\" resource.type=\"redis_instance\""
+      threshold_value = "0.999"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Redis - Out of Memory [MEAN]"
+  }
+
+  display_name = "Redis Out of Memory"
+
+  documentation {
+    content   = "Redis is out of memory. Please investigate and allocate more."
     mime_type = "text/markdown"
   }
 

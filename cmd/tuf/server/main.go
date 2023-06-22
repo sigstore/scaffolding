@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"net/http"
@@ -22,6 +23,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/sigstore/scaffolding/pkg/certs"
 	"github.com/sigstore/scaffolding/pkg/repo"
 	"github.com/sigstore/scaffolding/pkg/secret"
 	"k8s.io/client-go/kubernetes"
@@ -33,7 +35,9 @@ import (
 
 var (
 	dir = flag.String("file-dir", "/var/run/tuf-secrets", "Directory where all the files that need to be added to TUF root live. File names are used to as targets.")
-	// Name of the "secret" initial 1.root.json.
+	// Name of the "secret" where we create two entries, one for:
+	// root = Which holds 1.root.json
+	// repository - Compressed repo, which has been tar/gzipped.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
 )
 
@@ -78,7 +82,22 @@ func main() {
 			if err != nil {
 				logging.FromContext(ctx).Fatalf("failed to read file %s/%s: %v", fileName, err)
 			}
-			files[file.Name()] = fileBytes
+			// If it's a TSA file, we need to split it into multiple TUF
+			// targets.
+			if strings.Contains(file.Name(), "tsa") {
+				logging.FromContext(ctx).Infof("Splitting TSA certchain into individual certs")
+
+				certFiles, err := certs.SplitCertChain(fileBytes, "tsa")
+				if err != nil {
+					logging.FromContext(ctx).Fatalf("failed to parse  %s/%s: %v", fileName, err)
+				}
+				for k, v := range certFiles {
+					logging.FromContext(ctx).Infof("Got tsa cert file %s", k)
+					files[k] = v
+				}
+			} else {
+				files[file.Name()] = fileBytes
+			}
 		}
 	}
 
@@ -100,6 +119,15 @@ func main() {
 	data := make(map[string][]byte)
 	data["root"] = rootJSON
 
+	// Then compress the root directory and put it into a secret
+	// Secrets have 1MiB and the repository as tested goes to about ~3k, so no
+	// worries here.
+	var compressed bytes.Buffer
+	if err := repo.CompressFS(os.DirFS(dir), &compressed, map[string]bool{"keys": true, "staged": true}); err != nil {
+		logging.FromContext(ctx).Fatalf("Failed to compress the repo: %v", err)
+	}
+	data["repository"] = compressed.Bytes()
+
 	nsSecret := clientset.CoreV1().Secrets(ns)
 	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
 		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
@@ -111,6 +139,7 @@ func main() {
 	fs := http.FileServer(http.Dir(serveDir))
 	http.Handle("/", fs)
 
+	/* #nosec G114 */
 	if err := http.ListenAndServe(":8080", nil); err != nil {
 		panic(err)
 	}

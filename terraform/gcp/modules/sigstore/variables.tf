@@ -102,6 +102,12 @@ variable "monitoring" {
   }
 }
 
+variable "create_slos" {
+  description = "Creates SLOs when true. (Monitoring must be enabled.)"
+  type        = bool
+  default     = false
+}
+
 // Optional values that can be overridden or appended to if desired.
 variable "cluster_name" {
   description = "The name to give the new Kubernetes cluster."
@@ -133,6 +139,12 @@ variable "mysql_instance_name" {
 variable "mysql_db_name" {
   type        = string
   description = "Name for MySQL database name."
+  default     = "trillian"
+}
+
+variable "ctlog_mysql_db_name" {
+  type        = string
+  description = "Name for MySQL database name for ctlog shards."
   default     = "trillian"
 }
 
@@ -214,6 +226,34 @@ variable "rekor_key_name" {
   default     = "rekor-key"
 }
 
+variable "timestamp" {
+  type = object({
+    enabled = bool
+  })
+  default = {
+    enabled = true
+  }
+  description = "global enable/disable for timestamp resources"
+}
+
+variable "timestamp_keyring_name" {
+  type        = string
+  description = "Name of Timestamp Authority keyring."
+  default     = "timestamp-keyring"
+}
+
+variable "timestamp_encryption_key_name" {
+  type        = string
+  description = "Name of KMS key for encrypting Tink private key for Timestamp Authority."
+  default     = "timestamp-encryption-key"
+}
+
+variable "timestamp_intermediate_ca_key_name" {
+  type        = string
+  description = "Name of KMS key for intermediate CA for Timestamp Authority"
+  default     = "timestamp-intermediate-ca-key"
+}
+
 variable "iam_members_to_roles" {
   description = "Map of IAM member (e.g. group:foo@sigstore.dev) to a set of IAM roles (e.g. roles/viewer)"
   type        = map(set(string))
@@ -246,4 +286,66 @@ variable "static_external_ipv4_address" {
   description = "Static IPv4 Address to request for external services"
   type        = string
   default     = ""
+}
+
+variable "ctlog_shards" {
+  type        = list(string)
+  description = "Array of CTLog shards to create. Entry should be something like [2021, 2022], which would then have 2 independent CTLog shards backed by ctlog-2021 and ctlog-2022 Cloud SQL instances."
+  default     = []
+}
+
+variable "standalone_mysqls" {
+  type        = list(string)
+  description = "Array of Standalone mysql instances to create. Entry should be something like [postfix-1, postfix-2], which would then have 2 independent mysql instances created like <projectid>-<environment>-postfix-1 and  <projectid>-<environment>-postfix-2 Cloud SQL instances. For example running in staging with [rekor-ctlog-2022] would create sigstore-staging-standalone-rekor-ctlog-2022"
+  default     = []
+}
+
+variable "standalone_mysql_tier" {
+  type        = string
+  description = "Machine tier for Standalone MySQL instance."
+  default     = "db-n1-standard-4"
+}
+
+//  Cluster node pool
+variable "initial_node_count" {
+  type    = number
+  default = 3
+}
+
+variable "autoscaling_min_node" {
+  type    = number
+  default = 1
+}
+
+variable "autoscaling_max_node" {
+  type    = number
+  default = 10
+}
+
+variable "gke_autoscaling_resource_limits_resource_cpu_max" {
+  type    = number
+  default = 4
+}
+
+variable "gke_autoscaling_resource_limits_resource_mem_max" {
+  type    = number
+  default = 16
+}
+
+variable "gcs_logging_enabled" {
+  type        = bool
+  description = "enable/disable logging of GCS bucket traffic"
+  default     = false
+}
+
+variable "gcs_logging_bucket" {
+  description = "name of GCS bucket where storage logs will be written"
+  type        = string
+  default     = ""
+}
+
+variable "redis_cluster_memory_size_gb" {
+  description = "size of redis cluster (for rekor) expressed in whole GB"
+  type        = number
+  default     = 30
 }

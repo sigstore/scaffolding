@@ -26,6 +26,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -39,8 +40,6 @@ import (
 )
 
 const (
-	// Key in the configmap holding the value of the tree.
-	treeKey = "treeID"
 	// ConfigKey is the key in the map holding the marshalled CTLog config.
 	ConfigKey = "config"
 	// PrivateKey is the key in the map holding the encrypted PEM private key
@@ -58,15 +57,13 @@ const (
 	rootsPemFileDir = "/ctfe-keys/"
 	// This file contains the private key for the CTLog
 	privateKeyFile = "/ctfe-keys/private"
-	// This file contains the serialized proto config for the CTLog
-	configFile = "/ctfe-keys/config"
 )
 
-// CTLogConfig abstracts the proto munging to/from bytes suitable for working
+// Config abstracts the proto munging to/from bytes suitable for working
 // with secrets / configmaps. Note that we keep fulcioCerts here though
 // technically they are not part of the config, however because we create a
 // secret/CM that we then mount, they need to be synced.
-type CTLogConfig struct {
+type Config struct {
 	PrivKey         crypto.PrivateKey
 	PrivKeyPassword string
 	PubKey          crypto.PublicKey
@@ -96,13 +93,13 @@ func extractFulcioRoot(fulcioRoot []byte) ([]byte, error) {
 // Fulcios. If it already exists, it's a nop.
 // The fulcioRoot should come from the call to fetch a PublicFulcio root
 // and is the ChainPEM from the fulcioclient RootResponse.
-func (c *CTLogConfig) AddFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
+func (c *Config) AddFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
 	root, err := extractFulcioRoot(fulcioRoot)
 	if err != nil {
 		return fmt.Errorf("extracting fulcioRoot: %w", err)
 	}
 	for _, fc := range c.FulcioCerts {
-		if bytes.Compare(fc, root) == 0 {
+		if bytes.Equal(fc, root) {
 			logging.FromContext(ctx).Infof("Found existing fulcio root, not adding: %s", string(root))
 			return nil
 		}
@@ -114,7 +111,7 @@ func (c *CTLogConfig) AddFulcioRoot(ctx context.Context, fulcioRoot []byte) erro
 
 // RemoveFulcioRoot will remove the specified fulcioRoot from the list of
 // trusted Fulcios. If
-func (c *CTLogConfig) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
+func (c *Config) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) error {
 	root, err := extractFulcioRoot(fulcioRoot)
 	if err != nil {
 		return fmt.Errorf("extracting fulcioRoot: %w", err)
@@ -122,18 +119,17 @@ func (c *CTLogConfig) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) e
 
 	newCerts := make([][]byte, 0, len(c.FulcioCerts))
 	for _, fc := range c.FulcioCerts {
-		if bytes.Compare(fc, root) != 0 {
+		if !bytes.Equal(fc, root) {
 			newCerts = append(newCerts, fc)
 		} else {
 			logging.FromContext(ctx).Infof("Found existing fulcio root, removing: %s", string(root))
-
 		}
 	}
 	c.FulcioCerts = newCerts
 	return nil
 }
 
-func (c *CTLogConfig) String() string {
+func (c *Config) String() string {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("PrivateKeyPassword: %s\n", c.PrivKeyPassword))
 	sb.WriteString(fmt.Sprintf("LogID: %d\n", c.LogID))
@@ -163,7 +159,7 @@ func (c *CTLogConfig) String() string {
 // and secrets and constructs a CTLogConfig.
 // Note however that because we do not update public/private keys once set
 // we do not roundtrip these into their original forms.
-func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) {
+func Unmarshal(_ context.Context, in map[string][]byte) (*Config, error) {
 	var config, private, public []byte
 	var ok bool
 	if config, ok = in[ConfigKey]; !ok {
@@ -187,7 +183,7 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 	if len(multiConfig.LogConfigs.Config) != 1 {
 		return nil, fmt.Errorf("unexpected number of LogConfig, want 1 got %d", len(multiConfig.LogConfigs.Config))
 	}
-	ret := CTLogConfig{}
+	ret := Config{}
 	logConfig := multiConfig.GetLogConfigs().Config[0]
 	ret.LogID = logConfig.LogId
 	ret.LogPrefix = logConfig.Prefix
@@ -209,40 +205,40 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 
 	privProto, err := logConfig.PrivateKey.UnmarshalNew()
 	if err != nil {
-		return nil, fmt.Errorf("invalid private key: %v", err)
+		return nil, fmt.Errorf("invalid private key: %w", err)
 	}
 	pb, ok := privProto.(*keyspb.PEMKeyFile)
 	if !ok {
-		return nil, fmt.Errorf("Not a valid PEMKeyFile in proto")
+		return nil, fmt.Errorf("not a valid PEMKeyFile in proto")
 	}
 
-	privPEM, _ := pem.Decode(private)
-	if privPEM == nil {
-		return nil, fmt.Errorf("did not find valid private PEM data")
-	}
 	ret.PrivKeyPassword = pb.Password
 
-	privatePEMBlock, err := x509.DecryptPEMBlock(privPEM, []byte(pb.Password))
+	ret.PrivKey, _, err = DecryptExistingPrivateKey(private, ret.PrivKeyPassword)
 	if err != nil {
-		return nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
+		return nil, fmt.Errorf("decrypting existing private key: %w", err)
 	}
+	// Make sure to dedupe along the way just to make sure we do not have
+	// duplicate entries.
+	uniqueFulcioCerts := map[string][]byte{}
 
-	if ret.PrivKey, err = x509.ParsePKCS8PrivateKey(privatePEMBlock); err != nil {
-		// Try it as RSA
-		if ret.PrivKey, err = x509.ParsePKCS1PrivateKey(privatePEMBlock); err != nil {
-			return nil, fmt.Errorf("failed to parse private key PEM: %w", err)
-		}
-	}
-
-	// If there's legacy rootCA entry, check it first.
+	// If there's legacy rootCA entry, check it first. This will get converted
+	// to fulcio-0 when marshaling, but we just want to make sure it's there
+	// when we're converting from ConfigMap based configuration into secret
+	// based one.
 	if legacyRoot, ok := in[LegacyRootCAKey]; ok && len(legacyRoot) > 0 {
-		ret.FulcioCerts = append(ret.FulcioCerts, legacyRoot)
+		uniqueFulcioCerts[string(legacyRoot)] = legacyRoot
 	}
-	// Then loop through Fulcio roots
+
 	for k, v := range in {
 		if strings.HasPrefix(k, "fulcio-") {
-			ret.FulcioCerts = append(ret.FulcioCerts, v)
+			uniqueFulcioCerts[string(v)] = v
 		}
+	}
+
+	// Then loop through Fulcio roots that have been deduped above
+	for _, v := range uniqueFulcioCerts {
+		ret.FulcioCerts = append(ret.FulcioCerts, v)
 	}
 	return &ret, nil
 }
@@ -255,12 +251,12 @@ func Unmarshal(ctx context.Context, in map[string][]byte) (*CTLogConfig, error) 
 // public - CTLog public key, PEM encoded
 // fulcio-%d - For each fulcioCerts, contains one entry so we can support
 // multiple.
-func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, error) {
+func (c *Config) MarshalConfig(ctx context.Context) (map[string][]byte, error) {
 	// Since we can have multiple Fulcio secrets, we need to construct a set
 	// of files containing them for the RootsPemFile. Names don't matter
 	// so we just call them fulcio-%
 	// What matters however is to ensure that the filenames match the keys
-	// in the configmap / secret that we construc so they get properly mounted.
+	// in the configmap / secret that we construct so they get properly mounted.
 	rootPems := make([]string, 0, len(c.FulcioCerts))
 	for i := range c.FulcioCerts {
 		rootPems = append(rootPems, fmt.Sprintf("%sfulcio-%d", rootsPemFileDir, i))
@@ -302,6 +298,9 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 		},
 	}
 	marshalledConfig, err := prototext.Marshal(&multiConfig)
+	if err != nil {
+		return nil, err
+	}
 	secrets, err := c.marshalSecrets()
 	if err != nil {
 		return nil, err
@@ -316,7 +315,7 @@ func (c *CTLogConfig) MarshalConfig(ctx context.Context) (map[string][]byte, err
 // public - CTLog public key, PEM encoded
 // fulcio-%d - For each fulcioCerts, contains one entry so we can support
 // multiple.
-func (c *CTLogConfig) marshalSecrets() (map[string][]byte, error) {
+func (c *Config) marshalSecrets() (map[string][]byte, error) {
 	// Encode private key to PKCS #8 ASN.1 PEM.
 	marshalledPrivKey, err := x509.MarshalPKCS8PrivateKey(c.PrivKey)
 	if err != nil {
@@ -374,4 +373,34 @@ func mustMarshalAny(pb proto.Message) *anypb.Any {
 		panic(fmt.Sprintf("MarshalAny failed: %v", err))
 	}
 	return ret
+}
+
+// DecryptExistingPrivateKey reads in an encrypted private key, decrypts with
+// the given password, and returns private, public keys for it.
+func DecryptExistingPrivateKey(privateKey []byte, password string) (crypto.PrivateKey, crypto.PublicKey, error) {
+	privPEM, _ := pem.Decode(privateKey)
+	if privPEM == nil {
+		return nil, nil, fmt.Errorf("did not find valid private PEM data")
+	}
+	privatePEMBlock, err := x509.DecryptPEMBlock(privPEM, []byte(password))
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to decrypt private PEMKeyFile: %w", err)
+	}
+
+	var priv crypto.PrivateKey
+	if priv, err = x509.ParsePKCS8PrivateKey(privatePEMBlock); err != nil {
+		// Try it as RSA
+		if priv, err = x509.ParsePKCS1PrivateKey(privatePEMBlock); err != nil {
+			if priv, err = x509.ParseECPrivateKey(privatePEMBlock); err != nil {
+				return nil, nil, fmt.Errorf("failed to parse private key PEM: %w", err)
+			}
+		}
+	}
+	var ok bool
+	var signer crypto.Signer
+	if signer, ok = priv.(crypto.Signer); !ok {
+		return nil, nil, errors.New("failed to convert private key to Signer")
+	}
+
+	return priv, signer.Public(), nil
 }

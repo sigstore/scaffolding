@@ -32,7 +32,7 @@ resource "google_monitoring_alert_policy" "prober_rekor_endpoint_latency" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", var.rekor_url)
+      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND %s", var.rekor_url, local.rekor_endpoint_filter)
       threshold_value = "750"
 
       trigger {
@@ -74,7 +74,7 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\"", var.fulcio_url)
+      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND %s", var.fulcio_url, local.fulcio_endpoint_filter)
       threshold_value = "750"
 
       trigger {
@@ -99,7 +99,10 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
 }
 
 resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
-  for_each = toset(local.hosts)
+  for_each = {
+    for host in local.hosts :
+    host.host => host.endpoint_filter
+  }
 
   alert_strategy {
     auto_close = "604800s"
@@ -117,7 +120,7 @@ resource "google_monitoring_alert_policy" "prober_data_absent_alert" {
       }
 
       duration = "300s"
-      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\"", each.key)
+      filter   = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND %s", each.key, each.value)
 
       trigger {
         count   = "1"
@@ -161,7 +164,7 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != one_of(\"200\", \"201\") AND metric.labels.endpoint != \"/api/v1/index/retrieve\" AND metric.labels.endpoint != \"/api/v1/version\""
+      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency_count/summary\" AND metric.labels.status_code != one_of(\"200\", \"201\") AND %s", local.all_endpoints_filter)
       threshold_value = "0"
 
       trigger {
@@ -180,6 +183,45 @@ resource "google_monitoring_alert_policy" "prober_error_codes" {
     mime_type = "text/markdown"
   }
 
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+resource "google_monitoring_alert_policy" "prober_verification" {
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_SUM"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown\" AND metric.labels.verified = \"false\""
+      threshold_value = "0"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Kubernetes Container - prometheus/verification"
+  }
+
+  documentation {
+    content   = "An entry written to Rekor produced an unverifiable response at least once in the last 60s.\n"
+    mime_type = "text/markdown"
+  }
+
+  display_name          = "API Prober: Rekor write correctness verifier returned 'false' within the last 60s"
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id

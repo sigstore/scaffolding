@@ -91,3 +91,20 @@ resource "helm_release" "argocd" {
     kubectl_manifest.externalsecret_argocd_slack
   ]
 }
+
+resource "helm_release" "argocd_apps" {
+  name       = "argocd-apps"
+  namespace  = "argocd"
+  chart      = "argocd-apps"
+  repository = "https://argoproj.github.io/argo-helm"
+  version    = var.argocd_apps_chart_version
+  timeout    = 900
+
+  values = [
+    file(var.argo_apps_chart_values_yaml_path)
+  ]
+
+  depends_on = [
+    helm_release.argocd
+  ]
+}

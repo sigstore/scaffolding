@@ -1,0 +1,29 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: createcertchain
+  namespace: tsa-system
+spec:
+  # This number looks crazy, but on k8s 1.23 there does not seem to be
+  # exponential backoff, so just keep on trying. For any other version
+  # won't run this far by any chance.
+  backoffLimit: 90
+  activeDeadlineSeconds: 300
+  ttlSecondsAfterFinished: 600
+  template:
+    spec:
+      serviceAccountName: createsecret
+      restartPolicy: Never
+      automountServiceAccountToken: true
+      containers:
+      - name: createsecret
+        image: ko://github.com/sigstore/scaffolding/cmd/tsa/createcertchain
+        args: [
+          "--secret=tsa-cert-chain"
+        ]
+        env:
+          - name: NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace

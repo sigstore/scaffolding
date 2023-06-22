@@ -15,8 +15,10 @@
 package repo
 
 import (
+	"bytes"
 	"context"
 	"os"
+	"path/filepath"
 	"testing"
 )
 
@@ -72,4 +74,54 @@ func TestCreateRepo(t *testing.T) {
 		t.Errorf("Failed to GetMeta: %s", err)
 	}
 	t.Logf("Got repo meta as: %+v", meta)
+}
+
+func TestCompressUncompressFS(t *testing.T) {
+	files := map[string][]byte{
+		"fulcio_v1.crt.pem": []byte(fulcioRootCert),
+		"ctfe.pub":          []byte(ctlogPublicKey),
+		"rekor.pub":         []byte(rekorPublicKey),
+	}
+	repo, dir, err := CreateRepo(context.Background(), files)
+	if err != nil {
+		t.Fatalf("Failed to CreateRepo: %s", err)
+	}
+	defer os.RemoveAll(dir)
+
+	var buf bytes.Buffer
+	fsys := os.DirFS(dir)
+	if err = CompressFS(fsys, &buf, map[string]bool{"keys": true, "staged": true}); err != nil {
+		t.Fatalf("Failed to compress: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(t.TempDir(), "newcompressed"), buf.Bytes(), os.ModePerm); err != nil {
+		t.Fatalf("Failed to write compressed output")
+	}
+	dstDir := t.TempDir()
+	if err = Uncompress(&buf, dstDir); err != nil {
+		t.Fatalf("Failed to uncompress: %v", err)
+	}
+	// Then check that files have been uncompressed there.
+	meta, err := repo.GetMeta()
+	if err != nil {
+		t.Errorf("Failed to GetMeta: %s", err)
+	}
+	root := meta["root.json"]
+
+	// This should have roundtripped to the new directory.
+	rtRoot, err := os.ReadFile(filepath.Join(dstDir, "repository", "root.json"))
+	if err != nil {
+		t.Errorf("Failed to read the roundtripped root %v", err)
+	}
+	if !bytes.Equal(root, rtRoot) {
+		t.Errorf("Roundtripped root differs:\n%s\n%s", string(root), string(rtRoot))
+	}
+
+	// As well as, say rekor.pub under targets dir
+	rtRekor, err := os.ReadFile(filepath.Join(dstDir, "repository", "targets", "rekor.pub"))
+	if err != nil {
+		t.Errorf("Failed to read the roundtripped rekor %v", err)
+	}
+	if !bytes.Equal(files["rekor.pub"], rtRekor) {
+		t.Errorf("Roundtripped rekor differs:\n%s\n%s", rekorPublicKey, string(rtRekor))
+	}
 }

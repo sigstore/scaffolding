@@ -90,6 +90,23 @@ KTkomoSY/OxE/5doBCACehThH+96joWfgC0rXi9qAwZ6hwIMJAKy
 	privateKeyEncodedRSA = "LS0tLS1CRUdJTiBSU0EgUFJJVkFURSBLRVktLS0tLQpQcm9jLVR5cGU6IDQsRU5DUllQVEVECkRFSy1JbmZvOiBBRVMtMjU2LUNCQyw3NWUxNTkxNzQ0NTc4MjMwNGUzYjY1NGQ5NjhjY2M4MAoKV1pPQ1QrQXlaUmlaaFpDdXMveGxuR2dFbzNwTk1GRSsra0YvWVdBZUxMQjhmclNuL2NlL3VjbURuOURGQ01VZApORlNhSks1YzNvWEJCckt0Uk1sQ0I2S2RGblJucHNpVHUzbU1sVzVPdzRNTVh0L3JJaEFXbDFDaUFYUkdqL0NWClg4clRvQldpOFN4dXh3aWgrOHlrY0VpaVg3Ti9aWkNYOUppbjFQeTc0QUczWHBPT28rbFhwKzRTN1BwQmlZbzAKU0pzaUZ4Mlk0LzF4RXBWMEVWdmZobmN1R0k1R0ROcm0wUnBBNnNraGRSbU5iMW1HYkR5ZXdnMndPTTJTRHRGQwpSWEE5aFAxV1czUWx0VGhXRml2VTU0SngrYktMc3Fnem9JMzNZRmRFdnRPNmNxWCtoOVprN1pORmxaMDNaREk4Ck5RdzEyT3Z3VnpEeE5XdmFYVFhIMEpJc2tUSTE5cjFCTnB6aW1xdWg4ZWRYSTFuT2ppbUM5VjlRQTF0TVNmWmkKVmM2RW9VSG55N0xNVXkydG1yN3R2M2pLRWJHT09nclNRcXhJejAxcjFtV0dpREU2YkNDeFFueUhOUHExQmlIRQp1WTR3K25iU2V5UDhVc3h6YjlVNkRSd2IxVzZkMjlmbGNsdFp1TFlqdEhRL1JwRUdxbWRNc1RmRU1wRUVTNU9jClJPVmtsQlpQM0NHN3I4NGN0aVBMUGpvZnk0aG4rai9SeTBtT2tzcFcyVjNlQ2FvdGQwU0lQZFhxT3h6K2p3U1kKaDRBelg1VHdMSlg2UDlSaVdVZ2xQUWZKNjhCclpOT1Ywc3IwaEIwc1NXY25mSWorWWxSSzMvUXJTZGdhellRRQo0ZHBrK0hDUUE4bkdwN1M1Uks4ZGdxek1QYS96Z1AvR1dnN0t5K0dVWFB3cXRhalBFd1ZVWFJPNGViWUJCQ1RwClFHYnRSSmdRRjFzSmtqN1F0d0J4NzVoM25ZSjlWdEhiMWR2d2FKL09mWklhSklKQkRROVlyRGtqMjVmdDdtWlEKZVlGN1c5NlhCU0xHc2ZhdzlDMXhNRXZVY081UGtkS3ArR3pvMFhUaXhNb1U1Q0h6Yk0rQnFqMFZycGpNV29XbQphbHZpYVc4RlNYQkZQZUNoNFIrOXhwN1Q3ZWl6OU9uRFpKRVdnR1B1YXZyN29XL0t6blE1RS9SVlJtRllaZVY2CkluRXlmUVlRVE5QMnVBWjdibFRCeEc0VlhWdjA4ZUhWVHJ4YkVBcmE4VXJrZkQ1Nm02U3M3YWsrYU1mdG0vSnkKZHBxbTJ5YWlpSDd1SmRiZ1hyNTBnNEFDUThtZlE1QjNpbk1Ea0NFZ2RyQTRTQXg1YXNaQjJ0V2l1VC9SZFVSLworMUpXbjNKdXBEL2dhWU5CTVBTRzhjL0hKa0xmeE5UdzZVaHBBTlg5TkErTlE1UVdCUTVaaWNhbUNLQWJUczEvCjhUUlJlbnBLdUdhZXVsazhneVNOTm5xa0plZUNlZ1c5RGR1d3BZcUpjVkJ3L3lrY3BDc0hleVVZSTFOZkd0dCsKcTJ0Z2h0WGhaSGpFV1ZhcWVIb0JOTHlxZ0NET0l6U1QyTnFSeC9yYXhXckl1K0JwMTJTazNpQm5pc1Y0cE02NQprMnFaTDVhY2FDb3lIWTlSWStKSThYdHBzcHVjclViZnp6K0F3ZVZpdkcwN0hkOWRnV0dMRHRwMDJ4VGFMb09pCnp1NnV1dU9heUtZaUI4N2RBYlJlZUY0RVNrTlZOM3k4c1hIS3lnRlFvN2pqRExWVnBwRVVYWC8vN081VU9aZ0wKMWtWcVJ4K2hLeTQvTnVqQUVReWJubnMzRlpIMHBDMDQvcnAwS2xBeHlmRzBRNWJvTWdBeUR0VGlyUFBzK2lwTQpveDh1aWdlQlFaTmZyWW41TVA2UWVUSWY0QWx4NWNzSktxb1Nzb2dZclljbWhoSkhkc1Q4QUpidlpXSUo4L01JCjRFKzJ6UEZSNUlOYzNGbjVoVFpnRzNMQjh4N0ErTHlCbEdNR2owdW9melVzdnZMNnpxeEtqZ3F1Qm5DbTNmTHYKSjFnaDFYbkUyeENVekZhSlpQOVVNU1N2bmVmci92TzBFMjFxL0NlSGRUNWZsaUl4UjBZQ0t5MENvd3ZIeUdyYwpmc2JWWS92dGhIcUxLYmx0Vkh0bndPOExFTmhWZmVweGhFUy9sQUZrWmgrbmZFYjVsUnRZb2hZSW9RUkFOR1A0CmhCS1BhWldua0kwbFl5TmJNU1h3d3U0R2lScFdUUjhUYW84WDlXSWlJdmgyc3hHd0NleTBPSGZCVGtoYnR3Y2sKQzlaT0pERW9SNXBlOGZXSitzWXBia1laYjd3TzhSVEMyNlBGZTRQdEtKRFNGWXlOMzM2T1ZVdzM2RkZmVzR0QQpvcGtBdkRVbDdXVEZ1TlB4RVZ3SXZQSnN2ZDdnaG9Kdm1MYm4xQldQTS8wY0lobkQ0YkdrbjBsVURTTUFjUXIvCkV2R0h4Z2xpeU4wdktnOWU5SE9VNkVOYVdMaTRzemhwdE05RzF6UnBic01CV05zRW5TTEEwL3BaS01TOXdGdk8KL1N2VEVFc3dlM2xKWjV3WFc2R3lUdURFMzQ4Z011UFk4RmpCajZjQVo3RUJLTmYrWG1TY3VQTHYxVzd3Nm52cApKTGtQRS8wQmswdEZWRndlZUlERHJOTEg4Z0dseTY3MHk5cUxQSi8rMUhwdXpwR2tqc3RwWEs2QkRqWXUzeEFlCkhsd3E2RDNmRTMrZ0VkcW5RUmhZeHRacWxqaGIydFIxYUErZndhcWVBT2dNOG43RkNaY0gvK0ZBakdhRis3YjEKQ0RIdjA0cktKdVFGZjZTKzNzQktaVW9aVllJakxidE9VWko4c2QvZEZaQ01mNGhnN3RiaXNQeVFxMjQ2MUI3Wgp1SnFidlozdHhiT0lpd3k0cklCT2VtTnJaR3ArYmMzT3FuOHZQaEtpM3c2aDd4M2lvUzBxS250bStMbG11MXBqCnZOZnQwNmFZYklGcUhkY3ZqQ1AxajZNemY1Rm9TMGhmVnlpRmltOVFUOVpGeDl4bDNGeHBkK2VsYkxYY09pM0YKU2dISWE5SUdYQXNsSmo5dE5zdC9GaHBxeFdQbmt5c3dNTjRCQkJ2SDJNZU5odWpVUGdWblp5bEVodU1jQTBrcgpzdWMrNmliMEdRYUhRSW1pOHpmQ1FyQUVXMzZ2WWRxK1M0ZjBOeEZVNFZkclFzd2tpYlJhSytBTkZGY1ZKUzFJClcxWFdoU0FKV2VPUjJONmxJVFNqZVNDbXc5bnlXb1prZXBvSEkrcTlDZ0cvV09qRy9ZUkdjZUJNSFZQbk1zNDYKanA1NitvQkdXSUVpK3dvRU51UFV0aDNlZnZNT2dGTlBGZWh1QUFUUHBOeGtaMlBheHpRVmp6NXJGR09tNmJtZgoyWExIQVZxcTFjYVhEY1RidGxoSWh0Q3A5cmlGcXIzc2R6YlFxWThCWUsyQjdyQ0JHbXFjZld0akgvWUZadkNrCnFWNWpoOHQ2MFp2Z2F1bU15Y2h2NGNVaFRWMFJzZ1BteE9GMzdUenY1T0d3OVBKeS9sdFphNncveFFZQWVMaHQKRnVWN0I0WFJvdERyYklvZkNNM1ZObXdXTnN4R29LNWY1LzV6bVBEQ1JQNjZDNkkwbWVLNjZXb3prY0N2NTRMcQpJZDJaZTN5aUY2bjE0K05xZUZMWGVsdnRvay9RSWdiTEd3ME9XVEQyaFJtZGVYMjhUMEVMMW5kZ0ZUYU0xV3NlCkVJdXQxWXNLWXk1Vml2bDg1V0JiZEsvKzZuMjVIa2l3SGV5bHRsOWZ1cFEwSlcyM01yc1I2RWwybU1qQ0FFTEwKQ0l4TjdrOGFRTk92SndmV25LWjQ0U3BIalFPUXdtTTJySlVpZzBhZURUMWNMck9sVDNSVndUeG5DK00rN2V6SwpTZElza0ZZR0ZXdW12NlBZSVZBMy9MOE16T3dWeGs1WWwzcnpJaVh4UGlrdU1FeEtqNlRsNU8rQjBXQ2c0UVVUCjFGdk1zZksxNUwrRjdaeExuVi96WTVmQ2VBUEY2dXZDYjJ4VFBBeGZwN0VxK0tsSEdybzBWb1UwSGRSNFJLR2YKZlg0TytkZ3NNUHB1K1lQWTBWVGZTVjdVN2dWdklPcHhzc2lQbXQwdmRLSjJLK04xWUV5TmdKVlBCNUtyVXZveQotLS0tLUVORCBSU0EgUFJJVkFURSBLRVktLS0tLQo="
 
 	publicKeyEncodedRSA = "LS0tLS1CRUdJTiBSU0EgUFVCTElDIEtFWS0tLS0tCk1JSUNDZ0tDQWdFQXVhTkpwYmdWT2VSQ2g4TmFGaEVBYytTZGplKzhPV1NLdGxPZnFFd1ExWVlGQytVTVRjNHkKdHZDQWxRRjNvRURTdDBhR0tvRkVyamY5MldzeXZITis0WG5ZRnZZSkVnM0ttd29OR3BmbXN1ckErcnhscFhDSQpsNG8zLy9IT2RoemZDc2l3TGR6VWUvbCtFQ1NXdkRnZzRoN0MwdlBIYVE0dGpyYUVMZ1VYSmVTaEQ4ek9qVlZXCk9SaEVKYWVEVHlKNnArZGtkS0ZFVEt6bmVuSnNFTmRBbmwzd1pORlNYbDg1L2FjL05DRDNFMXpQNmNkc0F5bnAKWTlzQk9ER1pmZTh5ajBWVFNQOW4rTXRKdWJtRG9xYlFBV09IUDNNRCs0ZnBTTnA1QS9Oa1hicDdneHkzWEtZRwpQUlBrNjlQZUVhZFdYMnRRaThDTi9QcG51TUJtUzdRdFljMVQ3RzZLZ1V4ZEJBQ3Y0Vm5VbHc5aUlRTzZPWFlsCkRJUHhHYXc2QzNUOGhsR3l6UEM3TWU2cjRFUURuQzNkYXFTSU1sbFFWSkFTakVSNWRNMXZjRFVmZWYxMnh4YXcKQkRFTmRFTVpOeVFRMHVFZGtFVVZLZTZwaTh6dE9uV2c1QkRVWWxuOEJNT3pKczZCVWQxR1VFWHhhenBhdHB0dAphaFhYVjhYZTUwSHloOXNWNEVDUENZUFpsb0JGU1IybHJKTExabnFDaFROM2s0SHV4R3Uydmxsc2xCbzZZT1R5CkRQQ2dJMys2TDFyUU9uM2pBZ3RWVy9ZdDAxS2RDK0tSaE5tU2w1eFVmL0ZZc091c3J4bU1oL2JnR2sxZldtZmMKbC9KNFBhRlNiS3VkWXZIeFp6MVdqMm5zZitQNEg5c2JZdUJya2RmSFhnQVVOTk5YNjYxVjFkOENBd0VBQVE9PQotLS0tLUVORCBSU0EgUFVCTElDIEtFWS0tLS0tCg=="
+
+	// Testing importing an existing key that's been added to TUF already.
+	// Generated with:
+	// openssl ecparam -name prime256v1 -genkey -noout -out privkey.pem
+	// openssl ec -in privkey.pem -pubout -out pubkey.pem
+	// openssl ec -in privkey.pem -out privatekey_encrypted.pem -aes256
+	// And encrypted with this supersecretpassword
+	existingEncryptedPrivateKeyPassword = "supersecretpassword"
+	existingEncryptedPrivateKey         = `
+-----BEGIN EC PRIVATE KEY-----
+Proc-Type: 4,ENCRYPTED
+DEK-Info: AES-256-CBC,3C33CA88DF439D434ABDB2DD03491BEC
+
+A9UPVwTxy82/vDcG9q/e5SDKYokAGYvMyS5KD9rfyS5RGGQDdpkQPK0q6v9AFJbn
+VCphFSJvnjFAR90XgF2EK+fVpX2GQjFEPhODVzAmqjawZHfTeGeMU5cJ+nNW+O6A
+71ay3pGMAEQAvrzEErTLzCsBf2HZV1ioeFZVwHysvAA=
+-----END EC PRIVATE KEY-----`
 )
 
 // testConfig wraps the private,public, and config into a single struct
@@ -123,7 +140,7 @@ func TestUnmarshal(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
 		t.Logf("Got: %s", config.String())
-		if len(config.FulcioCerts) != 1 || bytes.Compare(config.FulcioCerts[0], []byte(existingRootCert)) != 0 {
+		if len(config.FulcioCerts) != 1 || !bytes.Equal(config.FulcioCerts[0], []byte(existingRootCert)) {
 			t.Errorf("Fulciosecrets differ")
 		}
 	}
@@ -138,21 +155,27 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Failed to generate Private Key: %v", err)
 	}
-	for k, v := range map[string]crypto.PrivateKey{"rsa": privateKeyRSA, "ecdsa": privateKeyECDSA} {
+	privateKeyEC, _, err := DecryptExistingPrivateKey([]byte(existingEncryptedPrivateKey), existingEncryptedPrivateKeyPassword)
+	if err != nil {
+		t.Fatalf("Failed to parse encrypted Private Key: %v", err)
+	}
+	for k, v := range map[string]crypto.PrivateKey{"rsa": privateKeyRSA, "ecdsa": privateKeyECDSA, "ec": privateKeyEC} {
 		t.Logf("testing with %s", k)
 		var ok bool
 		var signer crypto.Signer
 		if signer, ok = v.(crypto.Signer); !ok {
 			t.Errorf("failed to convert to Signer")
 		}
-		configIn := &CTLogConfig{
+		configIn := &Config{
 			PrivKey:         v,
 			PrivKeyPassword: "mytestpassword",
 			PubKey:          signer.Public(),
 			LogID:           2022,
 			LogPrefix:       "2022-ctlog",
 		}
-		configIn.AddFulcioRoot(context.Background(), []byte(existingRootCert))
+		if err := configIn.AddFulcioRoot(context.Background(), []byte(existingRootCert)); err != nil {
+			t.Logf("Failed to add fulcio root: %v", err)
+		}
 
 		marshaledConfig, err := configIn.MarshalConfig(context.Background())
 		if err != nil {
@@ -163,7 +186,7 @@ func TestRoundTrip(t *testing.T) {
 			t.Fatalf("Failed to unmarshal: %v", err)
 		}
 		if !reflect.DeepEqual(configIn, configOut) {
-			t.Errorf("Things differ=%s", cmp.Diff(configIn, configOut, cmpopts.IgnoreUnexported(CTLogConfig{})))
+			t.Errorf("Things differ=%s", cmp.Diff(configIn, configOut, cmpopts.IgnoreUnexported(Config{})))
 		}
 	}
 }
@@ -185,7 +208,9 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		if err != nil {
 			t.Fatalf("Failed to create a test certificate: %v", err)
 		}
-		config.AddFulcioRoot(ctx, newFulcioCert)
+		if err := config.AddFulcioRoot(ctx, newFulcioCert); err != nil {
+			t.Fatalf("Failed to add fulcio root: %v", err)
+		}
 		marshaled, err := config.MarshalConfig(context.Background())
 		if err != nil {
 			t.Fatalf("Failed to MarshalConfig: %v", err)
@@ -198,13 +223,18 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		validateFulcioEntries(ctx, marshaled, expected, t)
 
 		newConfig, err := Unmarshal(ctx, marshaled)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal new configuration before removal: %v", err)
+		}
 		if len(newConfig.FulcioCerts) != 2 {
 			t.Fatalf("Unexpected number of FulcioCerts, got %d", len(newConfig.FulcioCerts))
 		}
 
 		// Now for our next trick, pretend we're rotating, so take out the
 		// existing entry from the trusted certs.
-		newConfig.RemoveFulcioRoot(ctx, []byte(existingRootCert))
+		if err := newConfig.RemoveFulcioRoot(ctx, []byte(existingRootCert)); err != nil {
+			t.Fatalf("Failed to remove fulcio root: %v", err)
+		}
 		marshaledNew, err := newConfig.MarshalConfig(context.Background())
 		if err != nil {
 			t.Fatalf("Failed to marshal new configuration after removal: %v", err)
@@ -213,7 +243,7 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 		// Now test that we have configuration that trusts only the new Fulcio
 		// root, simulating that the old one has been spun down.
 		expected = make([][]byte, 0)
-		expected = append(expected, []byte(newFulcioCert))
+		expected = append(expected, newFulcioCert)
 		validateFulcioEntries(ctx, marshaledNew, expected, t)
 	}
 }
@@ -240,7 +270,7 @@ func createBaseConfig(t *testing.T, tc testConfig) (map[string][]byte, error) {
 	}, nil
 }
 
-func createTestCert(t *testing.T) ([]byte, error) {
+func createTestCert(_ *testing.T) ([]byte, error) {
 	// Generate x509 Root CA
 	rootCA, rootKey, err := testutils.GenerateRootCa()
 	if err != nil {
@@ -262,7 +292,7 @@ func createTestCert(t *testing.T) ([]byte, error) {
 // that it has only the fulcioCerts specified as well as matching number
 // of fulcio-%d entries in both the CTLog configuration as well as in the
 // passed in map (that gets mounted as secret).
-func validateFulcioEntries(ctx context.Context, config map[string][]byte, fulcioCerts [][]byte, t *testing.T) {
+func validateFulcioEntries(_ context.Context, config map[string][]byte, fulcioCerts [][]byte, t *testing.T) {
 	t.Helper()
 	// This keeps track of if we've seen a file entry in the CTLog config
 	// for fulcio-%d entry. There should be one for each fulcioCerts
@@ -277,7 +307,7 @@ func validateFulcioEntries(ctx context.Context, config map[string][]byte, fulcio
 	for k, v := range config {
 		if strings.HasPrefix(k, "fulcio-") {
 			for i, fulcioCert := range fulcioCerts {
-				if bytes.Compare(v, fulcioCert) == 0 {
+				if bytes.Equal(v, fulcioCert) {
 					foundPEM[i] = true
 				}
 			}
@@ -317,4 +347,53 @@ func validateFulcioEntries(ctx context.Context, config map[string][]byte, fulcio
 			t.Errorf("Failed to find a PEM for entry %s", fileName)
 		}
 	}
+}
+
+func TestDecrypteExistingPrivateKey(t *testing.T) {
+	priv, pub, err := DecryptExistingPrivateKey([]byte(existingEncryptedPrivateKey), existingEncryptedPrivateKeyPassword)
+	if err != nil {
+		t.Fatalf("Failed to decrypt existing private key %v", err)
+	}
+	if priv == nil {
+		t.Fatalf("got back a nil private key")
+	}
+	if pub == nil {
+		t.Fatalf("got back a nil public key")
+	}
+}
+
+func TestDedupeUnmarshaling(t *testing.T) {
+	for k, v := range testConfigs {
+		t.Logf("testing with: %s", k)
+		cm, err := createBaseConfig(t, v)
+		if err != nil {
+			t.Fatalf("Failed to create base config: %v", err)
+		}
+		// Override the legacy rootca entry with our own for ease of testing. It
+		// doesn't really matter what it is for this test.
+		cm["fulcio-0"] = []byte("this is a test cert")
+		cm["fulcio-1"] = []byte("this is a test cert")
+		cm["fulcio-99"] = []byte("this is a different test cert")
+		config, err := Unmarshal(context.Background(), cm)
+		if err != nil {
+			t.Fatalf("failed to Unmarshal: %v", err)
+		}
+		// We should have original root cert, 0&1 deduped into one and fulcio-99
+		if len(config.FulcioCerts) != 3 {
+			t.Errorf("wanted 3 fulcio certs, got: %d", len(config.FulcioCerts))
+		}
+		checkContains(t, config.FulcioCerts, []byte("this is a test cert"))
+		checkContains(t, config.FulcioCerts, []byte("this is a different test cert"))
+		checkContains(t, config.FulcioCerts, cm["rootca"])
+	}
+}
+
+func checkContains(t *testing.T, fulcioCerts [][]byte, cert []byte) {
+	t.Helper()
+	for i := range fulcioCerts {
+		if bytes.Equal(fulcioCerts[i], cert) {
+			return
+		}
+	}
+	t.Errorf("did not find %s in fulcioCerts", string(cert))
 }

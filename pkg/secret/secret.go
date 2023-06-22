@@ -35,23 +35,23 @@ import (
 func ReconcileSecret(ctx context.Context, name, ns string, data map[string][]byte, nsSecret v1.SecretInterface) error {
 	existingSecret, err := nsSecret.Get(ctx, name, metav1.GetOptions{})
 	if err != nil && !apierrs.IsNotFound(err) {
-		return fmt.Errorf("failed to get secret %s/%s: %v", ns, name, err)
+		return fmt.Errorf("failed to get secret %s/%s: %w", ns, name, err)
 	}
 
 	// If we found the secret, just make sure all the fields are there.
 	if err == nil && existingSecret != nil {
 		update := false
 		for k := range data {
-			if bytes.Compare(data[k], existingSecret.Data[k]) != 0 {
-				logging.FromContext(ctx).Infof("%s missing or different than expected, updating", k)
+			if !bytes.Equal(data[k], existingSecret.Data[k]) {
+				logging.FromContext(ctx).Infof("secret key %q missing or different than expected, updating", k)
+				existingSecret.Data[k] = data[k]
 				update = true
 			}
 		}
 		if update {
-			existingSecret.Data = data
 			_, err = nsSecret.Update(ctx, existingSecret, metav1.UpdateOptions{})
 			if err != nil {
-				return fmt.Errorf("failed to udpate secret %s/%s: %w", ns, name, err)
+				return fmt.Errorf("failed to update secret %s/%s: %w", ns, name, err)
 			}
 			logging.FromContext(ctx).Infof("Updated secret %s/%s", ns, name)
 		}

@@ -14,6 +14,13 @@
  * limitations under the License.
  */
 
+// IAM project roles
+module "project_roles" {
+  source               = "../project_roles"
+  project_id           = var.project_id
+  iam_members_to_roles = var.iam_members_to_roles
+}
+
 // Private network
 module "network" {
   source = "../network"
@@ -24,6 +31,10 @@ module "network" {
   cluster_name = var.cluster_name
 
   requested_external_ipv4_address = var.static_external_ipv4_address
+
+  depends_on = [
+    module.project_roles
+  ]
 }
 
 // Bastion
@@ -38,7 +49,8 @@ module "bastion" {
   tunnel_accessor_sa = var.tunnel_accessor_sa
 
   depends_on = [
-    module.network
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -48,9 +60,15 @@ module "tuf" {
   region     = var.tuf_region == "" ? var.region : var.tuf_region
   project_id = var.project_id
 
-  tuf_bucket         = var.tuf_bucket
-  tuf_preprod_bucket = var.tuf_preprod_bucket
-  storage_class      = var.tuf_storage_class
+  tuf_bucket          = var.tuf_bucket
+  tuf_preprod_bucket  = var.tuf_preprod_bucket
+  gcs_logging_enabled = var.gcs_logging_enabled
+  gcs_logging_bucket  = var.gcs_logging_bucket
+  storage_class       = var.tuf_storage_class
+
+  depends_on = [
+    module.project_roles
+  ]
 }
 
 // Monitoring
@@ -62,16 +80,18 @@ module "monitoring" {
   count = var.monitoring.enabled ? 1 : 0
 
   project_id               = var.project_id
-  cluster_location         = var.project_id
+  cluster_location         = module.gke-cluster.cluster_location
   cluster_name             = var.cluster_name
   ca_pool_name             = var.ca_pool_name
   fulcio_url               = var.monitoring.fulcio_url
   rekor_url                = var.monitoring.rekor_url
   dex_url                  = var.monitoring.dex_url
   notification_channel_ids = var.monitoring.notification_channel_ids
+  create_slos              = var.create_slos
 
   depends_on = [
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -92,7 +112,8 @@ resource "google_compute_firewall" "bastion-egress" {
 
   depends_on = [
     module.network,
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -111,15 +132,25 @@ module "gke-cluster" {
   services_secondary_range_name = module.network.secondary_ip_range.1.range_name
   cluster_network_tag           = var.cluster_network_tag
 
+  initial_node_count   = var.initial_node_count
+  autoscaling_min_node = var.autoscaling_min_node
+  autoscaling_max_node = var.autoscaling_max_node
+
+  resource_limits_resource_cpu_max = var.gke_autoscaling_resource_limits_resource_cpu_max
+  resource_limits_resource_mem_max = var.gke_autoscaling_resource_limits_resource_mem_max
+
   bastion_ip_address = module.bastion.ip_address
 
   depends_on = [
     module.network,
-    module.bastion
+    module.bastion,
+    module.project_roles
   ]
 }
 
-// MYSQL
+// MYSQL. This is the original DB that was used for both Rekor and CTLog.
+// Newer versions of CTLog create their own database instance, so there's
+// one database instance to a single ctlog shard.
 module "mysql" {
   source = "../mysql"
 
@@ -147,22 +178,8 @@ module "mysql" {
 
   depends_on = [
     module.network,
-    module.gke-cluster
-  ]
-}
-
-// Cluster policies setup.
-module "policy_bindings" {
-  source = "../policy_bindings"
-
-  region     = var.region
-  project_id = var.project_id
-
-  cluster_name = var.cluster_name
-  github_repo  = var.github_repo
-
-  depends_on = [
-    module.network
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -184,17 +201,22 @@ module "rekor" {
   kms_location       = "global"
 
   // Storage
-  attestation_bucket = var.attestation_bucket
-  attestation_region = var.attestation_region == "" ? var.region : var.attestation_region
-  storage_class      = var.attestation_storage_class
+  attestation_bucket  = var.attestation_bucket
+  attestation_region  = var.attestation_region == "" ? var.region : var.attestation_region
+  gcs_logging_enabled = var.gcs_logging_enabled
+  gcs_logging_bucket  = var.gcs_logging_bucket
+  storage_class       = var.attestation_storage_class
 
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
 
+  redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
+
   depends_on = [
     module.network,
-    module.gke-cluster
+    module.gke-cluster,
+    module.project_roles
   ]
 }
 
@@ -220,7 +242,35 @@ module "fulcio" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
+  ]
+}
+
+module "timestamp" {
+  source = "../timestamp"
+
+  region       = var.region
+  project_id   = var.project_id
+  cluster_name = var.cluster_name
+
+  // Disable module entirely if timestamp
+  // is disabled
+  count = var.timestamp.enabled ? 1 : 0
+
+  // KMS
+  timestamp_keyring_name             = var.timestamp_keyring_name
+  timestamp_encryption_key_name      = var.timestamp_encryption_key_name
+  timestamp_intermediate_ca_key_name = var.timestamp_intermediate_ca_key_name
+
+  dns_zone_name      = var.dns_zone_name
+  dns_domain_name    = var.dns_domain_name
+  load_balancer_ipv4 = module.network.external_ipv4_address
+
+  depends_on = [
+    module.gke-cluster,
+    module.network,
+    module.project_roles
   ]
 }
 
@@ -228,13 +278,6 @@ module "fulcio" {
 module "audit" {
   source     = "../audit"
   project_id = var.project_id
-}
-
-// IAM project roles
-module "project_roles" {
-  source               = "../project_roles"
-  project_id           = var.project_id
-  iam_members_to_roles = var.iam_members_to_roles
 }
 
 // OSLogin configuration
@@ -255,17 +298,17 @@ module "oslogin" {
       zone          = module.bastion.zone
       members = [
         var.tunnel_accessor_sa,
-        module.policy_bindings.gha_serviceaccount_member
       ]
     }
   }
   depends_on = [
     module.bastion,
-    module.policy_bindings
+    module.project_roles
   ]
 }
 
-// ctlog
+// ctlog. This was the original (pre-ga) ctlog that shared the DB instance
+// with Rekor.
 module "ctlog" {
   source = "../ctlog"
 
@@ -277,7 +320,103 @@ module "ctlog" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
+  ]
+}
+
+// ctlog-shards. This will create CTLog shard that has its own Cloud SQL
+// instance for each shard
+module "ctlog_shards" {
+  source = "../mysql-shard"
+
+  for_each = toset(var.ctlog_shards)
+
+  instance_name = format("%s-ctlog-%s", var.cluster_name, each.key)
+
+  project_id = var.project_id
+  region     = var.region
+
+  cluster_name = var.cluster_name
+  // NB: These are commented out so that we pick up the defaults
+  // for the particular environment consistently.
+  //mysql_database_version  = var.mysql_db_version
+  //mysql_tier              = var.mysql_tier
+
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
+  // We want to use consistent password across mysql DB instances, because
+  // this is access only at the DB level and access to the DB instance is gated
+  // by the IAM as well as private network.
+  password = module.mysql.mysql_pass
+
+  network = module.network.network_self_link
+
+  db_name = var.ctlog_mysql_db_name
+
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
+
+  depends_on = [
+    module.gke-cluster,
+    module.network,
+    // Need to make sure we have the necessary network, service accounts, and
+    // services.
+    module.mysql
+  ]
+}
+
+// standalone-mysql. This will create a MySQL database that is not part of
+// something else. This is used to bring a database up with the appropriate
+// permissions / connections so that it can be used then by manually wiring
+// it to places where it's needed. This was initially created to bring up
+// a different version of a database that we needed to migrate to.
+
+module "standalone_mysqls" {
+  source = "../mysql-shard"
+
+  for_each = toset(var.standalone_mysqls)
+
+  instance_name = format("%s-standalone-%s", var.cluster_name, each.key)
+
+  project_id = var.project_id
+  region     = var.region
+
+  cluster_name = var.cluster_name
+  // NB: This is commented out so that we pick up the defaults
+  // for the particular environment consistently.
+  //mysql_database_version  = var.mysql_db_version
+
+  tier = var.standalone_mysql_tier
+
+  replica_zones = var.mysql_replica_zones
+  replica_tier  = var.mysql_replica_tier
+
+  // We want to use consistent password across mysql DB instances, because
+  // this is access only at the DB level and access to the DB instance is gated
+  // by the IAM as well as private network.
+  password = module.mysql.mysql_pass
+
+  network = module.network.network_self_link
+
+  db_name = var.mysql_db_name
+
+  ipv4_enabled              = var.mysql_ipv4_enabled
+  require_ssl               = var.mysql_require_ssl
+  backup_enabled            = var.mysql_backup_enabled
+  binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+
+
+  depends_on = [
+    module.gke-cluster,
+    module.network,
+    // Need to make sure we have the necessary network, service accounts, and
+    // services.
+    module.mysql
   ]
 }
 
@@ -293,6 +432,7 @@ module "dex" {
 
   depends_on = [
     module.gke-cluster,
-    module.network
+    module.network,
+    module.project_roles
   ]
 }

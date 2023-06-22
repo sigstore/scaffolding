@@ -24,20 +24,16 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.22.x
-        - v1.23.x
-        - v1.24.x
-        - v1.25.x
+          - v1.23.x
+          - v1.24.x
+          - v1.25.x
+          - v1.26.x
 
         leg:
-        - fulcio rekor ctlog e2e
-
-        ctlog-in-secret:
-        - "true"
-        - "false"
+          - fulcio rekor ctlog e2e
 
         go-version:
-        - 1.19
+          - 1.20.x
 
     env:
       GOPATH: ${{ github.workspace }}
@@ -52,13 +48,13 @@ jobs:
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
-      uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+      uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
     - name: Check out our repo
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         path: ./src/github.com/sigstore/scaffolding
 
@@ -75,14 +71,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - uses: imjasonh/setup-ko@v0.6
-      with:
-        version: v0.12.0
+    - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
-    - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
+    - uses: sigstore/cosign-installer@dd6b2e2b610a11fd73dd187a43d57cc1394e35f9 # v3.0.5
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@cc7afeaca6e5871be191ecc1b8bce10274bc1ee4
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -92,7 +86,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "latest"
+        version: "1.8.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -114,48 +108,15 @@ jobs:
         echo Created image $demoimage
         popd
 
-    # Configure the CTLog either to be stored in the secret or configmap.
-    # We do this by screwing around with the existing config files for now
-    # instead of creating a whole set of parallel files for these.
-    - name: Configure CTLog config storage
-      if: ${{ matrix.ctlog-in-secret == 'true' }}
-      run: |
-        echo "Fixing CTLog config to use secrets"
-        # First patch in the flag that creates the ctlog config in the secret.
-        cp config/ctlog/certs/300-createconfig.yaml ./300-createconfig.yaml
-        # The sed works differently in mac and other places, so just shuffle
-        # files around for now.
-        sed 's@"--secret=ctlog-secret"@"--secret=ctlog-secret","--config-in-secret"@' config/ctlog/certs/300-createconfig.yaml > ./300-createconfig-new.yaml
-        mv ./300-createconfig-new.yaml config/ctlog/certs/300-createconfig.yaml
-
-        cat config/ctlog/certs/300-createconfig.yaml
-
-        # Then patch in the ctlog to mount the secret instead of the configmap.
-        cp config/ctlog/ctlog/300-ctlog.yaml ./300-ctlog.yaml
-        # The sed works differently in mac and other places, so just shuffle
-        # files around for now.
-        sed 's@configMap:@secret:@' config/ctlog/ctlog/300-ctlog.yaml > ./300-ctlog-tmp.yaml
-
-        sed 's@name: ctlog-config@secretName: ctlog-secret@' 300-ctlog-tmp.yaml > ./300-ctlog-new.yaml
-        rm 300-ctlog-tmp.yaml
-        mv ./300-ctlog-new.yaml config/ctlog/ctlog/300-ctlog.yaml
-
-        cat config/ctlog/ctlog/300-ctlog.yaml
-
     - name: Install scaffolding
       run: |
         ./hack/setup-scaffolding.sh
 
-    - name: Restore CTLog config storage
-      if: ${{ matrix.ctlog-in-secret == 'true' }}
-      run: |
-        echo "Restore CTLog config to not use secrets"
-        mv ./300-createconfig.yaml config/ctlog/certs/300-createconfig.yaml
-        mv ./300-ctlog.yaml config/ctlog/ctlog/300-ctlog.yaml
-
     - name: Initialize cosign with our custom tuf root and make root copy
       run: |
         kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+        # Also grab the compressed repository for airgap testing.
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.repository}'  | base64 -d > ./repository.tar.gz
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         # Then initialize cosign
@@ -187,6 +148,9 @@ jobs:
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
 
+        #FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+        #echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
+
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
@@ -195,13 +159,70 @@ jobs:
         OIDC_TOKEN=`curl -s $ISSUER_URL`
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
 
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
+
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
+        --allow-insecure-registry "${{ env.demoimage }}" \
+        --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
+        --certificate-oidc-issuer "https://kubernetes.default.svc"
+
+    # Test with cosign in 'airgapped mode'
+    # Uncomment these once modified cosign goes in.
+    #- name: Checkout modified cosign for testing.
+    #  uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+    #  with:
+    #    repository: vaikas/cosign
+    #    ref: air-gap
+    #    path: ./src/github.com/sigstore/cosign
+    #- name: Build cosign
+    #  working-directory: ./src/github.com/sigstore/cosign
+    #  run: |
+    #    go build -o ./cosign ./cmd/cosign/main.go
+    #- name: Untar the repository from the fetched secret, initialize and verify with it
+    #  working-directory: ./src/github.com/sigstore/cosign
+    #  run: |
+    #    # Also grab the compressed repository for airgap testing.
+    #    kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.repository}'  | base64 -d > ./repository.tar.gz
+    #    tar -zxvf ./repository.tar.gz
+    #    PWD=$(pwd)
+    #    ROOT=${PWD}/repository/1.root.json
+    #    REPOSITORY=${PWD}/repository
+    #    ./cosign initialize --root ${ROOT} --mirror file://${REPOSITORY}
+    #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+    - name: Build timestamp-cli
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        go build -o ./timestamp-cli ./cmd/timestamp-cli
+    - name: Exercise TSA
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        echo "myblob" > myblob
+        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+          echo "failed to timestamp artifact"
+          exit -1
+        fi
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --certificate-chain ts_chain.pem ; then
+          echo "failed to verify timestamp"
+          exit -1
+        fi
+        if ! ./timestamp-cli inspect --timestamp response.tsr --format json ; then
+          echo "failed to inspect the timestamp"
+          exit -1
+        fi
 
     - name: Collect diagnostics
       if: ${{ failure() }}

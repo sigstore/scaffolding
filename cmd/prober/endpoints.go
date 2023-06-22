@@ -20,41 +20,48 @@ var (
 )
 
 type ReadProberCheck struct {
-	endpoint string
-	method   string
-	body     string
-	queries  map[string]string
+	Endpoint    string            `json:"endpoint"`
+	Method      string            `json:"method"`
+	Body        string            `json:"body"`
+	Queries     map[string]string `json:"queries"`
+	SLOEndpoint string            `json:"slo-endpoint"`
 }
 
 var RekorEndpoints = []ReadProberCheck{
 	{
-		endpoint: "/api/v1/log/publicKey",
-		method:   GET,
+		Endpoint: "/api/v1/log/publicKey",
+		Method:   GET,
 	}, {
-		endpoint: "/api/v1/log",
-		method:   GET,
+		Endpoint: "/api/v1/log",
+		Method:   GET,
 	}, {
-		endpoint: "/api/v1/log/entries",
-		method:   GET,
-		queries:  map[string]string{"logIndex": "10"},
+		Endpoint: "/api/v1/log/entries",
+		Method:   GET,
+		Queries:  map[string]string{"logIndex": "10"},
 	}, {
-		endpoint: "/api/v1/log/proof",
-		method:   GET,
-		queries:  map[string]string{"firstSize": "10", "lastSize": "20"},
+		Endpoint: "/api/v1/log/proof",
+		Method:   GET,
+		Queries:  map[string]string{"firstSize": "10", "lastSize": "20"},
 	}, {
-		endpoint: "/api/v1/log/entries/retrieve",
-		method:   POST,
-		body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
+		Endpoint: "/api/v1/log/entries/retrieve",
+		Method:   POST,
+		Body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
 	}, {
-		endpoint: "/api/v1/index/retrieve",
-		method:   POST,
-		body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
+		Endpoint: "/api/v1/index/retrieve",
+		Method:   POST,
+		Body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
 	},
 }
 
 var FulcioEndpoints = []ReadProberCheck{
 	{
-		endpoint: "/api/v1/rootCert",
-		method:   GET,
+		Endpoint: "/api/v1/rootCert",
+		Method:   GET,
+	}, {
+		Endpoint: "/api/v2/configuration",
+		Method:   GET,
+	}, {
+		Endpoint: "/api/v2/trustBundle",
+		Method:   GET,
 	},
 }

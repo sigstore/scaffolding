@@ -23,10 +23,37 @@ variable "project_id" {
   }
 }
 
+variable "cluster_location" {
+  description = "Zone or Region to create cluster in."
+  type        = string
+  default     = "us-central1"
+}
+
+// Optional values that can be overridden or appended to if desired.
+variable "cluster_name" {
+  description = "The name of the Kubernetes cluster."
+  type        = string
+  default     = ""
+}
+
 // URLs for Sigstore services
 variable "rekor_url" {
   description = "Rekor URL"
   default     = "rekor.sigstore.dev"
+}
+
+// URLs for Sigstore services
+variable "prober_url" {
+  description = "Rekor Prober URL"
+  type        = string
+  default     = ""
+}
+
+// Namespace for monitored service
+variable "gke_namespace" {
+  description = "GKE Namespace"
+  type        = string
+  default     = "rekor-system"
 }
 
 // Set-up for notification channel for alerting
@@ -38,9 +65,7 @@ variable "notification_channel_ids" {
 variable "api_endpoints_get" {
   type = list(string)
   default = [
-    "/",
     "/api/v1/log",
-    "/api/v1/log/publicKey",
   ]
 }
 
@@ -48,3 +73,8 @@ locals {
   notification_channels = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
 }
 
+variable "create_slos" {
+  description = "True to enable SLO creation"
+  type        = bool
+  default     = false
+}

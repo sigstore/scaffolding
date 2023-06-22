@@ -31,23 +31,53 @@ output "mysql_instance" {
   value       = module.mysql.mysql_instance
 }
 
+// Outputs a list of strings for each CTLog Cloud SQL instance.
+output "ctlog_mysql_instances" {
+  description = "Names of the DB instances created for the CTLog shards"
+  value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_instance]
+}
+
+// Outputs a list of connection strings for each CTLog Cloud SQL instance.
+output "ctlog_mysql_connections" {
+  description = "Connection strings of the DB instances created for the CTLog shards"
+  value       = [for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_connection]
+}
+
+// Outputs a list of strings for each Standalone Cloud SQL instance.
+output "standalone_mysql_instances" {
+  description = "Names of the DB instances created for the standalone MySQLs"
+  value       = [for standalone in module.standalone_mysqls : standalone.mysql_instance]
+}
+
+// Outputs a list of connection strings for each Standalone Cloud SQL instance.
+output "standalone_mysql_connections" {
+  description = "Connection strings of the DB instances created for the standalone MySQLs"
+  value       = [for standalone in module.standalone_mysqls : standalone.mysql_connection]
+}
+
 // Full connection string for the MySQL DB>
 output "mysql_connection" {
   description = "The connection string dynamically generated for storage inside the Kubernetes configmap"
   value       = module.mysql.mysql_connection
 }
 
-// Postgres DB username.
+// MySQL DB username.
 output "mysql_user" {
   description = "The Cloud SQL Instance User name"
   value       = module.mysql.mysql_user
 }
 
-// Postgres DB password.
+// MySQL DB password.
 output "mysql_pass" {
   sensitive   = true
   description = "The Cloud SQL Instance Password (Generated)"
   value       = module.mysql.mysql_pass
+}
+
+// CTLog MySQL DB name.
+output "ctlog_mysql_database" {
+  description = "The CTLog Cloud SQL Database name"
+  value       = length(var.ctlog_shards) == 0 ? null : element([for ctlog_shard in module.ctlog_shards : ctlog_shard.mysql_database], 0)
 }
 
 output "cluster_endpoint" {

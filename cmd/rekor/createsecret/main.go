@@ -21,7 +21,6 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"flag"
-	"log"
 	"os"
 
 	"github.com/sigstore/scaffolding/pkg/secret"
@@ -42,15 +41,12 @@ const (
 var (
 	signingSecretName  = flag.String("signing-secret", "rekor-signing-secret", "Secret to create the signing secret that Rekor will use.")
 	signingKeyPassword = flag.String("signing-secret-pwd", "scaffoldtest", "Password to encrypt the signing secret with.")
-	rekorURL           = flag.String("rekor_url", "http://rekor.rekor-system.svc", "Address of the Rekor server")
 	secretName         = flag.String("secret", "rekor-pub-key", "Secret to create the rekor public key in.")
 )
 
 func main() {
 	flag.Parse()
-	if *rekorURL == "" {
-		log.Panic("Need a rekorURL")
-	}
+
 	ns := os.Getenv("NAMESPACE")
 	if ns == "" {
 		panic("env variable NAMESPACE must be set")

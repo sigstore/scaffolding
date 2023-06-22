@@ -31,13 +31,13 @@ output "mysql_connection" {
   value       = format("%s:%s:%s", var.project_id, var.region, google_sql_database_instance.trillian.name)
 }
 
-// Postgres DB username.
+// MySQL DB username.
 output "mysql_user" {
   description = "The Cloud SQL Instance User name"
   value       = google_sql_user.trillian.name
 }
 
-// Postgres DB password.
+// MySQL DB password.
 output "mysql_pass" {
   sensitive   = true
   description = "The Cloud SQL Instance Password (Generated)"

@@ -24,6 +24,8 @@ import (
 
 	"database/sql"
 
+	"chainguard.dev/exitdir"
+
 	_ "github.com/go-sql-driver/mysql"
 
 	"knative.dev/pkg/logging"
@@ -202,17 +204,17 @@ var createIndices = map[string]indexCreate{
 	"SequencedLeafMerkleIdx": {"SequencedLeafData", createIndexSequencedLeafMerkle},
 }
 
-type envConfig struct {
-	DatabaseName string `envconfig:"DATABASE" default:"trillian" required:"true"`
-	ExitDir      string `envconfig:"EXIT_DIR" required:"false"`
-}
-
 var (
 	dbName   = flag.String("db_name", "trillian", "Database name to tack on to the connection string to select the right db.")
 	mysqlURI = flag.String("mysql_uri", "", "SQL connection string in mysql format, for example: $(USER):$(PWD)@tcp($(HOST):3306)/$(DATABASE_NAME)")
 )
 
 func main() {
+	// Signal via exitdir we are finished.
+	defer func() {
+		_ = exitdir.Exit()
+	}()
+
 	flag.Parse()
 	if *mysqlURI == "" {
 		log.Panicf("Need to specify mysql_uri to know where to connect to")
@@ -220,6 +222,7 @@ func main() {
 	if *dbName == "" {
 		log.Panicf("Need to specify database name")
 	}
+
 	connStr := fmt.Sprintf("%s/%s", strings.TrimSuffix(*mysqlURI, "/"), *dbName)
 	ctx := signals.NewContext()
 	db, err := sql.Open("mysql", connStr)

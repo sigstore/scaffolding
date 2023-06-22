@@ -21,20 +21,20 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
-	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/sigstore/cosign/pkg/cosign"
-	"github.com/sigstore/cosign/pkg/providers"
-	"github.com/sigstore/fulcio/pkg/api"
+	retryablehttp "github.com/hashicorp/go-retryablehttp"
+
+	"github.com/sigstore/cosign/v2/pkg/cosign"
+	"github.com/sigstore/cosign/v2/pkg/providers"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -42,19 +42,29 @@ import (
 	"github.com/sigstore/sigstore/pkg/signature"
 
 	// Loads OIDC providers
-	"github.com/sigstore/cosign/pkg/providers/all"
+	"github.com/sigstore/cosign/v2/pkg/providers/all"
 )
 
 const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
 	defaultOIDCClientID = "sigstore"
 
-	fulcioEndpoint = "/api/v1/signingCert"
+	fulcioEndpoint = "/api/v2/signingCert"
 	rekorEndpoint  = "/api/v1/log/entries"
 )
 
+func setHeaders(req *retryablehttp.Request, token string) {
+	if token != "" {
+		// Set the authorization header to our OIDC bearer token.
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
+	// Set the content-type to reflect we're sending JSON.
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+}
+
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
-// which is "/api/v1/signingCert", which requests a cert from Fulcio
+// which is "/api/v2/signingCert", which requests a cert from Fulcio
 func fulcioWriteEndpoint(ctx context.Context) error {
 	if !all.Enabled(ctx) {
 		return fmt.Errorf("no auth provider for fulcio is enabled")
@@ -72,22 +82,21 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	endpoint := fulcioEndpoint
 	hostPath := fulcioURL + endpoint
 
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the authorization header to our OIDC bearer token.
-	req.Header.Set("Authorization", "Bearer "+tok)
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
+	setHeaders(req, tok)
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
-		fmt.Printf("error requesting cert: %v\n", err.Error())
+		Logger.Errorf("error requesting cert: %v", err)
+		return err
 	}
+	defer resp.Body.Close()
 
 	// Export data to prometheus
 	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
@@ -104,28 +113,43 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("rekor entry: %w", err)
 	}
-	req, err := http.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
 	if err != nil {
 		return fmt.Errorf("new request: %w", err)
 	}
-	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
+	setHeaders(req, "")
 
 	t := time.Now()
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
-		fmt.Printf("error adding entry: %v\n", err.Error())
+		return fmt.Errorf("error adding entry: %w", err)
 	}
-
-	// Export data to prometheus
+	defer resp.Body.Close()
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
-	defer resp.Body.Close()
-	body, _ = io.ReadAll(resp.Body)
-	fmt.Println(string(body))
-	return nil
+	// If entry was added successfully, we should verify it
+	var logEntry models.LogEntry
+	err = json.NewDecoder(resp.Body).Decode(&logEntry)
+	if err != nil {
+		return fmt.Errorf("unmarshal: %w", err)
+	}
+	var logEntryAnon models.LogEntryAnon
+	for _, e := range logEntry {
+		logEntryAnon = e
+		break
+	}
+	verified := "true"
+	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
+	if err != nil {
+		return fmt.Errorf("getting rekor public keys: %w", err)
+	}
+	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys); err != nil {
+		verified = "false"
+	}
+	verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+	return err
 }
 
 func rekorEntryRequest() ([]byte, error) {
@@ -175,12 +199,12 @@ func rekorEntryRequest() ([]byte, error) {
 	return json.Marshal(pe)
 }
 
-func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {
+func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
 	priv, err := cosign.GeneratePrivateKey()
 	if err != nil {
 		return nil, fmt.Errorf("generating cert: %w", err)
 	}
-	pubBytes, err := x509.MarshalPKIXPublicKey(&priv.PublicKey)
+	pubBytesPEM, err := cryptoutils.MarshalPublicKeyToPEM(priv.Public())
 	if err != nil {
 		return nil, err
 	}
@@ -197,13 +221,27 @@ func certificateRequest(ctx context.Context, idToken string) ([]byte, error) {
 		return nil, err
 	}
 
-	cr := api.CertificateRequest{
-		PublicKey: api.Key{
-			Algorithm: "ecdsa",
-			Content:   pubBytes,
+	req := SigningCertificateRequest{
+		PublicKeyRequest: PublicKeyRequest{
+			PublicKey: PublicKey{
+				Content: string(pubBytesPEM),
+			},
+			ProofOfPossession: proof,
 		},
-		SignedEmailAddress: proof,
 	}
 
-	return json.Marshal(cr)
+	return json.Marshal(req)
+}
+
+type SigningCertificateRequest struct {
+	PublicKeyRequest PublicKeyRequest `json:"publicKeyRequest"`
+}
+
+type PublicKeyRequest struct {
+	PublicKey         PublicKey `json:"publicKey"`
+	ProofOfPossession []byte    `json:"proofOfPossession"`
+}
+
+type PublicKey struct {
+	Content string `json:"content"`
 }

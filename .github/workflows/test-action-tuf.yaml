@@ -21,43 +21,41 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.22.x
-        - v1.23.x
-        - v1.24.x
+          - v1.23.x
+          - v1.24.x
+          - v1.25.x
+          # TODO: need release w/ 1.26 support first.
+          # - v1.26.x
         release-version:
-        - "latest-release" # Test explicitly with latest
-        - "v0.4.6" # Test version with TUF
+          - "latest-release" # Test explicitly with latest
         go-version:
-        - 1.19
+          - 1.20.x
         leg:
-        - test github action with TUF
+          - test github action with TUF
     env:
       KO_DOCKER_REPO: registry.local:5000/knative
       COSIGN_EXPERIMENTAL: "true"
 
     steps:
     - name: Checkout the current action
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
     - name: Test running the action
       uses: ./actions/setup
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
-        legacy-variables: "false"
 
     # Install cosign
     - name: Install cosign
-      uses: sigstore/cosign-installer@b3413d484cc23cf8778c3d2aa361568d4eb54679 # v2
+      uses: sigstore/cosign-installer@dd6b2e2b610a11fd73dd187a43d57cc1394e35f9 # v3.0.5
 
     - name: Set up Go
-      uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+      uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    - uses: imjasonh/setup-ko@v0.6
-      with:
-        version: v0.12.0
+    - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
     - name: Create sample image
       run: |
@@ -80,11 +78,41 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
+        --allow-insecure-registry "${{ env.demoimage }}" \
+        --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
+        --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
+
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+    - name: Build timestamp-cli
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        go build -o ./timestamp-cli ./cmd/timestamp-cli
+    - name: Exercise TSA
+      working-directory: ./src/github.com/sigstore/timestamp-authority
+      run: |
+        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        echo "myblob" > myblob
+        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+          echo "failed to timestamp artifact"
+          exit -1
+        fi
+        if ! ./timestamp-cli verify --timestamp response.tsr --artifact "myblob" --certificate-chain ts_chain.pem ; then
+          echo "failed to verify timestamp"
+          exit -1
+        fi
+        if ! ./timestamp-cli inspect --timestamp response.tsr --format json ; then
+          echo "failed to inspect the timestamp"
+          exit -1
+        fi
 
     - name: Collect diagnostics
       if: ${{ failure() }}

@@ -26,6 +26,13 @@ resource "google_storage_bucket" "attestation" {
   versioning {
     enabled = true
   }
+
+  dynamic "logging" {
+    for_each = var.gcs_logging_enabled ? [1] : []
+    content {
+      log_bucket = var.gcs_logging_bucket
+    }
+  }
 }
 
 // GCS Bucket 

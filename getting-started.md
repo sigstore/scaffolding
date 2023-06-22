@@ -19,6 +19,11 @@ You need to install `yq`. You can do this like so:
 ```
 go install github.com/mikefarah/yq/v4@latest
 ```
+You also need [ko](https://ko.build/) a tool for building lighter, more secure container images.
+```
+go install github.com/google/ko@latest
+```
+There are further install options on the [ko website](https://ko.build/).
 
 # Running locally on KinD
 
@@ -31,7 +36,7 @@ cloning the repo):
 
 Or by downloading a release version of the script
 ```shell
-curl -fLo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-kind.sh
+curl -fLo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.6.4/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
 /tmp/setup-kind.sh
 ```
@@ -52,7 +57,7 @@ Or to check things first:
 
 ```shell
 docker ps -a | grep registry
-b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 minutes ago   Up 15 minutes               0.0.0.0:5000->5000/tcp, :::5000->5000/tcp   registry.local
+b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 minutes ago   Up 15 minutes               0.0.0.0:5000->5000/tcp, :::5001->5001/tcp   registry.local
 ```
 
 So that's the running version of the registry, so first kill and then remove it:
@@ -64,7 +69,7 @@ docker rm -f b1e3f3238f7a
 
 ## From the release
 ```shell
-curl -Lo /tmp/setup-scaffolding.sh https://github.com/sigstore/scaffolding/releases/download/v0.4.6/setup-scaffolding-from-release.sh
+curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/v0.6.4/setup-scaffolding-from-release.sh
 chmod u+x /tmp/setup-scaffolding-from-release.sh
 /tmp/setup-scaffolding-from-release.sh
 ```
@@ -75,7 +80,7 @@ If you're deploying to kind cluster created above, tell `ko` where it is, or
 change to where you're deploying your images.
 
 ```shell
-export KO_DOCKER_REPO=registry.local:5000/sigstore
+export KO_DOCKER_REPO=registry.local:5001/sigstore
 ```
 
 ```shell
@@ -117,7 +122,9 @@ To access these services from the cluster, you'd use:
 `fulcio-system` namespace contains [Fulcio](https://github.com/sigstore/fulcio)
 and Fulcio can be accessed in the cluster with:
 
- * `fulcio.fulcio-system.svc`
+ * `fulcio.fulcio-system.svc` for HTTP
+or
+ * `fulcio-grpc.fulcio-system.svc` for GRPC
 
 ## rekor-system namespace
 
@@ -179,6 +186,7 @@ URLs, let's create some up front:
 ```
 export REKOR_URL=http://rekor.rekor-system.svc:8080
 export FULCIO_URL=http://fulcio.fulcio-system.svc:8080
+export FULCIO_GRPC_URL=http://fulcio-grpc.fulcio-system.svc:8080
 export ISSUER_URL=http://gettoken.default.svc:8080
 export TUF_MIRROR=http://tuf.tuf-system.svc:8080
 ```
@@ -252,7 +260,7 @@ If you have an image that you want to play with, great, you can also create
 one easily like this (that gets then uploaded to our local registry):
 
 ```
-KO_DOCKER_REPO=registry.local:5000/sigstore
+KO_DOCKER_REPO=registry.local:5001/sigstore
 pushd $(mktemp -d)
 go mod init example.com/demo
 cat <<EOF > main.go
@@ -285,7 +293,7 @@ Retrieving signed certificate...
         This information will be used for signing this artifact and will be stored in public transparency logs and cannot be removed later.
 Successfully verified SCT...
 tlog entry created with index: 0
-Pushing signature to: registry.local:5000/sigstore/demo
+Pushing signature to: registry.local:5001/sigstore/demo
 ```
 
 Then let's verify the signature.
@@ -300,7 +308,7 @@ An example invocation from my local instance is like so:
 vaikas@villes-mbp scaffolding % COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
 **Warning** Missing fallback target fulcio.crt.pem, skipping
 
-Verification for registry.local:5000/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
+Verification for registry.local:5001/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
 The following checks were performed on each of these signatures:
   - The cosign claims were validated
   - Existence of the claims in the transparency log was verified offline
@@ -347,7 +355,7 @@ An example invocation from my local instance:
 vaikas@villes-mbp scaffolding % COSIGN_EXPERIMENTAL=1 cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
 **Warning** Missing fallback target fulcio.crt.pem, skipping
 
-Verification for registry.local:5000/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
+Verification for registry.local:5001/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
 The following checks were performed on each of these signatures:
   - The cosign claims were validated
   - Existence of the claims in the transparency log was verified offline
@@ -361,7 +369,7 @@ And you can inspect the `payload` of the attestation by base64 decoding the payl
 
 ```
 vaikas@villes-mbp scaffolding % echo 'eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjAuMSIsInByZWRpY2F0ZVR5cGUiOiJjb3NpZ24uc2lnc3RvcmUuZGV2L2F0dGVzdGF0aW9uL3YxIiwic3ViamVjdCI6W3sibmFtZSI6InJlZ2lzdHJ5LmxvY2FsOjUwMDAvc2lnc3RvcmUvZGVtbyIsImRpZ2VzdCI6eyJzaGEyNTYiOiJiNmNmYzZlODc3MDYzMDRiZTEzZjYwN2IyMzhkOTA1ZGIxMDk2NjE5YzAyMTdjODJmNDE1MTExN2UwMTEyMDI1In19XSwicHJlZGljYXRlIjp7IkRhdGEiOiJmb29iYXIgdGVzdCBhdHRlc3RhdGlvbiIsIlRpbWVzdGFtcCI6IjIwMjItMDgtMDdUMDM6NTU6NDhaIn19' | base64 -d
-{"_type":"https://in-toto.io/Statement/v0.1","predicateType":"cosign.sigstore.dev/attestation/v1","subject":[{"name":"registry.local:5000/sigstore/demo","digest":{"sha256":"b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025"}}],"predicate":{"Data":"foobar test attestation","Timestamp":"2022-08-07T03:55:48Z"}}%
+{"_type":"https://in-toto.io/Statement/v0.1","predicateType":"cosign.sigstore.dev/attestation/v1","subject":[{"name":"registry.local:5001/sigstore/demo","digest":{"sha256":"b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025"}}],"predicate":{"Data":"foobar test attestation","Timestamp":"2022-08-07T03:55:48Z"}}%
 ```
 
 Notice our predicate is `foobar test attestation` as was in our predicate file.

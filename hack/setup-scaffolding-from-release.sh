@@ -18,7 +18,7 @@ set -o nounset
 set -o pipefail
 
 # Default
-RELEASE_VERSION="v0.4.6"
+RELEASE_VERSION="v0.6.3"
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"
@@ -38,8 +38,27 @@ REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSIO
 FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
 CTLOG=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-ctlog.yaml
 TUF=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tuf.yaml
+TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tsa.yaml
 
-# Since the behaviour on oidc is different on k8s <1.23, check to see if we
+# Since things that we install vary based on the release version, parse out
+# MAJOR, MINOR, and PATCH
+# We don't use MAJOR yet, but add it here for future.
+# MAJOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 1 | sed -e 's/v//')
+MINOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 2)
+PATCH=$(echo "$RELEASE_VERSION" | cut -d '.' -f 3)
+
+if [ "${MINOR}" -lt 4 ]; then
+  echo Unsupported version, only support versions >= 0.4.0
+  exit 1
+fi
+
+# We introduced TSA in release v0.5.0
+INSTALL_TSA="false"
+if [ "${MINOR}" -ge 5 ]; then
+  INSTALL_TSA="true"
+fi
+
+# Since the behaviour on oidc is different on certain k8s versions, check to see if we
 # need to do some mucking with the Fulcio config
 NEED_TO_UPDATE_FULCIO_CONFIG="false"
 K8S_SERVER_VERSION=$(kubectl version -ojson | yq '.serverVersion.minor' -)
@@ -55,8 +74,8 @@ kubectl apply -f "${TRILLIAN}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-server
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-signer
+kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
+kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
 echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
@@ -66,7 +85,7 @@ echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
 kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
-kubectl wait --timeout 2m -n rekor-system --for=condition=Ready ksvc rekor
+kubectl wait --timeout 5m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
@@ -81,6 +100,10 @@ fi
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
+# this checks if the requested version is > 0.4.12 (and therefore has fulcio-grpc in it)
+if [ "${PATCH}" -gt 12 ] || [ "${MINOR}" -ge 5 ]; then
+  kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
+fi
 echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
@@ -93,6 +116,13 @@ kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 
+# If we're running release > 0.5.0 install TSA
+if [ "${INSTALL_TSA}" == "true" ]; then
+kubectl apply -f "${TSA}"
+kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
+kubectl wait --timeout 2m -n tsa-system --for=condition=Ready ksvc tsa
+fi
+
 # Install tuf
 echo '::group:: Install TUF'
 kubectl apply -f "${TUF}"
@@ -102,6 +132,10 @@ kubectl apply -f "${TUF}"
 kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+
+if [ "${INSTALL_TSA}" == "true" ]; then
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+fi
 echo '::endgroup::'
 
 # Make sure the tuf jobs complete
@@ -125,3 +159,8 @@ CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
 export CTLOG_URL
 TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
 export TUF_MIRROR
+
+if [ "${INSTALL_TSA}" == "true" ]; then
+  TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+  export TSA_URL
+fi

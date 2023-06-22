@@ -21,6 +21,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -33,10 +34,9 @@ import (
 	"github.com/sigstore/scaffolding/pkg/secret"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 
-	"google.golang.org/protobuf/proto"
-	"google.golang.org/protobuf/types/known/anypb"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
 	"knative.dev/pkg/signals"
@@ -54,7 +54,7 @@ const (
 
 var (
 	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
-	configInSecret     = flag.Bool("config-in-secret", false, "If set to true, create the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'")
+	privateKeySecret   = flag.String("private-secret", "", "If there's an existing private key that should be used, read it from this secret, decrypt with the key-password and use it instead of creating a new one.")
 	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
 	pubKeySecretName   = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
 	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
@@ -150,7 +150,16 @@ func main() {
 	if existingSecret.Data[privateKey] == nil ||
 		existingSecret.Data[publicKey] == nil ||
 		(existingSecret.Data[configKey] == nil && existingCMConfig == nil) {
-		ctlogConfig, err := createConfigWithKeys(ctx, *keyType)
+		var ctlogConfig *ctlog.Config
+		var err error
+		if *privateKeySecret != "" {
+			// We have an existing private key, use it instead of creating
+			// a new one.
+			ctlogConfig, err = createConfigFromExistingSecret(ctx, nsSecret, *privateKeySecret)
+		} else {
+			// Create a fresh private key.
+			ctlogConfig, err = createConfigWithKeys(ctx, *keyType)
+		}
 		if err != nil {
 			logging.FromContext(ctx).Fatalf("Failed to generate keys: %v", err)
 		}
@@ -158,7 +167,9 @@ func main() {
 		ctlogConfig.LogID = treeIDInt
 		ctlogConfig.LogPrefix = *ctlogPrefix
 		ctlogConfig.TrillianServerAddr = *trillianServerAddr
-		ctlogConfig.AddFulcioRoot(ctx, root.ChainPEM)
+		if err = ctlogConfig.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
+			logging.FromContext(ctx).Infof("Failed to add fulcio root: %v", err)
+		}
 		configMap, err := ctlogConfig.MarshalConfig(ctx)
 		if err != nil {
 			logging.FromContext(ctx).Fatalf("Failed to marshal ctlog config: %v", err)
@@ -191,7 +202,9 @@ func main() {
 	}
 
 	// Finally add Fulcio to it, marshal and write out.
-	existingConfig.AddFulcioRoot(ctx, root.ChainPEM)
+	if err = existingConfig.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
+		log.Printf("Failed to add fulcio root: %v", err)
+	}
 	marshaled, err := existingConfig.MarshalConfig(ctx)
 	if err != nil {
 		log.Fatalf("Failed to marshal new configuration: %v", err)
@@ -211,30 +224,21 @@ func main() {
 	}
 }
 
-func mustMarshalAny(pb proto.Message) *anypb.Any {
-	ret, err := anypb.New(pb)
-	if err != nil {
-		panic(fmt.Sprintf("MarshalAny failed: %v", err))
-	}
-	return ret
-}
-
 // createConfigWithKeys creates otherwise empty CTLogCOnfig but fills
 // in PrivKey, and PubKey. Can not be used as is, but use it to construct
 // the base to build upon
-func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.CTLogConfig, error) {
+func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.Config, error) {
 	var privKey crypto.PrivateKey
 	var err error
-	if *keyType == "rsa" {
+	if keytype == "rsa" {
 		privKey, err = rsa.GenerateKey(rand.Reader, bitSize)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to generate Private RSA Key: %w", err)
+			return nil, fmt.Errorf("failed to generate Private RSA Key: %w", err)
 		}
 	} else {
 		privKey, err = ecdsa.GenerateKey(supportedCurves[*curveType], rand.Reader)
 		if err != nil {
-			return nil, fmt.Errorf("Failed to generate Private ECDSA Key: %w", err)
-
+			return nil, fmt.Errorf("failed to generate Private ECDSA Key: %w", err)
 		}
 	}
 
@@ -243,8 +247,28 @@ func createConfigWithKeys(ctx context.Context, keytype string) (*ctlog.CTLogConf
 	if signer, ok = privKey.(crypto.Signer); !ok {
 		logging.FromContext(ctx).Fatalf("failed to convert to Signer")
 	}
-	return &ctlog.CTLogConfig{
+	return &ctlog.Config{
 		PrivKey: privKey,
 		PubKey:  signer.Public(),
+	}, nil
+}
+
+// create
+func createConfigFromExistingSecret(ctx context.Context, nsSecret v1.SecretInterface, secretName string) (*ctlog.Config, error) {
+	existingSecret, err := nsSecret.Get(ctx, secretName, metav1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting an existing private key secret: %w", err)
+	}
+	private := existingSecret.Data[privateKey]
+	if len(private) == 0 {
+		return nil, errors.New("secret missing private key entry")
+	}
+	priv, pub, err := ctlog.DecryptExistingPrivateKey(private, *keyPassword)
+	if err != nil {
+		return nil, fmt.Errorf("decrypting existing private key secret: %w", err)
+	}
+	return &ctlog.Config{
+		PrivKey: priv,
+		PubKey:  pub,
 	}, nil
 }

@@ -24,13 +24,13 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-        - v1.25.x
+          - v1.25.x
 
         leg:
-        - fulcio-key-rotation
+          - fulcio-key-rotation
 
         go-version:
-        - 1.18
+          - 1.20.x
 
     env:
       GOPATH: ${{ github.workspace }}
@@ -45,13 +45,13 @@ jobs:
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
-      uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+      uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
     - name: Check out our repo
-      uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
       with:
         path: ./src/github.com/sigstore/scaffolding
 
@@ -68,14 +68,12 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-go-${{ matrix.go-version }}-
 
-    - uses: imjasonh/setup-ko@v0.6
-      with:
-        version: v0.12.0
+    - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
 
-    - uses: sigstore/cosign-installer@f3c664df7af409cb4873aa5068053ba9d61a57b6 # v2
+    - uses: sigstore/cosign-installer@dd6b2e2b610a11fd73dd187a43d57cc1394e35f9 # v3.0.5
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@cc7afeaca6e5871be191ecc1b8bce10274bc1ee4
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -85,7 +83,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "latest"
+        version: "1.8.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -145,6 +143,9 @@ jobs:
         FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
         echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
 
+        #FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+        #echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
+
         CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
 
@@ -155,11 +156,14 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --force --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
+        --allow-insecure-registry "${{ env.demoimage }}" \
+        --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
+        --certificate-oidc-issuer "https://kubernetes.default.svc"
 
     - name: Spin up a new Fulcio with new keys
       run: |

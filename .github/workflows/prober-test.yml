@@ -20,14 +20,14 @@ jobs:
       contents: read
     steps:
       - name: 'Checkout'
-        uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+        uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
 
       - name: Set up Go
-        uses: actions/setup-go@268d8c0ca0432bb2cf416faae41297df9d262d7f # v3.3.0
+        uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
         with:
-          go-version: 1.18
+          go-version: '1.20'
           check-latest: true
 
       - name: Prober test
         id: prober-test
-        run: go run ./cmd/prober --one-time --write-prober
+        run: go run ./cmd/prober --one-time --write-prober --logStyle dev

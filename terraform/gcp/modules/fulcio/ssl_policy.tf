@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The Sigstore Authors
+ * Copyright 2023 The Sigstore Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,26 +14,9 @@
  * limitations under the License.
  */
 
-variable "project_id" {
-  type    = string
-  default = ""
-  validation {
-    condition     = length(var.project_id) > 0
-    error_message = "Must specify project_id variable."
-  }
+resource "google_compute_ssl_policy" "fulcio" {
+  name            = "fulcio-ingress-ssl-policy"
+  profile         = "MODERN"
+  min_tls_version = "TLS_1_2"
 }
 
-variable "dns_zone_name" {
-  description = "Name of DNS Zone object in Google Cloud DNS"
-  type        = string
-}
-
-variable "dns_domain_name" {
-  description = "Name of DNS domain name in Google Cloud DNS"
-  type        = string
-}
-
-variable "load_balancer_ipv4" {
-  description = "IPv4 adddress of external load balancer"
-  type        = string
-}

@@ -107,3 +107,16 @@ variable "redis_cluster_memory_size_gb" {
   type        = number
   default     = 30
 }
+
+// temporary variables to facilitate traffic shift
+variable "nginx_traffic_weight" {
+  description = "weight for DNS weighted round robin for NGINX-based ingress"
+  type        = number
+  default     = 1
+}
+
+variable "gcp_lb_traffic_weight" {
+  description = "weight for DNS weighted round robin for GCP-based load balancer"
+  type        = number
+  default     = 0
+}

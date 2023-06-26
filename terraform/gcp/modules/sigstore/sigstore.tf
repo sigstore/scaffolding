@@ -213,6 +213,9 @@ module "rekor" {
 
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
 
+  nginx_traffic_weight  = var.rekor_nginx_traffic_weight
+  gcp_lb_traffic_weight = var.rekor_gcp_lb_traffic_weight
+
   depends_on = [
     module.network,
     module.gke-cluster,

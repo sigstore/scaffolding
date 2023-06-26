@@ -53,12 +53,12 @@ resource "google_dns_record_set" "A_rekor" {
 
   routing_policy {
     wrr {
-      weight  = 1
+      weight  = var.nginx_traffic_weight
       rrdatas = [var.load_balancer_ipv4]
     }
 
     wrr {
-      weight  = 0
+      weight  = var.gcp_lb_traffic_weight
       rrdatas = [google_compute_global_address.gce_lb_ipv4.address]
     }
   }

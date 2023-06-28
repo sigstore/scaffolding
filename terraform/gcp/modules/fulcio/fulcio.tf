@@ -37,14 +37,3 @@ resource "google_dns_record_set" "A_fulcio" {
 
   rrdatas = [var.load_balancer_ipv4]
 }
-
-resource "google_dns_record_set" "A_v1_fulcio" {
-  name = "v1.fulcio.${var.dns_domain_name}"
-  type = "A"
-  ttl  = 60
-
-  project      = var.project_id
-  managed_zone = var.dns_zone_name
-
-  rrdatas = [var.load_balancer_ipv4]
-}

@@ -45,7 +45,7 @@ resource "google_monitoring_uptime_check_config" "uptime_ct_log" {
 
   http_check {
     mask_headers   = "false"
-    path           = "/"
+    path           = "/test/ct/v1/get-sth"
     port           = "443"
     request_method = "GET"
     use_ssl        = "true"

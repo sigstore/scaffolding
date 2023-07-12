@@ -91,6 +91,7 @@ variable "monitoring" {
     fulcio_url               = string
     rekor_url                = string
     dex_url                  = string
+    ctlog_url                = string
     notification_channel_ids = list(string)
   })
   default = {
@@ -98,6 +99,7 @@ variable "monitoring" {
     fulcio_url               = "fulcio.example.com"
     rekor_url                = "rekor.example.com"
     dex_url                  = "oauth2.example.com"
+    ctlog_url                = "ctlog.example.com"
     notification_channel_ids = []
   }
 }

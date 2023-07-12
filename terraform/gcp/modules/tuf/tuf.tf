@@ -68,7 +68,7 @@ resource "google_storage_bucket" "tuf" {
 
 resource "google_storage_bucket_iam_member" "public_tuf_member" {
   bucket = google_storage_bucket.tuf.name
-  role   = "roles/storage.objectViewer"
+  role   = "roles/storage.legacyObjectReader"
   member = "allUsers"
 
   depends_on = [google_storage_bucket.tuf]
@@ -114,7 +114,7 @@ resource "google_storage_bucket" "tuf_preprod" {
 
 resource "google_storage_bucket_iam_member" "public_tuf_preprod_member" {
   bucket = google_storage_bucket.tuf_preprod.name
-  role   = "roles/storage.objectViewer"
+  role   = "roles/storage.legacyObjectReader"
   member = "allUsers"
 
   depends_on = [google_storage_bucket.tuf_preprod]

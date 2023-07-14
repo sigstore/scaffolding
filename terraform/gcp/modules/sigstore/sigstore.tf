@@ -325,6 +325,9 @@ module "ctlog" {
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
 
+  nginx_traffic_weight  = var.ctlog_nginx_traffic_weight
+  gcp_lb_traffic_weight = var.ctlog_gcp_lb_traffic_weight
+
   depends_on = [
     module.gke-cluster,
     module.network,

@@ -319,11 +319,15 @@ module "oslogin" {
 module "ctlog" {
   source = "../ctlog"
 
-  project_id = var.project_id
+  project_id   = var.project_id
+  cluster_name = var.cluster_name
 
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name
   load_balancer_ipv4 = module.network.external_ipv4_address
+
+  nginx_traffic_weight  = var.ctlog_nginx_traffic_weight
+  gcp_lb_traffic_weight = var.ctlog_gcp_lb_traffic_weight
 
   depends_on = [
     module.gke-cluster,

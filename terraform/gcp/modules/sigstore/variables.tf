@@ -390,3 +390,16 @@ variable "fulcio_gcp_lb_traffic_weight" {
   type        = number
   default     = 0
 }
+
+// temporary variables to facilitate traffic shift for fulcio
+variable "ctlog_nginx_traffic_weight" {
+  description = "weight for DNS weighted round robin for NGINX-based ingress"
+  type        = number
+  default     = 1
+}
+
+variable "ctlog_gcp_lb_traffic_weight" {
+  description = "weight for DNS weighted round robin for GCP-based load balancer"
+  type        = number
+  default     = 0
+}

@@ -319,7 +319,8 @@ module "oslogin" {
 module "ctlog" {
   source = "../ctlog"
 
-  project_id = var.project_id
+  project_id   = var.project_id
+  cluster_name = var.cluster_name
 
   dns_zone_name      = var.dns_zone_name
   dns_domain_name    = var.dns_domain_name

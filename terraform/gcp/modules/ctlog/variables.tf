@@ -23,6 +23,11 @@ variable "project_id" {
   }
 }
 
+variable "cluster_name" {
+  type    = string
+  default = ""
+}
+
 variable "dns_zone_name" {
   description = "Name of DNS Zone object in Google Cloud DNS"
   type        = string

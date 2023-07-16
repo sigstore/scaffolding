@@ -19,8 +19,8 @@ spec:
       serviceAccountName: tsa
       containers:
       - name: tsa
-        # Resolved via crane digest 2022-12-16 for v0.2.0
-        image: ghcr.io/sigstore/timestamp-server@sha256:ae393a33a6d85c7764ae3bc858fb6e0d09e979312d11bc57e5fc3f7cdaa9c47c
+        # Resolved via crane digest 2023-07-16 for v1.1.1
+        image: ghcr.io/sigstore/timestamp-server@sha256:b0be2fb18150bcbfe15ff82d95bd9373a5ac7e6d8c7663299940a78e43fe69aa
         ports:
         - containerPort: 3000
         args: [

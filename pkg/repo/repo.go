@@ -24,6 +24,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
@@ -55,7 +56,7 @@ type sigstoreCustomMetadata struct {
 func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (tuf.LocalStore, string, error) {
 	// TODO: Make this an in-memory fileystem.
 	tmpDir := os.TempDir()
-	dir := tmpDir + "tuf"
+	dir := path.Join(tmpDir, "tuf")
 	err := os.Mkdir(dir, os.ModePerm)
 	if err != nil {
 		return nil, "", fmt.Errorf("failed to create tmp TUF dir: %w", err)

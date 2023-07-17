@@ -18,7 +18,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20221109233200-85aa52084eaf
 	github.com/prometheus/client_golang v1.16.0
 	github.com/sigstore/cosign/v2 v2.1.1
-	github.com/sigstore/fulcio v1.3.3
+	github.com/sigstore/fulcio v1.3.4
 	github.com/sigstore/rekor v1.2.2
 	github.com/sigstore/sigstore v1.7.1
 	github.com/sigstore/timestamp-authority v1.1.1

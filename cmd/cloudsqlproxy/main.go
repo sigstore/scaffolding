@@ -24,14 +24,14 @@ import (
 	"knative.dev/pkg/signals"
 )
 
-// Assuming the base image is image: gcr.io/cloudsql-docker/gce-proxy.
+// Assuming the base image is image: gcr.io/cloud-sql-connectors/cloud-sql-proxy
 
 func main() {
 	// Leverage exitdir to use file based lifecycle management.
 	ctx := exitdir.Aware(signals.NewContext())
 
 	log.Println("Starting the cloud sql proxy...")
-	cmd := exec.CommandContext(ctx, "/cloud_sql_proxy", os.Args[1:]...) //nolint: gosec
+	cmd := exec.CommandContext(ctx, "/cloud-sql-proxy", os.Args[1:]...) //nolint: gosec
 	cmd.Env = os.Environ()
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

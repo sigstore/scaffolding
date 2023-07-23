@@ -284,12 +284,6 @@ variable "dns_domain_name" {
   type        = string
 }
 
-variable "static_external_ipv4_address" {
-  description = "Static IPv4 Address to request for external services"
-  type        = string
-  default     = ""
-}
-
 variable "ctlog_shards" {
   type        = list(string)
   description = "Array of CTLog shards to create. Entry should be something like [2021, 2022], which would then have 2 independent CTLog shards backed by ctlog-2021 and ctlog-2022 Cloud SQL instances."
@@ -350,56 +344,4 @@ variable "redis_cluster_memory_size_gb" {
   description = "size of redis cluster (for rekor) expressed in whole GB"
   type        = number
   default     = 30
-}
-
-// temporary variables to facilitate traffic shift for rekor
-variable "rekor_nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "rekor_gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
-}
-
-// temporary variables to facilitate traffic shift for dex
-variable "dex_nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "dex_gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
-}
-
-// temporary variables to facilitate traffic shift for fulcio
-variable "fulcio_nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "fulcio_gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
-}
-
-// temporary variables to facilitate traffic shift for fulcio
-variable "ctlog_nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "ctlog_gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
 }

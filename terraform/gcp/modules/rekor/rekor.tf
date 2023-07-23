@@ -51,17 +51,7 @@ resource "google_dns_record_set" "A_rekor" {
   project      = var.project_id
   managed_zone = var.dns_zone_name
 
-  routing_policy {
-    wrr {
-      weight  = var.nginx_traffic_weight
-      rrdatas = [var.load_balancer_ipv4]
-    }
-
-    wrr {
-      weight  = var.gcp_lb_traffic_weight
-      rrdatas = [google_compute_global_address.gce_lb_ipv4.address]
-    }
-  }
+  rrdatas = [google_compute_global_address.gce_lb_ipv4.address]
 }
 
 // Create a static global IP for the external IPV4 GCE L7 load balancer

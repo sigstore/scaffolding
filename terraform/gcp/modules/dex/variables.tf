@@ -33,25 +33,7 @@ variable "dns_domain_name" {
   type        = string
 }
 
-variable "load_balancer_ipv4" {
-  description = "IPv4 adddress of external load balancer"
-  type        = string
-}
-
 variable "cluster_name" {
   type    = string
   default = ""
-}
-
-// temporary variables to facilitate traffic shift
-variable "nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
 }

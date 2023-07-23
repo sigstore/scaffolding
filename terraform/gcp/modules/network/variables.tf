@@ -33,9 +33,3 @@ variable "cluster_name" {
   type    = string
   default = ""
 }
-
-variable "requested_external_ipv4_address" {
-  type        = string
-  description = "External IPv4 address to request"
-  default     = ""
-}

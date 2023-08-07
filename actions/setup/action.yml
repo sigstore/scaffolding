@@ -101,7 +101,11 @@ runs:
 
       echo "Installing sigstore scaffolding @ ${tag}"
       curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+      # Temp hack to address issuer mismatch issue.
+      # Can be removed with the next release, after v0.6.5
+      sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
       chmod u+x /tmp/setup-scaffolding-from-release.sh
+      cat /tmp/setup-scaffolding-from-release.sh
       /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
       TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
       echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV

@@ -16,6 +16,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o xtrace
 
 # Default
 RELEASE_VERSION="v0.6.3"
@@ -94,8 +95,10 @@ if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
   curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
 else
-  kubectl apply -f "${FULCIO}"
+  curl -Ls "${FULCIO}" | sed 's@"IssuerURL": "https://kubernetes.default.svc",@"IssuerURL": "https://kubernetes.default.svc.cluster.local",@' | kubectl apply -f -
 fi
+
+kubectl get -n fulcio-system cm fulcio-config -o json
 
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all

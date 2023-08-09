@@ -5,6 +5,8 @@ LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
+PLATFORM ?= all
+
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := trillian ctlog fulcio rekor tsa tuf prober
 
@@ -13,18 +15,18 @@ ko-resolve:
 	# "Doing ko resolve for config"
 	$(foreach artifact, $(artifacts), $(shell export LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO); \
 	ko resolve --tags $(GIT_TAG),latest -BRf ./config/$(artifact) \
-	--platform=all \
+	--platform=$(PLATFORM) \
 	--image-refs imagerefs-$(artifact) > release-$(artifact).yaml )) \
 	# "Building cloudsqlproxy wrapper"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./cmd/cloudsqlproxy
+	ko build --base-import-paths --platform=$(PLATFORM) --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./cmd/cloudsqlproxy
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
 	# "Doing ko resolve for testdata"
 	# "Build a big bundle of joy, this also produces SBOMs"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./testdata --platform=all --image-refs testimagerefs > testrelease.yaml
+	ko resolve --tags $(GIT_TAG),latest --base-import-paths --recursive --filename ./testdata --platform=$(PLATFORM) --image-refs testimagerefs > testrelease.yaml
 
 .PHONY: sign-test-images
 sign-test-images:

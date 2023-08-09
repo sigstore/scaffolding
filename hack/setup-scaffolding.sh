@@ -29,7 +29,7 @@ fi
 
 # Install Trillian and wait for it to come up
 echo '::group:: Install Trillian'
-make ko-apply-trillian
+PLATFORM=linux/amd64 make ko-apply-trillian
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
@@ -39,7 +39,7 @@ echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
 echo '::group:: Install Rekor'
-make ko-apply-rekor
+PLATFORM=linux/amd64 make ko-apply-rekor
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
@@ -57,7 +57,7 @@ if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
   sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' config/fulcio/fulcio/200-configmap.yaml > ./200-configmap-new.yaml
   mv ./200-configmap-new.yaml config/fulcio/fulcio/200-configmap.yaml
 fi
-make ko-apply-fulcio
+PLATFORM=linux/amd64 make ko-apply-fulcio
 echo '::endgroup::'
 
 if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
@@ -72,7 +72,7 @@ echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
 echo '::group:: Install CTLog'
-make ko-apply-ctlog
+PLATFORM=linux/amd64 make ko-apply-ctlog
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
@@ -82,7 +82,7 @@ echo '::endgroup::'
 
 # Install TSA and wait for it to come up
 echo '::group:: Install TSA'
-make ko-apply-tsa
+PLATFORM=linux/amd64 make ko-apply-tsa
 echo '::endgroup::'
 
 echo '::group:: Wait for TSA ready'
@@ -92,7 +92,7 @@ echo '::endgroup::'
 
 # Install tuf
 echo '::group:: Install TUF'
-make ko-apply-tuf
+PLATFORM=linux/amd64 make ko-apply-tuf
 
 # Then copy the secrets (even though it's all public stuff, certs, public keys)
 # to the tuf-system namespace so that we can construct a tuf root out of it.

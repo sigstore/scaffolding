@@ -107,7 +107,7 @@ jobs:
 
     - name: Install scaffolding
       run: |
-        ./hack/setup-scaffolding.sh
+        ./hack/setup-scaffolding.sh --pr
 
     - name: Initialize cosign with our custom tuf root and make root copy
       run: |
@@ -163,7 +163,7 @@ jobs:
         cosign verify --rekor-url "${{ env.REKOR_URL }}" \
         --allow-insecure-registry "${{ env.demoimage }}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
-        --certificate-oidc-issuer "https://kubernetes.default.svc"
+        --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
 
     - name: Spin up a new Fulcio with new keys
       run: |

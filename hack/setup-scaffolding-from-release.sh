@@ -19,7 +19,8 @@ set -o pipefail
 set -o xtrace
 
 # Default
-RELEASE_VERSION="v0.6.3"
+RELEASE_VERSION="v0.6.5"
+PR=false
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"
@@ -28,18 +29,31 @@ while [[ $# -ne 0 ]]; do
       shift
       RELEASE_VERSION="$1"
       ;;
+    --pr)
+      PR=true
+      ;;
     *) echo "unknown option ${parameter}"; exit 1 ;;
   esac
   shift
 done
 
-echo "Installing release version: $RELEASE_VERSION"
-TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
-REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
-FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
-CTLOG=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-ctlog.yaml
-TUF=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tuf.yaml
-TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tsa.yaml
+if $PR; then
+  PLATFORM=linux/amd64 make ko-resolve
+  TRILLIAN=release-trillian.yaml
+  REKOR=release-rekor.yaml
+  FULCIO=release-fulcio.yaml
+  CTLOG=release-ctlog.yaml
+  TUF=release-tuf.yaml
+  TSA=release-tsa.yaml
+else
+  echo "Installing release version: $RELEASE_VERSION"
+  TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
+  REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
+  FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
+  CTLOG=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-ctlog.yaml
+  TUF=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tuf.yaml
+  TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tsa.yaml
+fi
 
 # Since things that we install vary based on the release version, parse out
 # MAJOR, MINOR, and PATCH
@@ -94,8 +108,6 @@ echo '::group:: Install Fulcio'
 if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
   curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
-else
-  curl -Ls "${FULCIO}" | sed 's@"IssuerURL": "https://kubernetes.default.svc",@"IssuerURL": "https://kubernetes.default.svc.cluster.local",@' | kubectl apply -f -
 fi
 
 kubectl get -n fulcio-system cm fulcio-config -o json

@@ -19,9 +19,9 @@ branding:
   color: green
 inputs:
   version:
-    description: 'Version of scaffolding to install (v0.4.0, latest-release.)'
+    description: 'Version of scaffolding to install (v0.4.0, latest-release, pr.)'
     required: true
-    default: 'latest-release'
+    default: 'pr'
   sigstore-only:
     description: 'If set to "true" will not install kind cluster, only Sigstore'
     required: true
@@ -58,10 +58,10 @@ runs:
       set -ex
 
       # Determine which version to install
-      # - if version is "latest-release", look up latest release.
+      # - if version is "latest-release" or "pr", look up latest release.
       # - otherwise, install the specified version.
       case ${{ inputs.version }} in
-      latest-release)
+      latest-release|pr)
         tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/sigstore/scaffolding/releases/latest | jq -r '.tag_name')
         ;;
       *)
@@ -90,23 +90,29 @@ runs:
         sudo service docker restart
 
         echo "Installing kind and knative using release"
-        curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
-        chmod u+x ./setup-kind.sh
-        ./setup-kind.sh \
+        KIND_PATH=.
+        if [[ "${{ inputs.version }}" == "pr" ]]; then
+          KIND_PATH=./hack
+        else
+          curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+          chmod u+x ./setup-kind.sh
+        fi
+        $KIND_PATH/setup-kind.sh \
           --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
           --cluster-suffix ${{ inputs.cluster-suffix }} \
           --k8s-version ${{ inputs.k8s-version }} \
           --knative-version ${{ inputs.knative-version }}
       fi
 
-      echo "Installing sigstore scaffolding @ ${tag}"
-      curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
-      # Temp hack to address issuer mismatch issue.
-      # Can be removed with the next release, after v0.6.5
-      sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
-      chmod u+x /tmp/setup-scaffolding-from-release.sh
-      cat /tmp/setup-scaffolding-from-release.sh
-      /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      if [[ "${{ inputs.version }}" == "pr" ]]; then
+        echo "Installing sigstore scaffolding @ ${{ github.ref }}"
+        ./hack/setup-scaffolding.sh
+      else
+        echo "Installing sigstore scaffolding @ ${tag}"
+        curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        chmod u+x /tmp/setup-scaffolding-from-release.sh
+        /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      fi
       TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
       echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
       # Grab the trusted root
@@ -116,7 +122,12 @@ runs:
       kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
       echo "Installing and running scaffolding tests to verify we are up and running"
-      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+      if [[ "${{ inputs.version }}" == "pr" ]]; then
+        PLATFORM=linux/amd64 make ko-resolve-testdata
+        kubectl apply -f testrelease.yaml
+      else
+        curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+      fi
 
       kubectl wait --for=condition=Complete --timeout=180s job/sign-job
       kubectl wait --for=condition=Complete --timeout=180s job/verify-job

@@ -67,11 +67,6 @@ done
 # The version map correlated with this version of KinD
 KIND_VERSION="v0.20.0"
 case ${K8S_VERSION} in
-  v1.23.x)
-    K8S_VERSION="1.23.17"
-    KIND_IMAGE_SHA="sha256:59c989ff8a517a93127d4a536e7014d28e235fb3529d9fba91b3951d461edfdb"
-    KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
-    ;;
   v1.24.x)
     K8S_VERSION="1.24.15"
     KIND_IMAGE_SHA="sha256:7db4f8bea3e14b82d12e044e25e34bd53754b7f2b0e9d56df21774e6f66a70ab"
@@ -169,7 +164,7 @@ kubeadmConfigPatches:
       name: config
     apiServer:
       extraArgs:
-        "service-account-issuer": "https://kubernetes.default.svc"
+        "service-account-issuer": "https://kubernetes.default.svc.cluster.local"
         "service-account-key-file": "/etc/kubernetes/pki/sa.pub"
         "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
         "service-account-api-audiences": "api,spire-server"

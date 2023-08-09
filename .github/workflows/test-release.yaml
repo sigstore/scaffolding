@@ -3,6 +3,8 @@ name: Fulcio&Rekor E2E Tests Using Release
 on:
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'terraform/**'
 
 defaults:
   run:

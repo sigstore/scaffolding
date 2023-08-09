@@ -3,6 +3,8 @@ name: Test github action with TUF
 on:
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'terraform/**'
 
 defaults:
   run:

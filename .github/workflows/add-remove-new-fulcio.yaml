@@ -3,6 +3,8 @@ name: Key rotation for Fulcio E2E Tests
 on:
   pull_request:
     branches: [ main ]
+    paths-ignore:
+      - 'terraform/**'
 
 permissions: read-all
 

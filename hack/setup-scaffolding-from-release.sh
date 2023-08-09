@@ -16,6 +16,7 @@
 set -o errexit
 set -o nounset
 set -o pipefail
+set -o xtrace
 
 # Default
 RELEASE_VERSION="v0.6.3"
@@ -96,6 +97,8 @@ if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
 else
   kubectl apply -f "${FULCIO}"
 fi
+
+kubectl get -n fulcio-system cm fulcio-config -o json
 
 echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all

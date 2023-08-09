@@ -76,12 +76,13 @@ jobs:
     - uses: sigstore/cosign-installer@6e04d228eb30da1757ee4e1dd75a0ec73a653e06 # v3.1.1
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@cc7afeaca6e5871be191ecc1b8bce10274bc1ee4
+      uses: chainguard-dev/actions/setup-kind@main
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
         registry-authority: registry.local:5000
         cluster-suffix: cluster.local
+        service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
@@ -171,7 +172,7 @@ jobs:
         cosign verify --rekor-url "${{ env.REKOR_URL }}" \
         --allow-insecure-registry "${{ env.demoimage }}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
-        --certificate-oidc-issuer "https://kubernetes.default.svc"
+        --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
 
     # Test with cosign in 'airgapped mode'
     # Uncomment these once modified cosign goes in.

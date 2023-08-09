@@ -52,12 +52,13 @@ jobs:
 
     - name: Setup Cluster
       # TODO: update after next release.
-      uses: chainguard-dev/actions/setup-kind@52eca3baf7c09ec1dbc4195449779fa59cc618e6
+      uses: chainguard-dev/actions/setup-kind@main
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
         registry-authority: registry.local:5000
         cluster-suffix: cluster.local
+        service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main

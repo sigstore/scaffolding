@@ -169,7 +169,7 @@ kubeadmConfigPatches:
       name: config
     apiServer:
       extraArgs:
-        "service-account-issuer": "https://kubernetes.default.svc"
+        "service-account-issuer": "https://kubernetes.default.svc.cluster.local"
         "service-account-key-file": "/etc/kubernetes/pki/sa.pub"
         "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
         "service-account-api-audiences": "api,spire-server"

@@ -95,7 +95,7 @@ if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
   curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
 else
-  curl -Ls "${FULCIO}" | sed 's@"IssuerURL": "https://kubernetes.default.svc",@"IssuerURL": "https://kubernetes.default.svc.cluster.local",@' | kubectl apply -f -
+  kubectl apply -f "${FULCIO}"
 fi
 
 kubectl get -n fulcio-system cm fulcio-config -o json

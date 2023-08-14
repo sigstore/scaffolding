@@ -120,13 +120,3 @@ output "bastion_kubectl" {
   description = "kubectl command using the local proxy once the bastion_ssh command is running"
   value       = "HTTPS_PROXY=socks5://localhost:8118 kubectl get pods --all-namespaces"
 }
-
-output "external_ipv4_name" {
-  description = "Name of the external IPv4 address resource for services on the cluster"
-  value       = module.network.external_ipv4_name
-}
-
-output "external_ipv4_address" {
-  description = "External IPv4 Address for services on the cluster"
-  value       = module.network.external_ipv4_address
-}

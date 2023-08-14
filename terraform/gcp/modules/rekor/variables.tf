@@ -97,26 +97,8 @@ variable "dns_domain_name" {
   type        = string
 }
 
-variable "load_balancer_ipv4" {
-  description = "IPv4 adddress of external load balancer"
-  type        = string
-}
-
 variable "redis_cluster_memory_size_gb" {
   description = "size of redis cluster expressed in whole GB"
   type        = number
   default     = 30
-}
-
-// temporary variables to facilitate traffic shift
-variable "nginx_traffic_weight" {
-  description = "weight for DNS weighted round robin for NGINX-based ingress"
-  type        = number
-  default     = 1
-}
-
-variable "gcp_lb_traffic_weight" {
-  description = "weight for DNS weighted round robin for GCP-based load balancer"
-  type        = number
-  default     = 0
 }

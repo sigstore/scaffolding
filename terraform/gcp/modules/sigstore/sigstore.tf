@@ -30,8 +30,6 @@ module "network" {
 
   cluster_name = var.cluster_name
 
-  requested_external_ipv4_address = var.static_external_ipv4_address
-
   depends_on = [
     module.project_roles
   ]
@@ -208,14 +206,10 @@ module "rekor" {
   gcs_logging_bucket  = var.gcs_logging_bucket
   storage_class       = var.attestation_storage_class
 
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
+  dns_zone_name   = var.dns_zone_name
+  dns_domain_name = var.dns_domain_name
 
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
-
-  nginx_traffic_weight  = var.rekor_nginx_traffic_weight
-  gcp_lb_traffic_weight = var.rekor_gcp_lb_traffic_weight
 
   depends_on = [
     module.network,
@@ -240,12 +234,8 @@ module "fulcio" {
   fulcio_keyring_name = var.fulcio_keyring_name
   fulcio_key_name     = var.fulcio_intermediate_key_name
 
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
-
-  nginx_traffic_weight  = var.fulcio_nginx_traffic_weight
-  gcp_lb_traffic_weight = var.fulcio_gcp_lb_traffic_weight
+  dns_zone_name   = var.dns_zone_name
+  dns_domain_name = var.dns_domain_name
 
   depends_on = [
     module.gke-cluster,
@@ -270,9 +260,8 @@ module "timestamp" {
   timestamp_encryption_key_name      = var.timestamp_encryption_key_name
   timestamp_intermediate_ca_key_name = var.timestamp_intermediate_ca_key_name
 
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
+  dns_zone_name   = var.dns_zone_name
+  dns_domain_name = var.dns_domain_name
 
   depends_on = [
     module.gke-cluster,
@@ -322,12 +311,8 @@ module "ctlog" {
   project_id   = var.project_id
   cluster_name = var.cluster_name
 
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
-
-  nginx_traffic_weight  = var.ctlog_nginx_traffic_weight
-  gcp_lb_traffic_weight = var.ctlog_gcp_lb_traffic_weight
+  dns_zone_name   = var.dns_zone_name
+  dns_domain_name = var.dns_domain_name
 
   depends_on = [
     module.gke-cluster,
@@ -439,12 +424,8 @@ module "dex" {
 
   cluster_name = var.cluster_name
 
-  dns_zone_name      = var.dns_zone_name
-  dns_domain_name    = var.dns_domain_name
-  load_balancer_ipv4 = module.network.external_ipv4_address
-
-  nginx_traffic_weight  = var.dex_nginx_traffic_weight
-  gcp_lb_traffic_weight = var.dex_gcp_lb_traffic_weight
+  dns_zone_name   = var.dns_zone_name
+  dns_domain_name = var.dns_domain_name
 
   depends_on = [
     module.gke-cluster,

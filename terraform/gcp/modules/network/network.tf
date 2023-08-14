@@ -108,12 +108,3 @@ resource "google_compute_router_nat" "nat" {
   }
   depends_on = [google_compute_subnetwork.subnetwork]
 }
-
-// Create a static IP for the external IPV4 L7 load balancer
-resource "google_compute_address" "default_ipv4" {
-  name         = format("%s-ext-lb", var.cluster_name)
-  address      = var.requested_external_ipv4_address
-  address_type = "EXTERNAL"
-  project      = var.project_id
-  region       = var.region
-}

@@ -1,7 +1,7 @@
 ---
 defaultBaseImage: cgr.dev/chainguard/alpine-base:latest
 baseImageOverrides:
-  github.com/sigstore/scaffolding/cmd/cloudsqlproxy: gcr.io/cloudsql-docker/gce-proxy:1.33.1-alpine
+  github.com/sigstore/scaffolding/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.6.0-alpine
 
 builds:
   - id: ctlog-createctconfig

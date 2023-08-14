@@ -24,6 +24,7 @@ resource "google_project_service" "service" {
     "container.googleapis.com",            // For GKE cluster. roles/container.admin
     "iam.googleapis.com",                  // For creating service accounts and access control. roles/iam.serviceAccountAdmin, roles/iam.serviceAccountUser
     "monitoring.googleapis.com",           // For managed prometheus
+    "containersecurity.googleapis.com",    // For Security Posture dashboard
   ])
   project = var.project_id
   service = each.key

@@ -140,6 +140,8 @@ module "gke-cluster" {
 
   bastion_ip_address = module.bastion.ip_address
 
+  monitoring_components = var.cluster_monitoring_components
+
   depends_on = [
     module.network,
     module.bastion,

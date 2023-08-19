@@ -214,3 +214,8 @@ variable "managed_prometheus" {
   type    = bool
   default = true
 }
+
+variable "monitoring_components" {
+  type    = list(string)
+  default = ["SYSTEM_COMPONENTS"]
+}

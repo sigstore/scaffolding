@@ -348,6 +348,6 @@ variable "redis_cluster_memory_size_gb" {
 
 variable "cluster_monitoring_components" {
   description = "The GKE components exposing metrics. Supported values include: SYSTEM_COMPONENTS, APISERVER, CONTROLLER_MANAGER, and SCHEDULER."
-  type        = list
+  type        = list(any)
   default     = ["SYSTEM_COMPONENTS"]
 }

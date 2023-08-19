@@ -216,6 +216,6 @@ variable "managed_prometheus" {
 }
 
 variable "monitoring_components" {
-  type    = list(any)
+  type    = list(string)
   default = ["SYSTEM_COMPONENTS"]
 }

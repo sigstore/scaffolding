@@ -90,7 +90,7 @@ resource "google_container_cluster" "cluster" {
     enable_components = ["SYSTEM_COMPONENTS", "WORKLOADS"]
   }
   monitoring_config {
-    enable_components = ["SYSTEM_COMPONENTS"]
+    enable_components = var.monitoring_components
 
     managed_prometheus {
       enabled = var.managed_prometheus

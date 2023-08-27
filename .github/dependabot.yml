@@ -1,5 +1,29 @@
 version: 2
 updates:
+- package-ecosystem: docker
+  directory: "/"
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: "/config/fulcio/fulcio"
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: "/config/rekor/rekor"
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: "/config/trillian/trillian-log-server"
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: "/config/trillian/trillian-log-signer"
+  schedule:
+    interval: daily
+- package-ecosystem: docker
+  directory: "/config/tsa/tsa"
+  schedule:
+    interval: daily
 - package-ecosystem: gomod
   directory: "/"
   schedule:

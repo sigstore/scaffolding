@@ -58,10 +58,9 @@ variable "fulcio_probed_endpoints" {
   type        = list(string)
   default = [
     "/api/v1/rootCert",
-    "/api/v1/signingCert",
     "/api/v2/configuration",
     "/api/v2/trustBundle",
-    # "/api/v2/signingCert", # TODO: probe the v2 cert endpoint
+    "/api/v2/signingCert",
   ]
 }
 

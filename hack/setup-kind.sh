@@ -92,6 +92,11 @@ case ${K8S_VERSION} in
     KIND_IMAGE_SHA="sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
+  v1.28.x)
+    K8S_VERSION="1.28.0"
+    KIND_IMAGE_SHA="sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;
 esac
 

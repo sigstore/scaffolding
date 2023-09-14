@@ -66,6 +66,127 @@ resource "google_monitoring_alert_policy" "ssl_cert_expiry_alert" {
 
 ### Cloud SQL Alerts
 
+# Cloud SQL Database CPU Utilization > 80%
+resource "google_monitoring_alert_policy" "cloud_sql_cpu_utilization_warning" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"cloudsql.googleapis.com/database/cpu/utilization\" resource.type=\"cloudsql_database\""
+      threshold_value = "0.8"
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+    display_name = "Cloud SQL Database - CPU Utilization [MEAN]"
+  }
+  display_name = "Cloud SQL Database CPU Utilization > 80%"
+  documentation {
+    content   = "Cloud SQL Database CPU Utilization is >80%. Please increase CPU capacity."
+    mime_type = "text/markdown"
+  }
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+
+  user_labels = {
+    severity = "warning"
+  }
+}
+
+# Cloud SQL Database CPU Utilization > 90%
+resource "google_monitoring_alert_policy" "cloud_sql_cpu_utilization" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"cloudsql.googleapis.com/database/cpu/utilization\" resource.type=\"cloudsql_database\""
+      threshold_value = "0.9"
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+    display_name = "Cloud SQL Database - CPU Utilization [MEAN]"
+  }
+  display_name = "Cloud SQL Database CPU Utilization > 90%"
+  documentation {
+    content   = "Cloud SQL Database CPU Utilization is >90%. Please increase CPU capacity."
+    mime_type = "text/markdown"
+  }
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+
+# Cloud SQL Database Memory Utilization > 80%
+resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization_warning" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "300s"
+        per_series_aligner = "ALIGN_MEAN"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "0s"
+      filter          = "metric.type=\"cloudsql.googleapis.com/database/memory/utilization\" resource.type=\"cloudsql_database\""
+      threshold_value = "0.8"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Cloud SQL Database - Memory utilization [MEAN]"
+  }
+
+  display_name = "Cloud SQL Database Memory Utilization > 80%"
+
+  documentation {
+    content   = "Cloud SQL Database Memory Utilization is >80%. Please increase memory capacity."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+
+  user_labels = {
+    severity = "warning"
+  }
+}
+
 # Cloud SQL Database Memory Utilization > 90%
 resource "google_monitoring_alert_policy" "cloud_sql_memory_utilization" {
   # In the absence of data, incident will auto-close in 7 days

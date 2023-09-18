@@ -24,7 +24,7 @@ require (
 	github.com/sigstore/timestamp-authority v1.1.2
 	github.com/theupdateframework/go-tuf v0.6.1
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
-	go.uber.org/zap v1.25.0
+	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.13.0
 	google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5
 	google.golang.org/grpc v1.57.0

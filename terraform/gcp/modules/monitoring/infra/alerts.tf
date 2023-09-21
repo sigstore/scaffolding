@@ -493,7 +493,7 @@ resource "google_monitoring_alert_policy" "redis_memory_usage" {
   display_name = "Redis Memory Usage > 90%"
 
   documentation {
-    content   = "Redis using >90% of max memory. You may need to allocate more."
+    content   = "Redis using >90% of max memory. You need to allocate more via Terraform with redis_cluster_memory_size_gb."
     mime_type = "text/markdown"
   }
 
@@ -525,7 +525,7 @@ resource "google_monitoring_alert_policy" "redis_out_of_memory" {
       comparison      = "COMPARISON_GT"
       duration        = "0s"
       filter          = "metric.type=\"redis.googleapis.com/stats/memory/usage_ratio\" resource.type=\"redis_instance\""
-      threshold_value = "0.999"
+      threshold_value = "0.99"
 
       trigger {
         count   = "1"
@@ -533,13 +533,13 @@ resource "google_monitoring_alert_policy" "redis_out_of_memory" {
       }
     }
 
-    display_name = "Redis - Out of Memory [MEAN]"
+    display_name = "Redis - Out of Memory (99%) [MEAN]"
   }
 
-  display_name = "Redis Out of Memory"
+  display_name = "Redis Out of Memory (99%)"
 
   documentation {
-    content   = "Redis is out of memory. Please investigate and allocate more."
+    content   = "Redis is out of memory. Please investigate and allocate more via Terraform with redis_cluster_memory_size_gb."
     mime_type = "text/markdown"
   }
 

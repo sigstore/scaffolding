@@ -41,3 +41,10 @@ resource "google_project_iam_member" "rekor_kms_member" {
   member     = "serviceAccount:${google_service_account.rekor-sa.email}"
   depends_on = [google_service_account.rekor-sa]
 }
+
+resource "google_project_iam_member" "rekor_profiler_agent" {
+  project    = var.project_id
+  role       = "roles/cloudprofiler.agent"
+  member     = "serviceAccount:${google_service_account.rekor-sa.email}"
+  depends_on = [google_service_account.rekor-sa]
+}

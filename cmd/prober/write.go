@@ -21,9 +21,11 @@ import (
 	"crypto/ecdsa"
 	"crypto/rand"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -65,17 +67,17 @@ func setHeaders(req *retryablehttp.Request, token string) {
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio
 // which is "/api/v2/signingCert", which requests a cert from Fulcio
-func fulcioWriteEndpoint(ctx context.Context) error {
+func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
-		return fmt.Errorf("no auth provider for fulcio is enabled")
+		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
 	tok, err := providers.Provide(ctx, "sigstore")
 	if err != nil {
-		return fmt.Errorf("getting provider: %w", err)
+		return nil, fmt.Errorf("getting provider: %w", err)
 	}
-	b, err := certificateRequest(ctx, tok)
+	b, err := certificateRequest(ctx, tok, priv)
 	if err != nil {
-		return fmt.Errorf("certificate response: %w", err)
+		return nil, fmt.Errorf("certificate response: %w", err)
 	}
 
 	// Construct the API endpoint for this handler
@@ -84,7 +86,7 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 
 	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
-		return fmt.Errorf("new request: %w", err)
+		return nil, fmt.Errorf("new request: %w", err)
 	}
 
 	setHeaders(req, tok)
@@ -94,22 +96,50 @@ func fulcioWriteEndpoint(ctx context.Context) error {
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		Logger.Errorf("error requesting cert: %v", err)
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Logger.Errorf("error reading response from Fulcio: %v", err)
+		return nil, err
+	}
+	var fulcioResp SigningCertificateResponse
+	if err := json.Unmarshal(responseBody, &fulcioResp); err != nil {
+		Logger.Errorf("error parsing response from Fulcio: %v", err)
+		return nil, err
+	}
+	if len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates) != 3 {
+		Logger.Errorf("unexpected number of certificates, got %d, expected 3",
+			len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates))
+		return nil, err
+	}
+
+	cert, err := cryptoutils.UnmarshalCertificatesFromPEM([]byte(fulcioResp.CertificatesWithSct.CertificateChain.Certificates[0]))
+	if err != nil {
+		Logger.Errorf("error unmarshalling leaf certificate from Fulcio: %v", err)
+		return nil, err
+	}
+	if len(cert) != 1 {
+		Logger.Errorf("unexpected number of certificates after unmarshalling got %d, expected 1", len(cert))
+		return nil, err
+	}
+
 	// Export data to prometheus
 	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
-	return nil
+	return cert[0], nil
 }
 
 // rekorWriteEndpoint tests the write endpoint for rekor, which is
 // /api/v1/log/entries and adds an entry to the log
-func rekorWriteEndpoint(ctx context.Context) error {
+// if a certificate is provided, the Rekor entry will contain that certificate,
+// otherwise the provided key is used
+func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
 	endpoint := rekorEndpoint
 	hostPath := rekorURL + endpoint
 
-	body, err := rekorEntryRequest()
+	body, err := rekorEntryRequest(cert, priv)
 	if err != nil {
 		return fmt.Errorf("rekor entry: %w", err)
 	}
@@ -152,27 +182,31 @@ func rekorWriteEndpoint(ctx context.Context) error {
 	return err
 }
 
-func rekorEntryRequest() ([]byte, error) {
+func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {
+	// sign payload
 	payload := []byte(time.Now().String())
-	priv, err := cosign.GeneratePrivateKey()
-	if err != nil {
-		return nil, fmt.Errorf("generating keys: %w", err)
-	}
 	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
 	if err != nil {
 		return nil, fmt.Errorf("loading signer verifier: %w", err)
 	}
-	pub, err := signer.PublicKey()
-	if err != nil {
-		return nil, fmt.Errorf("public key: %w", err)
-	}
-	pubKey, err := cryptoutils.MarshalPublicKeyToPEM(pub)
-	if err != nil {
-		return nil, fmt.Errorf("marshal public key: %w", err)
-	}
 	sig, err := signer.SignMessage(bytes.NewReader(payload))
 	if err != nil {
 		return nil, fmt.Errorf("sign message: %w", err)
+	}
+
+	var verifier []byte
+	if cert != nil {
+		certPEM, err := cryptoutils.MarshalCertificateToPEM(cert)
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling certificate: %w", err)
+		}
+		verifier = certPEM
+	} else {
+		pubKeyPEM, err := cryptoutils.MarshalPublicKeyToPEM(priv.Public())
+		if err != nil {
+			return nil, fmt.Errorf("error marshalling public key: %w", err)
+		}
+		verifier = pubKeyPEM
 	}
 
 	h := sha256.Sum256(payload)
@@ -187,7 +221,7 @@ func rekorEntryRequest() ([]byte, error) {
 			Signature: &models.HashedrekordV001SchemaSignature{
 				Content: strfmt.Base64(sig),
 				PublicKey: &models.HashedrekordV001SchemaSignaturePublicKey{
-					Content: strfmt.Base64(pubKey),
+					Content: strfmt.Base64(verifier),
 				},
 			},
 		},
@@ -199,11 +233,7 @@ func rekorEntryRequest() ([]byte, error) {
 	return json.Marshal(pe)
 }
 
-func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
-	priv, err := cosign.GeneratePrivateKey()
-	if err != nil {
-		return nil, fmt.Errorf("generating cert: %w", err)
-	}
+func certificateRequest(_ context.Context, idToken string, priv *ecdsa.PrivateKey) ([]byte, error) {
 	pubBytesPEM, err := cryptoutils.MarshalPublicKeyToPEM(priv.Public())
 	if err != nil {
 		return nil, err
@@ -235,6 +265,18 @@ func certificateRequest(_ context.Context, idToken string) ([]byte, error) {
 
 type SigningCertificateRequest struct {
 	PublicKeyRequest PublicKeyRequest `json:"publicKeyRequest"`
+}
+
+type SigningCertificateResponse struct {
+	CertificatesWithSct SignedCertificateEmbeddedSct `json:"signedCertificateEmbeddedSct"`
+}
+
+type SignedCertificateEmbeddedSct struct {
+	CertificateChain CertificateChain `json:"chain"`
+}
+
+type CertificateChain struct {
+	Certificates []string `json:"certificates"`
 }
 
 type PublicKeyRequest struct {

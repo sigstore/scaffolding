@@ -17,6 +17,9 @@ package main
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"encoding/json"
 	"flag"
 	"log"
@@ -194,11 +197,17 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 			}
 		}
 		if runWriteProber {
-			if err := fulcioWriteEndpoint(ctx); err != nil {
+			priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+			if err != nil {
+				Logger.Fatalf("failed to generate key: %v", err)
+			}
+
+			cert, err := fulcioWriteEndpoint(ctx, priv)
+			if err != nil {
 				hasErr = true
 				Logger.Errorf("error running fulcio write prober: %v", err)
 			}
-			if err := rekorWriteEndpoint(ctx); err != nil {
+			if err := rekorWriteEndpoint(ctx, cert, priv); err != nil {
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}

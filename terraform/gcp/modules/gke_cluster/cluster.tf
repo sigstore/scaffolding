@@ -128,7 +128,7 @@ resource "google_container_cluster" "cluster" {
     autoscaling_profile = var.cluster_autoscaling_profile
     enabled             = var.cluster_autoscaling_enabled
 
-    auto_provisioning_defaults = {
+    auto_provisioning_defaults {
       service_account = google_service_account.gke-sa.email
     }
 

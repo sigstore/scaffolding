@@ -226,3 +226,42 @@ resource "google_monitoring_alert_policy" "prober_verification" {
   notification_channels = local.notification_channels
   project               = var.project_id
 }
+
+resource "google_monitoring_alert_policy" "prober_verification_data_absent_alert" {
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  conditions {
+    condition_absent {
+      aggregations {
+        alignment_period     = "300s"
+        cross_series_reducer = "REDUCE_PERCENTILE_95"
+        per_series_aligner   = "ALIGN_MEAN"
+      }
+
+      duration = "300s"
+      filter   = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown\""
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "API Prober: Verification Data Absent for 5 minutes"
+  }
+
+  display_name = "API Prober: Verification Data Absent for 5 minutes"
+
+  documentation {
+    content   = "Verification Data Absent for 5 minutes. Check playbook for more details."
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}

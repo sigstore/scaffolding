@@ -251,13 +251,13 @@ resource "google_monitoring_alert_policy" "prober_verification_data_absent_alert
       }
     }
 
-    display_name = format("API Prober: Verification Data Absent for 5 minutes: %s", each.key)
+    display_name = "API Prober: Verification Data Absent for 5 minutes"
   }
 
-  display_name = format("API Prober: Verification Data Absent for 5 minutes: %s", each.key)
+  display_name = "API Prober: Verification Data Absent for 5 minutes"
 
   documentation {
-    content   = format("Verification Data Absent for 5 minutes: %s. Check playbook for more details.", each.key)
+    content   = "Verification Data Absent for 5 minutes. Check playbook for more details."
     mime_type = "text/markdown"
   }
 

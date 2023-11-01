@@ -34,7 +34,6 @@ done
 
 # Defaults
 K8S_VERSION="v1.25.x"
-KNATIVE_VERSION="1.8.6"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"
@@ -48,7 +47,7 @@ while [[ $# -ne 0 ]]; do
       ;;
     --knative-version)
       shift
-      KNATIVE_VERSION="$1"
+      KNATIVE_VERSION_ARG="$1"
       ;;
     --registry-url)
       shift
@@ -65,40 +64,50 @@ while [[ $# -ne 0 ]]; do
 done
 
 # The version map correlated with this version of KinD
+# KNATIVE versions are set from https://github.com/knative/community/blob/main/mechanics/RELEASE-SCHEDULE.md
 KIND_VERSION="v0.20.0"
 case ${K8S_VERSION} in
   v1.23.x)
     K8S_VERSION="1.23.17"
+    KNATIVE_VERSION="1.8.5"
     KIND_IMAGE_SHA="sha256:59c989ff8a517a93127d4a536e7014d28e235fb3529d9fba91b3951d461edfdb"
     KIND_IMAGE="kindest/node:v${K8S_VERSION}@${KIND_IMAGE_SHA}"
     ;;
   v1.24.x)
     K8S_VERSION="1.24.15"
+    KNATIVE_VERSION="1.10.5"
     KIND_IMAGE_SHA="sha256:7db4f8bea3e14b82d12e044e25e34bd53754b7f2b0e9d56df21774e6f66a70ab"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.25.x)
     K8S_VERSION="1.25.11"
+    KNATIVE_VERSION="1.11.3"
     KIND_IMAGE_SHA="sha256:227fa11ce74ea76a0474eeefb84cb75d8dad1b08638371ecf0e86259b35be0c8"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.26.x)
     K8S_VERSION="1.26.6"
+    KNATIVE_VERSION="1.12.0"
     KIND_IMAGE_SHA="sha256:6e2d8b28a5b601defe327b98bd1c2d1930b49e5d8c512e1895099e4504007adb"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.27.x)
     K8S_VERSION="1.27.3"
+    KNATIVE_VERSION="1.12.0"
     KIND_IMAGE_SHA="sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.28.x)
     K8S_VERSION="1.28.0"
+    KNATIVE_VERSION="1.12.0"
     KIND_IMAGE_SHA="sha256:b7a4cad12c197af3ba43202d3efe03246b3f0793f162afb40a33c923952d5b31"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;
 esac
+
+# allow cmd line arg to explicitly override knative mapping above
+KNATIVE_VERSION=${KNATIVE_VERSION_ARG:=${KNATIVE_VERSION}}
 
 #############################################################
 #

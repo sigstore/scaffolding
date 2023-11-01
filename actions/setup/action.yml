@@ -32,8 +32,6 @@ inputs:
     default: "."
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
-    required: true
-    default: '1.8.6'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true
@@ -95,8 +93,7 @@ runs:
         ./setup-kind.sh \
           --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
           --cluster-suffix ${{ inputs.cluster-suffix }} \
-          --k8s-version ${{ inputs.k8s-version }} \
-          --knative-version ${{ inputs.knative-version }}
+          --k8s-version ${{ inputs.k8s-version }} ${{ inputs.knative-version && join('--knative-version ',inputs.knative-version) }}
       fi
 
       echo "Installing sigstore scaffolding @ ${tag}"

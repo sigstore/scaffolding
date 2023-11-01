@@ -33,8 +33,8 @@ do
 done
 
 # Defaults
-K8S_VERSION="v1.24.x"
-KNATIVE_VERSION="1.6.0"
+K8S_VERSION="v1.25.x"
+KNATIVE_VERSION="1.8.0"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"

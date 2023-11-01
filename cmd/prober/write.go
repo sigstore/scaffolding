@@ -136,8 +136,12 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
 func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
+	verified := "false"
 	endpoint := rekorEndpoint
 	hostPath := rekorURL + endpoint
+	defer func() {
+		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+	}()
 
 	body, err := rekorEntryRequest(cert, priv)
 	if err != nil {
@@ -170,15 +174,13 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 		logEntryAnon = e
 		break
 	}
-	verified := "true"
 	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
 	if err != nil {
 		return fmt.Errorf("getting rekor public keys: %w", err)
 	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys); err != nil {
-		verified = "false"
+	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys); err == nil {
+		verified = "true"
 	}
-	verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
 	return err
 }
 

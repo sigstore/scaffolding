@@ -33,7 +33,7 @@ inputs:
   knative-version:
     description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
     required: true
-    default: '1.8.0'
+    default: '1.8.6'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true

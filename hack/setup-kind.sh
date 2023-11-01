@@ -319,7 +319,7 @@ function resource_blaster() {
   url="https://github.com/knative/${REPO}/releases/download/${REAL_KNATIVE_VERSION}/${FILE}"
 
   curl -L -s "${url}" \
-    | yq e 'del(.spec.template.spec.containers[]?.resources)' - \
+    | yq 'del(.spec.template.spec.containers[]?.resources)' - \
     `# Filter out empty objects that come out as {} b/c kubectl barfs` \
     | grep -v '^{}$'
 }

@@ -116,7 +116,7 @@ resource "google_monitoring_alert_policy" "availability_burn_alert" {
   conditions {
     display_name = each.value.display_name
     condition_threshold {
-      filter = format("select_slo_burn_rate(\"projects/%s/services/%s/serviceLevelObjectives/%s\", %s)", var.project_number, google_monitoring_custom_service.service.service_id, each.value.slo_id, each.value.window)
+      filter          = format("select_slo_burn_rate(\"projects/%s/services/%s/serviceLevelObjectives/%s\", %s)", var.project_number, google_monitoring_custom_service.service.service_id, each.value.slo_id, each.value.window)
       threshold_value = each.value.burn_rate_threshold
       duration        = "0s"
       comparison      = "COMPARISON_GT"

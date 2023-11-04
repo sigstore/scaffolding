@@ -80,8 +80,6 @@ apiVersion: v1
 kind: Namespace
 metadata:
   name: trillian-system
-  labels:
-    name: trillian-system
 YAML
 }
 

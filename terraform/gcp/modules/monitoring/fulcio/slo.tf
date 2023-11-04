@@ -19,6 +19,7 @@ module "slos" {
   count  = var.create_slos ? 1 : 0
 
   project_id            = var.project_id
+  project_number        = var.project_number
   service_id            = "fulcio"
   display_name          = "Fulcio"
   resource_name         = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
@@ -110,6 +111,7 @@ module "ctlog_slos" {
   count  = var.create_slos ? 1 : 0
 
   project_id            = var.project_id
+  project_number        = var.project_number
   service_id            = "ctlog"
   display_name          = "CT Log"
   resource_name         = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.ctlog_gke_namespace)

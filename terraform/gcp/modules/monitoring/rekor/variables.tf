@@ -23,6 +23,15 @@ variable "project_id" {
   }
 }
 
+variable "project_number" {
+  type    = string
+  default = ""
+  validation {
+    condition     = length(var.project_number) > 0
+    error_message = "Must specify PROJECT_NUMBER variable."
+  }
+}
+
 variable "cluster_location" {
   description = "Zone or Region to create cluster in."
   type        = string

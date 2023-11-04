@@ -12,15 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-terraform {
-  required_version = ">= 1.1.5"
-  required_providers {
-    google = {
-      version = ">= 4.11.0"
-    }
-  }
-}
-
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([

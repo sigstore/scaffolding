@@ -47,21 +47,6 @@ resource "google_service_networking_connection" "private_service_connection" {
   reserved_peering_ranges = [google_compute_global_address.service_range.name]
 }
 
-data "google_compute_zones" "available" {
-  // All available AZ in our region
-  region = var.region
-}
-
-resource "random_shuffle" "redis_az" {
-  // Randomly select two AZ from our region for the redis
-  input        = data.google_compute_zones.available.names
-  result_count = 2
-
-  lifecycle {
-    ignore_changes = all
-  }
-}
-
 resource "google_redis_instance" "index" {
   display_name   = "Rekor Index Instance"
   name           = "rekor-index"
@@ -69,15 +54,12 @@ resource "google_redis_instance" "index" {
   memory_size_gb = var.memory_size_gb
   redis_version  = "REDIS_6_X"
 
-  region                  = var.region // Used for naming, location determined by location_id
-  location_id             = random_shuffle.redis_az.result[0]
-  alternative_location_id = random_shuffle.redis_az.result[1]
+  region = var.region // Used for naming
 
   transit_encryption_mode = "DISABLED" // Consider enabling when Rekor is updated to support TLS with Redis client.
 
   authorized_network = var.network
   connect_mode       = "PRIVATE_SERVICE_ACCESS"
-
 
   depends_on = [google_service_networking_connection.private_service_connection]
 

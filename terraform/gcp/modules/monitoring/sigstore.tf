@@ -35,6 +35,7 @@ module "rekor" {
   source = "./rekor"
 
   project_id               = var.project_id
+  project_number           = var.project_number
   notification_channel_ids = var.notification_channel_ids
   rekor_url                = var.rekor_url
   cluster_name             = var.cluster_name
@@ -52,6 +53,7 @@ module "fulcio" {
   source = "./fulcio"
 
   project_id               = var.project_id
+  project_number           = var.project_number
   notification_channel_ids = var.notification_channel_ids
   ctlog_url                = var.ctlog_url
   fulcio_url               = var.fulcio_url
@@ -70,6 +72,7 @@ module "dex" {
   source = "./dex"
 
   project_id               = var.project_id
+  project_number           = var.project_number
   notification_channel_ids = var.notification_channel_ids
   cluster_name             = var.cluster_name
   cluster_location         = var.cluster_location

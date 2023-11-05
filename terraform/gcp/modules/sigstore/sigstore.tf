@@ -78,6 +78,7 @@ module "monitoring" {
   count = var.monitoring.enabled ? 1 : 0
 
   project_id               = var.project_id
+  project_number           = var.project_number
   cluster_location         = module.gke-cluster.cluster_location
   cluster_name             = var.cluster_name
   ca_pool_name             = var.ca_pool_name

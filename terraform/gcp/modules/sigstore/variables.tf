@@ -22,6 +22,14 @@ variable "project_id" {
   }
 }
 
+variable "project_number" {
+  type = string
+  validation {
+    condition     = length(var.project_number) > 0
+    error_message = "Must specify project_number variable."
+  }
+}
+
 variable "region" {
   description = "The region in which to create the VPC network"
   type        = string

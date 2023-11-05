@@ -201,7 +201,7 @@ resource "google_secret_manager_secret" "mysql-password" {
   secret_id = "mysql-password"
 
   replication {
-    automatic = true
+    auto {}
   }
   depends_on = [google_project_service.service]
 }
@@ -216,7 +216,7 @@ resource "google_secret_manager_secret" "mysql-user" {
   secret_id = "mysql-user"
 
   replication {
-    automatic = true
+    auto {}
   }
   depends_on = [google_project_service.service]
 }
@@ -230,7 +230,7 @@ resource "google_secret_manager_secret" "mysql-database" {
   secret_id = "mysql-database"
 
   replication {
-    automatic = true
+    auto {}
   }
   depends_on = [google_project_service.service]
 }

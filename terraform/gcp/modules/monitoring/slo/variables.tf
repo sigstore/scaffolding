@@ -24,6 +24,16 @@ variable "project_id" {
   }
 }
 
+variable "project_number" {
+  description = "Project Number in which the monitored service lives. Must correspond to same project_id"
+  type        = string
+  default     = ""
+  validation {
+    condition     = length(var.project_number) > 0
+    error_message = "Must specify PROJECT_NUMBER variable."
+  }
+}
+
 variable "service_id" {
   description = "Resource ID for the monitoring service."
   type        = string

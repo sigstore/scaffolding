@@ -31,7 +31,7 @@ inputs:
     required: true
     default: "."
   knative-version:
-    description: 'Version of Knative to install (1.1.0, 1.1.1, etc.)'
+    description: 'Version of Knative to install (1.1.0, 1.1.1, etc.); if not specified, a version with support for requested k8s-version will be used'
   registry-name:
     description: 'Name of the registry to install (registry.local)'
     required: true

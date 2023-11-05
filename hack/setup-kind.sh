@@ -326,6 +326,7 @@ function resource_blaster() {
 
 resource_blaster serving serving-crds.yaml | kubectl apply -f -
 sleep 10 # Avoid the race creating CRDs then instantiating them...
+resource_blaster serving serving-core.yaml | kubectl apply --validate=true --dry-run -f -
 resource_blaster serving serving-core.yaml | kubectl apply -f -
 resource_blaster net-kourier kourier.yaml | kubectl apply -f -
 kubectl patch configmap/config-network \

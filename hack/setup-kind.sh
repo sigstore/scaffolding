@@ -319,13 +319,13 @@ function resource_blaster() {
   url="https://github.com/knative/${REPO}/releases/download/${REAL_KNATIVE_VERSION}/${FILE}"
 
   curl -L -s "${url}" \
-    | yq 'del(.spec.template.spec.containers[]?.resources)' - \
+    | yq e 'del(.spec.template.spec.containers[]?.resources)' - \
     `# Filter out empty objects that come out as {} b/c kubectl barfs` \
     | grep -v '^{}$'
 }
 
 resource_blaster serving serving-crds.yaml | kubectl apply -f -
-sleep 3 # Avoid the race creating CRDs then instantiating them...
+sleep 10 # Avoid the race creating CRDs then instantiating them...
 resource_blaster serving serving-core.yaml | kubectl apply -f -
 resource_blaster net-kourier kourier.yaml | kubectl apply -f -
 kubectl patch configmap/config-network \

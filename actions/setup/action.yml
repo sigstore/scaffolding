@@ -19,7 +19,7 @@ branding:
   color: green
 inputs:
   version:
-    description: 'Version of scaffolding to install (v0.4.0, latest-release.)'
+    description: 'Version of scaffolding to install (v0.4.0, latest-release, main); main will use the latest commit on the main branch'
     required: true
     default: 'latest-release'
   sigstore-only:
@@ -61,7 +61,7 @@ runs:
       # - if version is "latest-release", look up latest release.
       # - otherwise, install the specified version.
       case ${{ inputs.version }} in
-      latest-release)
+      latest-release | main)
         tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/sigstore/scaffolding/releases/latest | jq -r '.tag_name')
         ;;
       *)
@@ -90,23 +90,37 @@ runs:
         sudo service docker restart
 
         echo "Installing kind and knative using release"
-        curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+
+        if [ "${{ inputs.version }}" != "main" ]; then
+          curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+        else
+          cp ${{ github.action_path }}/../../hack/setup-kind.sh .
+        fi
+
         chmod u+x ./setup-kind.sh
         ./setup-kind.sh \
           --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
           --cluster-suffix ${{ inputs.cluster-suffix }} \
-          --k8s-version ${{ inputs.k8s-version }} \
-          --knative-version ${{ inputs.knative-version }}
+          --k8s-version ${{ inputs.k8s-version }} ${{ inputs.knative-version != "" && (join(["--knative-version ", inputs.knative-version],"")) }}
       fi
 
-      echo "Installing sigstore scaffolding @ ${tag}"
-      curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+      if [ "${{ inputs.version }}" != "main" ]; then
+        echo "Installing sigstore scaffolding @ ${tag}"
+        curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+      else
+        cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
+      fi
       # Temp hack to address issuer mismatch issue.
       # Can be removed with the next release, after v0.6.5
       sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
       chmod u+x /tmp/setup-scaffolding-from-release.sh
       cat /tmp/setup-scaffolding-from-release.sh
-      /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      if [ "${{ inputs.version }}" != "main" ]; then
+        /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      else
+        /tmp/setup-scaffolding-from-release.sh
+      fi
+
       TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
       echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
       # Grab the trusted root

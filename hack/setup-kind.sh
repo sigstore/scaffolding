@@ -75,7 +75,7 @@ case ${K8S_VERSION} in
     ;;
   v1.24.x)
     K8S_VERSION="1.24.15"
-    KNATIVE_VERSION="1.10.5"
+    KNATIVE_VERSION="1.10.6"
     KIND_IMAGE_SHA="sha256:7db4f8bea3e14b82d12e044e25e34bd53754b7f2b0e9d56df21774e6f66a70ab"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;

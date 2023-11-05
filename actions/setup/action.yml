@@ -101,7 +101,7 @@ runs:
         ./setup-kind.sh \
           --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
           --cluster-suffix ${{ inputs.cluster-suffix }} \
-          --k8s-version ${{ inputs.k8s-version }} ${{ inputs.knative-version != "" && (join(["--knative-version ", inputs.knative-version],"")) }}
+          --k8s-version ${{ inputs.k8s-version }} ${{ inputs.knative-version != '' && (join(['--knative-version', inputs.knative-version],' ')) }}
       fi
 
       if [ "${{ inputs.version }}" != "main" ]; then

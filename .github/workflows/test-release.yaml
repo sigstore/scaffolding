@@ -23,10 +23,10 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.24.x
           - v1.25.x
           - v1.26.x
           - v1.27.x
+          - v1.28.x
         leg:
           - fulcio rekor ctlog e2e
         go-version:

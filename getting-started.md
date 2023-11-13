@@ -16,13 +16,17 @@ There's a reusable [action](./actions/setup/README.md) that you can use as is.
 # Prerequisites
 
 You need to install `yq`. You can do this like so:
-```
+
+```shell
 go install github.com/mikefarah/yq/v4@latest
 ```
+
 You also need [ko](https://ko.build/) a tool for building lighter, more secure container images.
-```
+
+```shell
 go install github.com/google/ko@latest
 ```
+
 There are further install options on the [ko website](https://ko.build/).
 
 # Running locally on KinD
@@ -35,6 +39,7 @@ cloning the repo):
 ```
 
 Or by downloading a release version of the script
+
 ```shell
 curl -fLo /tmp/setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/v0.6.4/setup-kind.sh
 chmod u+x /tmp/setup-kind.sh
@@ -61,6 +66,7 @@ b1e3f3238f7a   registry:2                        "/entrypoint.sh /etc…"   15 m
 ```
 
 So that's the running version of the registry, so first kill and then remove it:
+
 ```shell
 docker rm -f b1e3f3238f7a
 ```
@@ -68,8 +74,9 @@ docker rm -f b1e3f3238f7a
 # Install sigstore-scaffolding pieces
 
 ## From the release
+
 ```shell
-curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/v0.6.4/setup-scaffolding-from-release.sh
+curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/v0.6.9/setup-scaffolding-from-release.sh
 chmod u+x /tmp/setup-scaffolding-from-release.sh
 /tmp/setup-scaffolding-from-release.sh
 ```
@@ -171,7 +178,7 @@ kubectl -n kourier-system port-forward service/kourier-internal 8080:80 &
 
 Add the following entries to your `/etc/hosts` file
 
-```
+```txt
 127.0.0.1 rekor.rekor-system.svc
 127.0.0.1 fulcio.fulcio-system.svc
 127.0.0.1 ctlog.ctlog-system.svc
@@ -183,7 +190,7 @@ Add the following entries to your `/etc/hosts` file
 Instead of having to specify these in various flags when calling cosign and long
 URLs, let's create some up front:
 
-```
+```shell
 export REKOR_URL=http://rekor.rekor-system.svc:8080
 export FULCIO_URL=http://fulcio.fulcio-system.svc:8080
 export FULCIO_GRPC_URL=http://fulcio-grpc.fulcio-system.svc:8080
@@ -206,17 +213,20 @@ Let's first run a quick smoke test that does a cosign sign followed by making
 sure that the rekor entry is created for it.
 
 1) Get TUF root from the tuf-system namespace
+
 ```shell
 kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
 ```
 
 2) Initialize cosign with our root.
+
 ```shell
 cosign initialize --mirror $TUF_MIRROR --root ./root.json
 ```
 
 An example invocation of this on my machine looked like this:
-```
+
+```shell
 vaikas@villes-mbp scaffolding % cosign initialize --mirror $TUF_MIRROR --root ./root.json
 Root status:
  {
@@ -259,7 +269,7 @@ Root status:
 If you have an image that you want to play with, great, you can also create
 one easily like this (that gets then uploaded to our local registry):
 
-```
+```shell
 KO_DOCKER_REPO=registry.local:5001/sigstore
 pushd $(mktemp -d)
 go mod init example.com/demo
@@ -278,13 +288,14 @@ popd
 
 Then let's sign it (or change $demoimage to something else).
 
-```
-COSIGN_EXPERIMENTAL=1 cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --force --allow-insecure-registry $demoimage --identity-token `curl -s $ISSUER_URL`
+```shell
+cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --yes --allow-insecure-registry $demoimage --identity-token $(curl -s $ISSUER_URL)
 ```
 
 An example invocation from my local instance is like so:
-```
-vaikas@villes-mbp scaffolding % COSIGN_EXPERIMENTAL=1 cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --force --allow-insecure-registry $demoimage --identity-token `curl -s $ISSUER_URL`
+
+```shell
+vaikas@villes-mbp scaffolding % cosign sign --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --yes --allow-insecure-registry $demoimage --identity-token $(curl -s $ISSUER_URL)
 Generating ephemeral keys...
 Retrieving signed certificate...
 
@@ -298,14 +309,14 @@ Pushing signature to: registry.local:5001/sigstore/demo
 
 Then let's verify the signature.
 
-```
-COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```shell
+cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage --certificate-identity=https://kubernetes.io/namespaces/default/serviceaccounts/default --certificate-oidc-issuer=https://kubernetes.default.svc.cluster.local
 ```
 
 An example invocation from my local instance is like so:
 
-```
-vaikas@villes-mbp scaffolding % COSIGN_EXPERIMENTAL=1 cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```shell
+vaikas@villes-mbp scaffolding % cosign verify --rekor-url $REKOR_URL --allow-insecure-registry $demoimage --certificate-identity=https://kubernetes.io/namespaces/default/serviceaccounts/default --certificate-oidc-issuer=https://kubernetes.default.svc.cluster.local
 **Warning** Missing fallback target fulcio.crt.pem, skipping
 
 Verification for registry.local:5001/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
@@ -321,16 +332,16 @@ And the `**Warning**` is just letting us know that there's no custom metadata
 on TUF, and we fallback on the hard-coded names, and that's one of the ones we
 expect for Fulcio (and the other is the one we use: fulcio_v1.crt.pem)
 
-```
+```shell
 echo -n 'foobar test attestation' > ./predicate-file
-COSIGN_EXPERIMENTAL=1 cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --force $demoimage --identity-token `curl -s $ISSUER_URL`
+cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --yes $demoimage --identity-token $(curl -s $ISSUER_URL)
 ```
 
 An example invocation from my local instance:
 
-```
+```shell
 vaikas@villes-mbp scaffolding % echo -n 'foobar test attestation' > ./predicate-file
-COSIGN_EXPERIMENTAL=1 cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --force $demoimage --identity-token `curl -s $ISSUER_URL`
+cosign attest --predicate ./predicate-file --fulcio-url $FULCIO_URL --rekor-url $REKOR_URL --allow-insecure-registry --yes $demoimage --identity-token $(curl -s $ISSUER_URL)
 
 Generating ephemeral keys...
 Retrieving signed certificate...
@@ -345,14 +356,14 @@ tlog entry created with index: 1
 
 And then finally let's verify the attestation we just created:
 
-```
-COSIGN_EXPERIMENTAL=1 cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```shell
+cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage --certificate-identity=https://kubernetes.io/namespaces/default/serviceaccounts/default --certificate-oidc-issuer=https://kubernetes.default.svc.cluster.local
 ```
 
 An example invocation from my local instance:
 
-```
-vaikas@villes-mbp scaffolding % COSIGN_EXPERIMENTAL=1 cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage
+```shell
+vaikas@villes-mbp scaffolding % cosign verify-attestation --rekor-url $REKOR_URL --allow-insecure-registry $demoimage --certificate-identity=https://kubernetes.io/namespaces/default/serviceaccounts/default --certificate-oidc-issuer=https://kubernetes.default.svc.cluster.local
 **Warning** Missing fallback target fulcio.crt.pem, skipping
 
 Verification for registry.local:5001/sigstore/demo@sha256:b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025 --
@@ -367,7 +378,7 @@ Certificate issuer URL:  https://kubernetes.default.svc
 
 And you can inspect the `payload` of the attestation by base64 decoding the payload, so for me:
 
-```
+```shell
 vaikas@villes-mbp scaffolding % echo 'eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdGF0ZW1lbnQvdjAuMSIsInByZWRpY2F0ZVR5cGUiOiJjb3NpZ24uc2lnc3RvcmUuZGV2L2F0dGVzdGF0aW9uL3YxIiwic3ViamVjdCI6W3sibmFtZSI6InJlZ2lzdHJ5LmxvY2FsOjUwMDAvc2lnc3RvcmUvZGVtbyIsImRpZ2VzdCI6eyJzaGEyNTYiOiJiNmNmYzZlODc3MDYzMDRiZTEzZjYwN2IyMzhkOTA1ZGIxMDk2NjE5YzAyMTdjODJmNDE1MTExN2UwMTEyMDI1In19XSwicHJlZGljYXRlIjp7IkRhdGEiOiJmb29iYXIgdGVzdCBhdHRlc3RhdGlvbiIsIlRpbWVzdGFtcCI6IjIwMjItMDgtMDdUMDM6NTU6NDhaIn19' | base64 -d
 {"_type":"https://in-toto.io/Statement/v0.1","predicateType":"cosign.sigstore.dev/attestation/v1","subject":[{"name":"registry.local:5001/sigstore/demo","digest":{"sha256":"b6cfc6e87706304be13f607b238d905db1096619c0217c82f4151117e0112025"}}],"predicate":{"Data":"foobar test attestation","Timestamp":"2022-08-07T03:55:48Z"}}%
 ```

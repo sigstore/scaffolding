@@ -293,9 +293,12 @@ variable "dns_domain_name" {
 }
 
 variable "ctlog_shards" {
-  type        = list(string)
-  description = "Array of CTLog shards to create. Entry should be something like [2021, 2022], which would then have 2 independent CTLog shards backed by ctlog-2021 and ctlog-2022 Cloud SQL instances."
-  default     = []
+  type = map(object({
+    mysql_db_version = string
+  }))
+
+  description = "Map of CTLog shards to create. If keys are '2022' and '2023', it would create 2 independent CTLog Cloud MySql instances named sigstore-staging-ctlog-2022 and sigstore-staging-ctlog-2023."
+  default     = {}
 }
 
 variable "standalone_mysqls" {

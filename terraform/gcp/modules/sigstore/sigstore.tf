@@ -329,7 +329,7 @@ module "ctlog" {
 module "ctlog_shards" {
   source = "../mysql-shard"
 
-  for_each = toset(var.ctlog_shards)
+  for_each = var.ctlog_shards
 
   instance_name = format("%s-ctlog-%s", var.cluster_name, each.key)
 
@@ -337,9 +337,11 @@ module "ctlog_shards" {
   region     = var.region
 
   cluster_name = var.cluster_name
-  // NB: These are commented out so that we pick up the defaults
+
+  database_version = each.value["mysql_db_version"]
+
+  // NB: This is commented out so that we pick up the defaults
   // for the particular environment consistently.
-  //mysql_database_version  = var.mysql_db_version
   //mysql_tier              = var.mysql_tier
 
   replica_zones = var.mysql_replica_zones

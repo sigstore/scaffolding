@@ -11,7 +11,7 @@ replace google.golang.org/grpc => google.golang.org/grpc v1.57.1
 require (
 	chainguard.dev/exitdir v0.0.1
 	github.com/cenkalti/backoff/v3 v3.2.2
-	github.com/go-jose/go-jose/v3 v3.0.0
+	github.com/go-jose/go-jose/v3 v3.0.1
 	github.com/go-openapi/strfmt v0.21.7
 	github.com/go-openapi/swag v0.22.4
 	github.com/go-sql-driver/mysql v1.7.1

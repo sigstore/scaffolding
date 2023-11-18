@@ -4,10 +4,6 @@ go 1.21
 
 toolchain go1.21.1
 
-// Ping to v1.57.1 until google/certificate-transparency-go is on 1.58.3 or higher
-// https://github.com/google/certificate-transparency-go/pull/1151
-replace google.golang.org/grpc => google.golang.org/grpc v1.57.1
-
 require (
 	chainguard.dev/exitdir v0.0.1
 	github.com/cenkalti/backoff/v3 v3.2.2

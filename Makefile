@@ -69,7 +69,7 @@ ko-apply-rekor:
 .PHONY: ko-apply-trillian
 ko-apply-trillian:
 	LDFLAGS="$(LDFLAGS)" \
-	ko apply -BRf ./config/trillian
+	ko apply -v -BRf ./config/trillian
 
 .PHONY: ko-apply-tsa
 ko-apply-tsa:

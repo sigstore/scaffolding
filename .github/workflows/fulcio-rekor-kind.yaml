@@ -74,8 +74,6 @@ jobs:
           ${{ runner.os }}-go-${{ matrix.go-version }}-
 
     - uses: ko-build/setup-ko@ace48d793556083a76f1e3e6068850c1f4a369aa # v0.6
-      with:
-        version: tip
 
     - uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8 # v3.2.0
 

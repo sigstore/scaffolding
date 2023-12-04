@@ -40,7 +40,7 @@ require (
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.16.0
-	golang.org/x/net v0.18.0
+	golang.org/x/net v0.19.0
 	golang.org/x/time v0.4.0
 	google.golang.org/genproto v0.0.0-20231016165738-49dd2c1f3d0b
 	google.golang.org/grpc v1.59.0

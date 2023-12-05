@@ -163,11 +163,14 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 	defer resp.Body.Close()
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("invalid status code when checking an entry in rekor: %s", resp.Status)
+	}
 	// If entry was added successfully, we should verify it
 	var logEntry models.LogEntry
 	err = json.NewDecoder(resp.Body).Decode(&logEntry)
 	if err != nil {
-		return fmt.Errorf("unmarshal: %w", err)
+		return fmt.Errorf("error decoding the log entry with body '%v' and error: %w", resp.Body, err)
 	}
 	var logEntryAnon models.LogEntryAnon
 	for _, e := range logEntry {

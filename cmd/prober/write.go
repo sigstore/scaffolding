@@ -100,6 +100,11 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("invalid status code '%s' when requesting a cert from Fulcio with body '%s'", resp.Status, string(body))
+	}
+
 	responseBody, err := io.ReadAll(resp.Body)
 	if err != nil {
 		Logger.Errorf("error reading response from Fulcio: %v", err)

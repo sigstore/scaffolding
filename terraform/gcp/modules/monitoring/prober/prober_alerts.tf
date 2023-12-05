@@ -199,7 +199,7 @@ resource "google_monitoring_alert_policy" "prober_verification" {
     condition_threshold {
       aggregations {
         alignment_period   = "60s"
-        per_series_aligner = "ALIGN_DELTA"
+        per_series_aligner = "ALIGN_SUM"
       }
 
       comparison      = "COMPARISON_GT"
@@ -211,8 +211,6 @@ resource "google_monitoring_alert_policy" "prober_verification" {
         count   = "1"
         percent = "0"
       }
-
-      evaluation_missing_data = "EVALUATION_MISSING_DATA_INACTIVE"
     }
 
     display_name = "Kubernetes Container - prometheus/verification"

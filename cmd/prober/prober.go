@@ -165,6 +165,11 @@ func main() {
 	reg.MustRegister(endpointLatenciesSummary, endpointLatenciesHistogram, verificationCounter)
 	reg.MustRegister(NewVersionCollector("sigstore_prober"))
 
+	// Ensure that we report zeroed failures on verifications.  This allows us to
+	// detect on alert on the "never seen" --> "seen once" transition.
+	verificationCounter.With(prometheus.Labels{verifiedLabel: "false"}).Add(0)
+	verificationCounter.With(prometheus.Labels{verifiedLabel: "true"}).Add(0)
+
 	go runProbers(ctx, frequency, oneTime)
 
 	// Expose the registered metrics via HTTP.

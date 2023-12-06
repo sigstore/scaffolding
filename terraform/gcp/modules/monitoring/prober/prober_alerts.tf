@@ -199,17 +199,21 @@ resource "google_monitoring_alert_policy" "prober_verification" {
     condition_threshold {
       aggregations {
         alignment_period   = "60s"
-        per_series_aligner = "ALIGN_SUM"
+        per_series_aligner = "ALIGN_RATE"
       }
 
       comparison      = "COMPARISON_GT"
-      duration        = "0s"
-      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown\" AND metric.labels.verified = \"false\""
+      duration        = "60s"
+      filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown:counter\" AND metric.labels.verified = \"false\""
       threshold_value = "0"
 
+      // When there are no responses we get no data instead of "0" in the
+      // metric. This flag treats lack of data as 0 so incidents autoresolve
+      // correctly.
+      evaluation_missing_data = "EVALUATION_MISSING_DATA_NO_OP"
+
       trigger {
-        count   = "1"
-        percent = "0"
+        count = "1"
       }
     }
 

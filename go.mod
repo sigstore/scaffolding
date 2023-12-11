@@ -34,7 +34,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.0
 	github.com/sigstore/fulcio v1.4.3
 	github.com/sigstore/rekor v1.3.4
-	github.com/sigstore/sigstore v1.7.5
+	github.com/sigstore/sigstore v1.7.6
 	github.com/sigstore/timestamp-authority v1.2.0
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399

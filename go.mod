@@ -8,7 +8,7 @@ require (
 	chainguard.dev/exitdir v0.0.1
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/go-jose/go-jose/v3 v3.0.1
-	github.com/go-openapi/strfmt v0.21.8
+	github.com/go-openapi/strfmt v0.21.9
 	github.com/go-openapi/swag v0.22.4
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/golang/glog v1.2.0
@@ -197,7 +197,7 @@ require (
 	go.etcd.io/etcd/api/v3 v3.6.0-alpha.0 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.0-alpha.0 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0 // indirect
-	go.mongodb.org/mongo-driver v1.12.1 // indirect
+	go.mongodb.org/mongo-driver v1.13.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.21.0 // indirect
 	go.opentelemetry.io/otel/metric v1.21.0 // indirect

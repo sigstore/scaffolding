@@ -27,6 +27,7 @@ jobs:
           - v1.26.x
           - v1.27.x
           - v1.28.x
+          - v1.29.x
         release-version:
           - "main" # Test explicitly with latest
         go-version:

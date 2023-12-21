@@ -115,7 +115,7 @@ that has the mysql running, and Trillian
 
 Rekor requires a Merkle tree that has been created in Trillian to function. This
 can be achieved by using the admin grpc client
-[CreateTree](https://github.com/google/trillian/blob/master/trillian_admin_api.proto#L49)
+[CreateTree](https://github.com/google/trillian/blob/29373b23c1b1d8e830dc697f70b3185b65a1325f/trillian_admin_api.proto#L49https://github.com/google/trillian/blob/29373b23c1b1d8e830dc697f70b3185b65a1325f/trillian_admin_api.proto#L49)
 call. This again is a Job ‘**createtree**’ and this job will also create a
 ConfigMap containing the newly minted TreeID. This allows us to (recall mounting
 Configmaps to pods from above) to block Rekor server from starting before the
@@ -134,13 +134,6 @@ keys:
  * signing-secret-password - Holds the password used to encrypt the key above.
 
 That secret then gets mounted / used by Rekor as demonstrated below.
-
- Also a secret holding the Rekor public key is created, which by default is
- named `rekor-pub-key` and contains one key that we need to construct a proper
- tuf root later on.
-
-  * public - Rekor public key
-
 
 ```
 spec:
@@ -178,42 +171,6 @@ spec:
           - key: signing-secret
             path: signing-secret
 ```
-spec:
-  template:
-    spec:
-      containers:
-      - image: gcr.io/projectsigstore/fulcio@sha256:66870bd6b111f3c5478703a8fb31c062003f0127b2c2c5e49ccd82abc4ec7841
-        name: fulcio
-        args:
-          - "serve"
-          - "--port=5555"
-          - "--ca=fileca"
-          - "--fileca-key"
-          - "/var/run/fulcio-secrets/key.pem"
-          - "--fileca-cert"
-          - "/var/run/fulcio-secrets/cert.pem"
-          - "--fileca-key-passwd"
-          - "$(PASSWORD)"
-          - "--ct-log-url=http://ctlog.ctlog-system.svc/e2e-test-tree"
-        env:
-        - name: PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: fulcio-secret
-              key: password
-        volumeMounts:
-        - name: fulcio-cert
-          mountPath: "/var/run/fulcio-secrets"
-          readOnly: true
-      volumes:
-      - name: fulcio-cert
-        secret:
-          secretName: fulcio-secret
-          items:
-          - key: private
-            path: key.pem
-          - key: cert
-            path: cert.pem
 
 In addition to creating a tree, we will also create a secret holding the
 public key of the Rekor client that we'll need to be able to construct a proper
@@ -228,7 +185,7 @@ incoming Signing Certificate requests. For this we again have a Job
 ‘**createcerts**’ that will create a self signed certificate, private/public
 keys as well as password used to encrypt the private key.
 Basically we need to ensure we have all the
-[necessary pieces](https://github.com/sigstore/fulcio/blob/main/cmd/app/serve.go#L63-L65)
+[necessary pieces](https://github.com/sigstore/fulcio/blob/156bc98ddacda11850d7aad5f37cda94ed160315/cmd/app/serve.go#L91-L93)
 to start up Fulcio.
 
 This ‘**createcerts**’ job just creates the pieces mentioned above and creates
@@ -239,7 +196,7 @@ two Secrets, one called `fulcio-secrets` containing the following keys:
 * password - Password to use for decrypting the private key
 * public - Public key
 
-We also create another secert that just holds the public information called
+We also create another secret that just holds the public information called
 `pubkeysecret` that has two keys:
 
 * cert - Root Certificate
@@ -302,8 +259,8 @@ same ‘**createtree**’ Job from above.
 
 In addition to Trillian, the dependency on Fulcio is that we need to establish
 trust for the Root Certificate that Fulcio is using so that when Fulcio sends
-requests for inclusion in our CTLog, we trust it. For this, we use
-[RootCert](https://github.com/sigstore/fulcio/blob/main/pkg/api/client.go#L132)
+requests for inclusion in our CTLog, we trust it. For this, we use the
+[RootCert](https://github.com/sigstore/fulcio/blob/156bc98ddacda11850d7aad5f37cda94ed160315/pkg/api/client.go#L155)
 API call to fetch the Certificate.
 
 Lastly we need to create a Certificate for CTLog itself.

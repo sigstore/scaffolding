@@ -93,7 +93,8 @@ func main() {
 				}
 				for k, v := range certFiles {
 					logging.FromContext(ctx).Infof("Got tsa cert file %s", k)
-					files[k] = v
+					trimmedCert := strings.TrimSpace(string(v))
+					files[k] = []byte(trimmedCert)
 				}
 			} else {
 				files[file.Name()] = fileBytes

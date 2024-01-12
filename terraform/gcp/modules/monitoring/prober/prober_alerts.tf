@@ -205,7 +205,7 @@ resource "google_monitoring_alert_policy" "prober_verification" {
       comparison      = "COMPARISON_GT"
       duration        = "60s"
       filter          = "resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/verification/unknown:counter\" AND metric.labels.verified = \"false\""
-      threshold_value = "0"
+      threshold_value = "5" // Should retry ~7 times per minute, so more than 5 failures denotes an issue
 
       // When there are no responses we get no data instead of "0" in the
       // metric. This flag treats lack of data as 0 so incidents autoresolve

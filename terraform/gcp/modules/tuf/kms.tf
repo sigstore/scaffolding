@@ -1,5 +1,5 @@
 /**
- * Copyright 2023 The Sigstore Authors
+ * Copyright 2024 The Sigstore Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,4 +37,13 @@ resource "google_kms_key_ring_iam_member" "tuf-sa-key-iam" {
   role        = "roles/cloudkms.signerVerifier"
   member      = format("serviceAccount:%s@%s.iam.gserviceaccount.com", var.tuf_service_account_name, var.project_id)
   depends_on  = [google_kms_key_ring.tuf-keyring, google_service_account.tuf-sa]
+}
+
+resource "google_kms_key_ring_iam_member" "tuf-key-iam-viewers" {
+  for_each = toset(var.tuf_key_viewers)
+
+  key_ring_id = google_kms_key_ring.tuf-keyring.id
+  role        = "roles/cloudkms.publicKeyViewer"
+  member      = each.key
+  depends_on  = [google_kms_key_ring.tuf-keyring]
 }

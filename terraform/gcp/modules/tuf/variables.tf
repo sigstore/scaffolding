@@ -82,3 +82,9 @@ variable "kms_location" {
   description = "Location of KMS keyring"
   default     = "global"
 }
+
+variable "tuf_key_viewers" {
+  type        = list(string)
+  description = "List of members who can view the public key. See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_kms_key_ring_iam#argument-reference for supported values"
+  default     = []
+}

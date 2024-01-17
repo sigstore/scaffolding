@@ -28,6 +28,7 @@ variable "region" {
   description = "GCP region"
 }
 
+// Storage variables
 variable "tuf_bucket" {
   type        = string
   description = "Name of GCS bucket for TUF root."
@@ -54,4 +55,36 @@ variable "gcs_logging_bucket" {
   description = "name of GCS bucket where storage logs will be written"
   type        = string
   default     = ""
+}
+
+// Service account variables
+variable "tuf_service_account_name" {
+  type        = string
+  description = "Name of service account for TUF signing on GitHub Actions"
+  default     = "tuf-gha"
+}
+
+// KMS variables
+variable "tuf_keyring_name" {
+  type        = string
+  description = "Name of KMS keyring for TUF metadata signing"
+  default     = "tuf-keyring"
+}
+
+variable "tuf_key_name" {
+  type        = string
+  description = "Name of KMS key for TUF metadata signing"
+  default     = "tuf-key"
+}
+
+variable "kms_location" {
+  type        = string
+  description = "Location of KMS keyring"
+  default     = "global"
+}
+
+variable "tuf_key_viewers" {
+  type        = list(string)
+  description = "List of members who can view the public key. See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_kms_key_ring_iam#argument-reference for supported values"
+  default     = []
 }

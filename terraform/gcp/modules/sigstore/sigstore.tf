@@ -64,6 +64,12 @@ module "tuf" {
   gcs_logging_bucket  = var.gcs_logging_bucket
   storage_class       = var.tuf_storage_class
 
+  tuf_service_account_name = var.tuf_service_account_name
+
+  tuf_keyring_name = var.tuf_keyring_name
+  tuf_key_name     = var.tuf_key_name
+  kms_location     = var.tuf_kms_location
+
   depends_on = [
     module.project_roles
   ]

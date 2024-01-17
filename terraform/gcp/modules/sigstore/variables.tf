@@ -80,6 +80,30 @@ variable "tuf_storage_class" {
   default     = "REGIONAL"
 }
 
+variable "tuf_service_account_name" {
+  type        = string
+  description = "Name of service account for TUF signing on GitHub Actions"
+  default     = "tuf-gha"
+}
+
+variable "tuf_keyring_name" {
+  type        = string
+  description = "Name of KMS keyring for TUF metadata signing"
+  default     = "tuf-keyring"
+}
+
+variable "tuf_key_name" {
+  type        = string
+  description = "Name of KMS key for TUF metadata signing"
+  default     = "tuf-key"
+}
+
+variable "tuf_kms_location" {
+  type        = string
+  description = "Location of KMS keyring"
+  default     = "global"
+}
+
 variable "ca_pool_name" {
   description = "Certificate authority pool name"
   type        = string

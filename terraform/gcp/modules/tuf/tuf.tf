@@ -74,6 +74,14 @@ resource "google_storage_bucket_iam_member" "public_tuf_member" {
   depends_on = [google_storage_bucket.tuf]
 }
 
+resource "google_storage_bucket_iam_member" "tuf_sa_editor" {
+  bucket = google_storage_bucket.tuf.name
+  role   = "roles/storage.objectUser"
+  member = format("serviceAccount:%s@%s.iam.gserviceaccount.com", var.tuf_service_account_name, var.project_id)
+
+  depends_on = [google_storage_bucket.tuf, google_service_account.tuf-sa]
+}
+
 resource "google_storage_bucket" "tuf_preprod" {
   name     = var.tuf_preprod_bucket
   location = var.region
@@ -118,4 +126,12 @@ resource "google_storage_bucket_iam_member" "public_tuf_preprod_member" {
   member = "allUsers"
 
   depends_on = [google_storage_bucket.tuf_preprod]
+}
+
+resource "google_storage_bucket_iam_member" "tuf_sa_preprod_editor" {
+  bucket = google_storage_bucket.tuf_preprod.name
+  role   = "roles/storage.objectUser"
+  member = format("serviceAccount:%s@%s.iam.gserviceaccount.com", var.tuf_service_account_name, var.project_id)
+
+  depends_on = [google_storage_bucket.tuf_preprod, google_service_account.tuf-sa]
 }

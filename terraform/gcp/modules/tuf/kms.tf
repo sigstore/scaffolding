@@ -34,6 +34,11 @@ resource "google_kms_crypto_key" "tuf-key" {
   depends_on = [google_kms_key_ring.tuf-keyring]
 }
 
+resource "google_kms_crypto_key_version" "tuf-key-version" {
+  crypto_key = google_kms_crypto_key.tuf-key.id
+  depends_on = [google_kms_key_ring.tuf-key]
+}
+
 resource "google_kms_key_ring_iam_member" "tuf-sa-key-iam" {
   key_ring_id = google_kms_key_ring.tuf-keyring.id
   role        = "roles/cloudkms.signerVerifier"

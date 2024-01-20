@@ -102,3 +102,10 @@ variable "redis_cluster_memory_size_gb" {
   type        = number
   default     = 30
 }
+
+variable "new_entry_pubsub_consumers" {
+  // If this list is empty, the PubSub resources will not be created.
+  description = "The list of IAM principals that can subscribe to events about new entries in the log"
+  type        = list(string)
+  default     = []
+}

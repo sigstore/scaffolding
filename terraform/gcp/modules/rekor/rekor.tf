@@ -43,6 +43,18 @@ module "redis" {
   network = var.network
 }
 
+module "newentry_pubsub_topic" {
+  source = "../pubsub_topic"
+
+  count = length(var.new_entry_pubsub_consumers) > 0 ? 1 : 0
+
+  project_id = var.project_id
+
+  pubsub_topic_name      = "new-entry"
+  publisher_sa_email     = google_service_account.rekor-sa.email
+  pubsub_topic_consumers = var.new_entry_pubsub_consumers
+}
+
 resource "google_dns_record_set" "A_rekor" {
   name = "rekor.${var.dns_domain_name}"
   type = "A"

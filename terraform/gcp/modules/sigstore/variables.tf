@@ -260,6 +260,11 @@ variable "rekor_key_name" {
   default     = "rekor-key"
 }
 
+variable "rekor_new_entry_pubsub_consumers" {
+  type        = list(string)
+  description = "List of IAM principals that can subscribe to events about new entries in the log"
+}
+
 variable "timestamp" {
   type = object({
     enabled = bool

@@ -218,6 +218,8 @@ module "rekor" {
   dns_zone_name   = var.dns_zone_name
   dns_domain_name = var.dns_domain_name
 
+  new_entry_pubsub_consumers = var.rekor_new_entry_pubsub_consumers
+
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
 
   depends_on = [

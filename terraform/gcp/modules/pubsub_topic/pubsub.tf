@@ -33,5 +33,5 @@ data "google_iam_policy" "topic_iam" {
 resource "google_pubsub_topic_iam_policy" "topic_iam" {
   project     = google_pubsub_topic.topic.project
   topic       = google_pubsub_topic.topic.name
-  policy_data = data.google_iam_policy.topic_iam
+  policy_data = data.google_iam_policy.topic_iam.policy_data
 }

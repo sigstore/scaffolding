@@ -263,6 +263,7 @@ variable "rekor_key_name" {
 variable "rekor_new_entry_pubsub_consumers" {
   type        = list(string)
   description = "List of IAM principals that can subscribe to events about new entries in the log"
+  default     = []
 }
 
 variable "timestamp" {

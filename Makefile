@@ -1,9 +1,11 @@
 GIT_TAG ?= $(shell git describe --tags --always --dirty)
 GIT_HASH ?= $(shell git rev-parse HEAD)
 
-LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG)
+LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) -X sigs.k8s.io/release-utils/version.gitCommit=$(GIT_HASH)
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
+
+TRILLIAN_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/google/trillian)
 
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := trillian ctlog fulcio rekor tsa tuf prober
@@ -18,6 +20,12 @@ ko-resolve:
 	# "Building cloudsqlproxy wrapper"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./cmd/cloudsqlproxy
+	# "Building trillian_log_server"
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_server github.com/google/trillian/cmd/trillian_log_server
+	# "Building trillian_log_signer"
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_signer github.com/google/trillian/cmd/trillian_log_signer
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:

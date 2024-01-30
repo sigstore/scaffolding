@@ -26,4 +26,6 @@ import (
 
 	// Import things that we build using ko
 	_ "github.com/google/certificate-transparency-go/trillian/ctfe/ct_server"
+	_ "github.com/google/trillian/cmd/trillian_log_server"
+	_ "github.com/google/trillian/cmd/trillian_log_signer"
 )

@@ -31,7 +31,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/prometheus/client_golang v1.18.0
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/sigstore/cosign/v2 v2.2.2
+	github.com/sigstore/cosign/v2 v2.2.3
 	github.com/sigstore/fulcio v1.4.3
 	github.com/sigstore/rekor v1.3.5
 	github.com/sigstore/sigstore v1.8.1
@@ -76,7 +76,7 @@ require (
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.1 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go v1.49.21 // indirect
+	github.com/aws/aws-sdk-go v1.50.0 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.24.1 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.26.6 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.16.16 // indirect
@@ -94,8 +94,8 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
-	github.com/buildkite/agent/v3 v3.59.0 // indirect
-	github.com/buildkite/go-pipeline v0.2.0 // indirect
+	github.com/buildkite/agent/v3 v3.62.0 // indirect
+	github.com/buildkite/go-pipeline v0.3.2 // indirect
 	github.com/buildkite/interpolate v0.0.0-20200526001904-07f35b4ae251 // indirect
 	github.com/census-instrumentation/opencensus-proto v0.4.1 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
@@ -139,7 +139,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
-	github.com/google/go-containerregistry v0.17.0 // indirect
+	github.com/google/go-containerregistry v0.18.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect
@@ -207,7 +207,7 @@ require (
 	github.com/spf13/cobra v1.8.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.18.2 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.1.6 // indirect
+	github.com/spiffe/go-spiffe/v2 v2.1.7 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect

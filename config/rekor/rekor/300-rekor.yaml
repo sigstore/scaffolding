@@ -19,7 +19,7 @@ spec:
       serviceAccountName: rekor
       containers:
       - name: rekor
-        image: gcr.io/projectsigstore/rekor-server:v1.3.4@sha256:bafe388dd66097f06516bc67cf9c0fc5da629798f60a2326e8c4b4584c82ed4f
+        image: gcr.io/projectsigstore/rekor-server:v1.3.5@sha256:392610f51948daa0efe0c05bc088f2af0ca1b7411c9c9c571146cfd40df23af8
         ports:
         - containerPort: 3000
         args: [

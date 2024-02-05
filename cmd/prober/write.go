@@ -31,6 +31,7 @@ import (
 
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag"
+	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -63,6 +64,8 @@ func setHeaders(req *retryablehttp.Request, token string) {
 	// Set the content-type to reflect we're sending JSON.
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+	// Set this value (even though it is not coming through an GCP LB) to correlate prober req/response
+	req.Header.Set("X-Cloud-Trace-Context", uuid.Must(uuid.NewV7()).String())
 }
 
 // fulcioWriteEndpoint tests the only write endpoint for Fulcio

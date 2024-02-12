@@ -39,7 +39,7 @@ require (
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.uber.org/zap v1.26.0
-	golang.org/x/crypto v0.18.0
+	golang.org/x/crypto v0.19.0
 	golang.org/x/net v0.20.0
 	golang.org/x/time v0.5.0
 	google.golang.org/genproto v0.0.0-20240116215550-a9fa1716bcac
@@ -230,8 +230,8 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/oauth2 v0.16.0 // indirect
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/tools v0.16.1 // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect

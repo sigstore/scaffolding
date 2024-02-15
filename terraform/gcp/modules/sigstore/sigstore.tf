@@ -149,6 +149,8 @@ module "gke-cluster" {
 
   monitoring_components = var.cluster_monitoring_components
 
+  security_group = var.gke_cluster_security_group
+
   depends_on = [
     module.network,
     module.bastion,

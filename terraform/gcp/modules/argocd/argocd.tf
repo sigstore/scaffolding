@@ -17,7 +17,8 @@
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([
-    "admin.googleapis.com",      // For accessing Directory API
+    "admin.googleapis.com",         // For accessing Directory API
+    "secretmanager.googleapis.com", // For Secrets
   ])
   project = var.project_id
   service = each.key
@@ -150,4 +151,13 @@ YAML
   depends_on = [
     kubernetes_namespace_v1.argocd
   ]
+}
+
+resource "google_secret_manager_secret" "argocd-directory-api-credentials" {
+  secret_id = var.gcp_secret_name_directory_api_credentials
+
+  replication {
+    auto {}
+  }
+  depends_on = [google_project_service.service]
 }

@@ -155,6 +155,7 @@ YAML
 
 resource "google_secret_manager_secret" "argocd-directory-api-credentials" {
   secret_id = var.gcp_secret_name_directory_api_credentials
+  project   = var.project_id
 
   replication {
     auto {}

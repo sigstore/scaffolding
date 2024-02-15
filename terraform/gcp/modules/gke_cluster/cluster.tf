@@ -145,6 +145,10 @@ resource "google_container_cluster" "cluster" {
     }
   }
 
+  authenticator_groups_config {
+    security_group = var.security_group
+  }
+
   depends_on = [google_project_service.service]
 }
 
@@ -176,4 +180,3 @@ resource "google_compute_firewall" "master-webhooks" {
 
   depends_on = [google_container_cluster.cluster]
 }
-

@@ -14,6 +14,20 @@
  * limitations under the License.
  */
 
+// Enable required services for this module
+resource "google_project_service" "service" {
+  for_each = toset([
+    "admin.googleapis.com",         // For accessing Directory API
+    "secretmanager.googleapis.com", // For Secrets
+  ])
+  project = var.project_id
+  service = each.key
+
+  // Do not disable the service on destroy. On destroy, we are going to
+  // destroy the project, but we need the APIs available to destroy the
+  // underlying resources.
+  disable_on_destroy = false
+}
 
 // ArgoCD
 resource "kubernetes_namespace_v1" "argocd" {
@@ -107,4 +121,43 @@ resource "helm_release" "argocd_apps" {
   depends_on = [
     helm_release.argocd
   ]
+}
+
+resource "google_service_account" "argocd-directory-api-sa" {
+  account_id   = "argocd-directory-api-sa"
+  display_name = "ArgoCD Directory API Service Account"
+  project      = var.project_id
+}
+
+resource "kubectl_manifest" "externalsecret_argocd_directory_api_credentials" {
+  yaml_body = <<YAML
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: gcp-external-secret-argocd-directory-api-credentials
+  namespace: "${kubernetes_namespace_v1.argocd.metadata[0].name}"
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-backend
+  target:
+    name: argocd-directory-api-credentials
+  data:
+  - secretKey: googleAuth.json
+    remoteRef:
+      key: "${var.gcp_secret_name_directory_api_credentials}"
+YAML
+
+  depends_on = [
+    kubernetes_namespace_v1.argocd
+  ]
+}
+
+resource "google_secret_manager_secret" "argocd-directory-api-credentials" {
+  secret_id = var.gcp_secret_name_directory_api_credentials
+
+  replication {
+    auto {}
+  }
+  depends_on = [google_project_service.service]
 }

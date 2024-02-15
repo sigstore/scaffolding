@@ -392,3 +392,8 @@ variable "cluster_monitoring_components" {
   type        = list(string)
   default     = ["SYSTEM_COMPONENTS"]
 }
+
+variable "gke_cluster_security_group" {
+  description = "name of Google Group used for GKE Group RBAC; must be gke-security-groups@<yourdomain>"
+  type        = string
+}

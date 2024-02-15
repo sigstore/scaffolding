@@ -14,6 +14,15 @@
  * limitations under the License.
  */
 
+variable "project_id" {
+  type    = string
+  default = ""
+  validation {
+    condition     = length(var.project_id) > 0
+    error_message = "Must specify project_id variable."
+  }
+}
+
 variable "argocd_chart_version" {
   description = "Version of ArgoCD Helm chart. Versions listed here https://artifacthub.io/packages/helm/argo/argo-cd"
   type        = string
@@ -46,5 +55,10 @@ variable "gcp_secret_name_ssh" {
 
 variable "gcp_secret_name_slack_token" {
   description = "GCP Secret name that holds the slack token to argocd send notifications."
+  type        = string
+}
+
+variable "gcp_secret_name_directory_api_credentials" {
+  description = "GCP Secret name that holds the SA credentials to access Directory API services."
   type        = string
 }

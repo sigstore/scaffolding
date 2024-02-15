@@ -17,7 +17,7 @@
 // Enable required services for this module
 resource "google_project_service" "service" {
   for_each = toset([
-    "admin.googleapis.com",      // For configuring DNS records
+    "admin.googleapis.com",      // For accessing Directory API
   ])
   project = var.project_id
   service = each.key

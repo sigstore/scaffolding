@@ -48,7 +48,7 @@ require (
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.29.1
-	k8s.io/apimachinery v0.29.1
+	k8s.io/apimachinery v0.29.2
 	k8s.io/client-go v0.29.1
 	k8s.io/code-generator v0.29.1
 	knative.dev/hack v0.0.0-20230417170854-f591fea109b3

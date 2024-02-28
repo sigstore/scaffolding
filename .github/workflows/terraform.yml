@@ -26,7 +26,7 @@ jobs:
       - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v2.0.0
         with:
           # TODO: extract terraform from the tf file when we have pinned
-          terraform_version: 1.7.2
+          terraform_version: 1.7.4
 
       - name: Terraform fmt
         id: fmt
@@ -46,7 +46,7 @@ jobs:
       - uses: hashicorp/setup-terraform@a1502cd9e758c50496cc9ac5308c4843bcd56d36 # v2.0.0
         with:
           # TODO: extract terraform from the tf file when we have pinned
-          terraform_version: 1.7.2
+          terraform_version: 1.7.4
 
       - name: Terraform init
         id: init

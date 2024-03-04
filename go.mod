@@ -34,7 +34,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.2.3
 	github.com/sigstore/fulcio v1.4.4
 	github.com/sigstore/rekor v1.3.5
-	github.com/sigstore/sigstore v1.8.1
+	github.com/sigstore/sigstore v1.8.2
 	github.com/sigstore/timestamp-authority v1.2.2
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
@@ -139,7 +139,7 @@ require (
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
-	github.com/google/go-containerregistry v0.18.0 // indirect
+	github.com/google/go-containerregistry v0.19.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/google/s2a-go v0.1.7 // indirect

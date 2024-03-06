@@ -75,8 +75,13 @@ resource "google_storage_bucket_iam_member" "public_tuf_member" {
 }
 
 resource "google_storage_bucket_iam_member" "tuf_sa_editor" {
+  for_each = toset([
+    "roles/storage.objectUser",
+    "roles/storage.legacyBucketReader"
+  ])
+
   bucket = google_storage_bucket.tuf.name
-  role   = "roles/storage.objectUser"
+  role   = each.key
   member = format("serviceAccount:%s@%s.iam.gserviceaccount.com", var.tuf_service_account_name, var.project_id)
 
   depends_on = [google_storage_bucket.tuf, google_service_account.tuf-sa]
@@ -129,8 +134,13 @@ resource "google_storage_bucket_iam_member" "public_tuf_preprod_member" {
 }
 
 resource "google_storage_bucket_iam_member" "tuf_sa_preprod_editor" {
+  for_each = toset([
+    "roles/storage.objectUser",
+    "roles/storage.legacyBucketReader"
+  ])
+
   bucket = google_storage_bucket.tuf_preprod.name
-  role   = "roles/storage.objectUser"
+  role   = each.key
   member = format("serviceAccount:%s@%s.iam.gserviceaccount.com", var.tuf_service_account_name, var.project_id)
 
   depends_on = [google_storage_bucket.tuf_preprod, google_service_account.tuf-sa]

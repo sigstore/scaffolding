@@ -9,7 +9,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-openapi/strfmt v0.23.0
-	github.com/go-openapi/swag v0.22.9
+	github.com/go-openapi/swag v0.23.0
 	github.com/go-sql-driver/mysql v1.8.0
 	github.com/golang/glog v1.2.0
 	github.com/google/certificate-transparency-go v1.1.7

@@ -57,7 +57,7 @@ jobs:
         check-latest: true
 
     - name: Check out our repo
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       with:
         path: ./src/github.com/sigstore/scaffolding
 
@@ -180,7 +180,7 @@ jobs:
     # Test with cosign in 'airgapped mode'
     # Uncomment these once modified cosign goes in.
     #- name: Checkout modified cosign for testing.
-    #  uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+    #  uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
     #  with:
     #    repository: vaikas/cosign
     #    ref: air-gap
@@ -202,7 +202,7 @@ jobs:
     #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
-      uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
+      uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
       with:
         repository: sigstore/timestamp-authority
         path: ./src/github.com/sigstore/timestamp-authority

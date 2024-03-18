@@ -223,4 +223,5 @@ variable "monitoring_components" {
 variable "security_group" {
   description = "Name of security group used for Google Groups RBAC within GKE Cluster"
   type        = string
+  default     = ""
 }

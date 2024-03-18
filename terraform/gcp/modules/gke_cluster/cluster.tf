@@ -145,8 +145,11 @@ resource "google_container_cluster" "cluster" {
     }
   }
 
-  authenticator_groups_config {
-    security_group = var.security_group
+  dynamic "authenticator_groups_config" {
+    for_each = var.security_group == "" ? [] : [1]
+    content {
+      security_group = var.security_group
+    }
   }
 
   depends_on = [google_project_service.service]

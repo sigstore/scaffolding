@@ -16,6 +16,7 @@
 
 // Attestation bucket and relevant IAM
 resource "google_storage_bucket" "attestation" {
+  count    = var.enable_attestations ? 1 : 0
   name     = var.attestation_bucket
   location = var.attestation_region == "" ? var.region : var.attestation_region
   project  = var.project_id
@@ -37,7 +38,8 @@ resource "google_storage_bucket" "attestation" {
 
 // GCS Bucket 
 resource "google_storage_bucket_iam_member" "rekor_gcs_member" {
-  bucket     = google_storage_bucket.attestation.name
+  count      = var.enable_attestations ? 1 : 0
+  bucket     = google_storage_bucket.attestation[count.index].name
   role       = "roles/storage.objectAdmin"
   member     = "serviceAccount:${google_service_account.rekor-sa.email}"
   depends_on = [google_storage_bucket.attestation, google_service_account.rekor-sa]

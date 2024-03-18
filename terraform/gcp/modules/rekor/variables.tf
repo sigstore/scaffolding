@@ -39,8 +39,15 @@ variable "network" {
 }
 
 // Storage
+variable "enable_attestations" {
+  type        = bool
+  default     = true
+  description = "enable/disable storage for attestations"
+}
+
 variable "attestation_bucket" {
   type        = string
+  default     = ""
   description = "Name of GCS bucket for attestation."
 }
 

@@ -10,7 +10,7 @@ require (
 	github.com/go-jose/go-jose/v3 v3.0.3
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/swag v0.23.0
-	github.com/go-sql-driver/mysql v1.8.0
+	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang/glog v1.2.0
 	github.com/google/certificate-transparency-go v1.1.8
 	github.com/google/go-cmp v0.6.0

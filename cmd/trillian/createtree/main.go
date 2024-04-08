@@ -101,7 +101,7 @@ func createTree(ctx context.Context) (*trillian.Tree, error) {
 		return nil, fmt.Errorf("failed to determine dial options: %w", err)
 	}
 
-	conn, err := grpc.Dial(*adminServerAddr, dialOpts...)
+	conn, err := grpc.NewClient(*adminServerAddr, dialOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("failed to dial: %w", err)
 	}

@@ -11,7 +11,7 @@ require (
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/swag v0.23.0
 	github.com/go-sql-driver/mysql v1.8.1
-	github.com/golang/glog v1.2.0
+	github.com/golang/glog v1.2.1
 	github.com/google/certificate-transparency-go v1.1.8
 	github.com/google/go-cmp v0.6.0
 	github.com/google/trillian v1.6.0

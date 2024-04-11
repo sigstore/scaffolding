@@ -49,6 +49,22 @@ var (
 	},
 		[]string{endpointLabel, hostLabel, statusCodeLabel, methodLabel})
 
+	grpcMethodLatenciesSummary = prometheus.NewSummaryVec(
+		prometheus.SummaryOpts{
+			Name:       "api_endpoint_latency",
+			Help:       "API endpoint latency distributions (milliseconds).",
+			Objectives: map[float64]float64{0.5: 0.05, 0.9: 0.01, 0.99: 0.001, .999: 0.0001},
+		},
+		[]string{hostLabel, methodLabel},
+	)
+
+	grpcMethodLatenciesHistogram = prometheus.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "api_endpoint_latency_histogram",
+		Help:    "API endpoint latency distribution across Rekor and Fulcio (milliseconds)",
+		Buckets: []float64{0.0, 200.0, 400.0, 600.0, 800.0, 1000.0},
+	},
+		[]string{hostLabel, methodLabel})
+
 	verificationCounter = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "verification",
@@ -70,6 +86,16 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
 
 	Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v", method, host+endpoint)
+}
+
+func exportGrpcDataToPrometheus(host string, method string, latency int64) {
+	labels := prometheus.Labels{
+		hostLabel:   host,
+		methodLabel: method,
+	}
+	grpcMethodLatenciesSummary.With(labels).Observe(float64(latency))
+	grpcMethodLatenciesHistogram.With(labels).Observe(float64(latency))
+	Logger.With(zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v", method, host)
 }
 
 // NewVersionCollector returns a collector that exports metrics about current version

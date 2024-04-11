@@ -28,11 +28,14 @@ import (
 	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
-
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"sigs.k8s.io/release-utils/version"
 
+	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
 	_ "github.com/sigstore/cosign/v2/pkg/providers/all"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -100,6 +103,7 @@ var (
 	addr           string
 	rekorURL       string
 	fulcioURL      string
+	fulcioGrpcURL  string
 	oneTime        bool
 	runWriteProber bool
 	versionInfo    version.Info
@@ -114,6 +118,7 @@ func init() {
 
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
+	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "grpc://fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
@@ -170,7 +175,8 @@ func main() {
 	verificationCounter.With(prometheus.Labels{verifiedLabel: "false"}).Add(0)
 	verificationCounter.With(prometheus.Labels{verifiedLabel: "true"}).Add(0)
 
-	go runProbers(ctx, frequency, oneTime)
+	fulcioClient, _ := NewFulcioClient()
+	go runProbers(ctx, frequency, oneTime, fulcioClient)
 
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
@@ -185,7 +191,18 @@ func main() {
 	Logger.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func runProbers(ctx context.Context, freq int, runOnce bool) {
+func NewFulcioClient() (fulciopb.CAClient, error) {
+	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
+	transportCreds := insecure.NewCredentials()
+	opts = append(opts, grpc.WithTransportCredentials(transportCreds))
+	conn, err := grpc.NewClient(fulcioGrpcURL, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return fulciopb.NewCAClient(conn), nil
+}
+
+func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fulciopb.CAClient) {
 	for {
 		hasErr := false
 
@@ -201,6 +218,15 @@ func runProbers(ctx context.Context, freq int, runOnce bool) {
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
 		}
+
+		Logger.Infoln("Getting Bundle via grpc:", fulcioGrpcURL)
+		if resp, err := fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{}); err != nil {
+			hasErr = true
+			Logger.Errorf("error running request GetTrustBundle via gRPC: %v", err)
+		} else {
+			Logger.Infoln("Worked fine: %s", resp)
+		}
+
 		if runWriteProber {
 			priv, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
 			if err != nil {

@@ -176,8 +176,8 @@ func main() {
 	verificationCounter.With(prometheus.Labels{verifiedLabel: "false"}).Add(0)
 	verificationCounter.With(prometheus.Labels{verifiedLabel: "true"}).Add(0)
 
-	if fulcioClient, err := NewFulcioClient(); err != nil {
-		Logger.Errorf("error creating fulcio grpc client %v", err)
+	if fulcioClient, err := NewFulcioGrpcClient(); err != nil {
+		Logger.Fatalf("error creating fulcio grpc client %v", err)
 	} else {
 		go runProbers(ctx, frequency, oneTime, fulcioClient)
 	}
@@ -194,7 +194,7 @@ func main() {
 	Logger.Fatal(http.ListenAndServe(addr, nil))
 }
 
-func NewFulcioClient() (fulciopb.CAClient, error) {
+func NewFulcioGrpcClient() (fulciopb.CAClient, error) {
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
 	transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})
 	opts = append(opts, grpc.WithTransportCredentials(transportCreds))
@@ -222,12 +222,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
-		// Performing requests against Fulcio gRPC API
-		for _, method := range fulciopb.CA_ServiceDesc.Methods {
-			if err := observeGrcpRequest(ctx, method, fulcioGrpcClient); err != nil {
-				hasErr = true
-				Logger.Errorf("error running request %s: %v", method.MethodName, err)
-			}
+		// Performing requests for GetTrustBundle against Fulcio gRPC API
+		if err := observeGrcpGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
+			hasErr = true
+			Logger.Errorf("error running request %s: %v", "GetTrustBundle", err)
 		}
 
 		if runWriteProber {
@@ -287,24 +285,15 @@ func observeRequest(host string, r ReadProberCheck) error {
 	return nil
 }
 
-func observeGrcpRequest(ctx context.Context, method grpc.MethodDesc, fulcioGrpcClient fulciopb.CAClient) error {
+func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
 	s := time.Now()
 
-	var err error
-	switch method.MethodName {
-	case "GetTrustBundle":
-		_, err = fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{})
-	case "GetConfiguration":
-		_, err = fulcioGrpcClient.GetConfiguration(ctx, &fulciopb.GetConfigurationRequest{})
-	default:
-		Logger.Warn("Unimplemented:", method.MethodName)
-		return nil
-	}
+	_, err := fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{})
 	latency := time.Since(s).Milliseconds()
 	if err != nil {
 		return err
 	}
-	exportGrpcDataToPrometheus(fulcioGrpcURL, method.MethodName, latency)
+	exportGrpcDataToPrometheus(0, "grpc://"+fulcioGrpcURL, "GetTrustBundle", "GET", latency)
 	return nil
 }
 

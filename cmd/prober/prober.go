@@ -34,6 +34,7 @@ import (
 	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
 	"sigs.k8s.io/release-utils/version"
 
 	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
@@ -287,14 +288,11 @@ func observeRequest(host string, r ReadProberCheck) error {
 
 func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
 	s := time.Now()
-
 	_, err := fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{})
+
 	latency := time.Since(s).Milliseconds()
-	if err != nil {
-		return err
-	}
-	exportGrpcDataToPrometheus(0, "grpc://"+fulcioGrpcURL, "GetTrustBundle", "GET", latency)
-	return nil
+	exportGrpcDataToPrometheus(status.Code(err), "grpc://"+fulcioGrpcURL, "GetTrustBundle", "GET", latency)
+	return err
 }
 
 func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error) {

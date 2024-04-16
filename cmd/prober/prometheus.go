@@ -21,6 +21,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
 )
 
 var (
@@ -70,6 +71,18 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
 
 	Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v", method, host+endpoint)
+}
+
+func exportGrpcDataToPrometheus(statusCode codes.Code, host string, endpoint string, method string, latency int64) {
+	labels := prometheus.Labels{
+		endpointLabel:   endpoint,
+		statusCodeLabel: fmt.Sprintf("%d", statusCode),
+		hostLabel:       host,
+		methodLabel:     method,
+	}
+	endpointLatenciesSummary.With(labels).Observe(float64(latency))
+	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
+	Logger.With(zap.Int32("status", int32(statusCode)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v %v", method, endpoint, host)
 }
 
 // NewVersionCollector returns a collector that exports metrics about current version

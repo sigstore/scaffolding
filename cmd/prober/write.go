@@ -139,6 +139,24 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 	return cert[0], nil
 }
 
+func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath string) (*http.Response, time.Time, error) {
+
+	body, err := rekorEntryRequest(cert, priv)
+	t := time.Now()
+	if err != nil {
+		return nil, t, fmt.Errorf("rekor entry: %w", err)
+	}
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, t, fmt.Errorf("new request: %w", err)
+	}
+	setHeaders(req, "")
+
+	t = time.Now()
+	resp, err := retryableClient.Do(req)
+	return resp, t, err
+}
+
 // rekorWriteEndpoint tests the write endpoint for rekor, which is
 // /api/v1/log/entries and adds an entry to the log
 // if a certificate is provided, the Rekor entry will contain that certificate,
@@ -151,19 +169,12 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
 	}()
 
-	body, err := rekorEntryRequest(cert, priv)
-	if err != nil {
-		return fmt.Errorf("rekor entry: %w", err)
-	}
-	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
-	if err != nil {
-		return fmt.Errorf("new request: %w", err)
+	resp, t, err := makeRekorRequest(cert, priv, hostPath)
+	// A new body should be created when it is conflicted
+	for resp.StatusCode == http.StatusConflict {
+		resp, t, err = makeRekorRequest(cert, priv, hostPath)
 	}
 
-	setHeaders(req, "")
-
-	t := time.Now()
-	resp, err := retryableClient.Do(req)
 	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		return fmt.Errorf("error adding entry: %w", err)

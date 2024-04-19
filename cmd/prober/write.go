@@ -140,7 +140,6 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 }
 
 func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath string) (*http.Response, time.Time, error) {
-
 	body, err := rekorEntryRequest(cert, priv)
 	t := time.Now()
 	if err != nil {
@@ -170,16 +169,22 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 	}()
 
 	resp, t, err := makeRekorRequest(cert, priv, hostPath)
-	// A new body should be created when it is conflicted
-	for resp.StatusCode == http.StatusConflict {
-		resp, t, err = makeRekorRequest(cert, priv, hostPath)
-	}
-
-	latency := time.Since(t).Milliseconds()
 	if err != nil {
 		return fmt.Errorf("error adding entry: %w", err)
 	}
 	defer resp.Body.Close()
+	// A new body should be created when it is conflicted
+	for {
+		if resp.StatusCode != http.StatusConflict {
+			break
+		}
+		resp, t, err = makeRekorRequest(cert, priv, hostPath)
+		if err != nil {
+			return fmt.Errorf("error adding entry: %w", err)
+		}
+		defer resp.Body.Close()
+	}
+	latency := time.Since(t).Milliseconds()
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
 	if resp.StatusCode != http.StatusCreated {

@@ -139,6 +139,23 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 	return cert[0], nil
 }
 
+func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath string) (*http.Response, int64, error) {
+	body, err := rekorEntryRequest(cert, priv)
+	if err != nil {
+		return nil, -1, fmt.Errorf("rekor entry: %w", err)
+	}
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
+	if err != nil {
+		return nil, -1, fmt.Errorf("new request: %w", err)
+	}
+	setHeaders(req, "")
+
+	t := time.Now()
+	resp, err := retryableClient.Do(req)
+	latency := time.Since(t).Milliseconds()
+	return resp, latency, err
+}
+
 // rekorWriteEndpoint tests the write endpoint for rekor, which is
 // /api/v1/log/entries and adds an entry to the log
 // if a certificate is provided, the Rekor entry will contain that certificate,
@@ -150,25 +167,20 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 	defer func() {
 		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
 	}()
-
-	body, err := rekorEntryRequest(cert, priv)
-	if err != nil {
-		return fmt.Errorf("rekor entry: %w", err)
+	var resp *http.Response
+	var latency int64
+	var err error
+	// A new body should be created when it is conflicted
+	for i := 1; i < 10; i++ {
+		resp, latency, err = makeRekorRequest(cert, priv, hostPath)
+		if err != nil {
+			return fmt.Errorf("error adding entry: %w", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusConflict {
+			break
+		}
 	}
-	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(body))
-	if err != nil {
-		return fmt.Errorf("new request: %w", err)
-	}
-
-	setHeaders(req, "")
-
-	t := time.Now()
-	resp, err := retryableClient.Do(req)
-	latency := time.Since(t).Milliseconds()
-	if err != nil {
-		return fmt.Errorf("error adding entry: %w", err)
-	}
-	defer resp.Body.Close()
 	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
 
 	if resp.StatusCode != http.StatusCreated {

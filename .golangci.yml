@@ -45,4 +45,4 @@ issues:
   max-same-issues: 0
 run:
   issues-exit-code: 1
-  timeout: 10m
+  timeout: 15m

@@ -48,3 +48,17 @@ resource "google_project_iam_member" "rekor_profiler_agent" {
   member     = "serviceAccount:${google_service_account.rekor-sa.email}"
   depends_on = [google_service_account.rekor-sa]
 }
+
+resource "google_service_account_iam_member" "gke_sa_iam_member_rekor_server" {
+  service_account_id = google_service_account.rekor-sa.name
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[rekor-system/rekor-server]"
+  depends_on         = [google_service_account.rekor-sa]
+}
+
+resource "google_project_iam_member" "db_admin_member_rekor" {
+  project    = var.project_id
+  role       = "roles/cloudsql.client"
+  member     = "serviceAccount:${google_service_account.rekor-sa.email}"
+  depends_on = [google_service_account.rekor-sa]
+}

@@ -104,6 +104,12 @@ variable "db_name" {
   default     = "trillian"
 }
 
+variable "index_db_name" {
+  type        = string
+  description = "Name for the MySQL database for search indexes."
+  default     = "searchindexes"
+}
+
 variable "database_version" {
   type        = string
   description = "MySQL database version."

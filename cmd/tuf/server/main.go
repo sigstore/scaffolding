@@ -141,7 +141,7 @@ func main() {
 	http.Handle("/", fs)
 
 	/* #nosec G114 */
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil { //nolint: gosec
 		panic(err)
 	}
 }

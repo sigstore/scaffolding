@@ -58,7 +58,7 @@ func main() {
 
 	http.HandleFunc("/", tokenWriter(env.FileName))
 	/* #nosec G114 */
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	if err := http.ListenAndServe(":8080", nil); err != nil { //nolint: gosec
 		panic(err)
 	}
 }

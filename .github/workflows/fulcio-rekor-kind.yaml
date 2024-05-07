@@ -26,8 +26,6 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.25.x
-          - v1.26.x
           - v1.27.x
           - v1.28.x
           - v1.29.x
@@ -37,6 +35,7 @@ jobs:
 
         go-version:
           - 1.21.x
+          - 1.22.x
 
     env:
       GOPATH: ${{ github.workspace }}

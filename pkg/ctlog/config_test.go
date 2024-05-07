@@ -98,7 +98,8 @@ KTkomoSY/OxE/5doBCACehThH+96joWfgC0rXi9qAwZ6hwIMJAKy
 	// openssl ec -in privkey.pem -out privatekey_encrypted.pem -aes256
 	// And encrypted with this supersecretpassword
 	existingEncryptedPrivateKeyPassword = "supersecretpassword"
-	existingEncryptedPrivateKey         = `
+	//nolint: gosec
+	existingEncryptedPrivateKey = `
 -----BEGIN EC PRIVATE KEY-----
 Proc-Type: 4,ENCRYPTED
 DEK-Info: AES-256-CBC,3C33CA88DF439D434ABDB2DD03491BEC

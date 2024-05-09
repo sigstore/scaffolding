@@ -225,3 +225,9 @@ variable "security_group" {
   type        = string
   default     = ""
 }
+
+variable "oauth_scopes" {
+  description = "OAuth scopes to assign to the cluster node config"
+  type        = list(string)
+  default     = ["https://www.googleapis.com/auth/cloud-platform"]
+}

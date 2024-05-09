@@ -405,3 +405,9 @@ variable "gke_cluster_security_group" {
   description = "name of Google Group used for GKE Group RBAC; must be gke-security-groups@<yourdomain>"
   type        = string
 }
+
+variable "gke_oauth_scopes" {
+  description = "OAuth scopes to assign to the cluster node config"
+  type        = list(string)
+  default     = ["https://www.googleapis.com/auth/cloud-platform"]
+}

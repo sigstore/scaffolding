@@ -152,6 +152,8 @@ module "gke-cluster" {
 
   security_group = var.gke_cluster_security_group
 
+  oauth_scopes = var.gke_oauth_scopes
+
   depends_on = [
     module.network,
     module.bastion,

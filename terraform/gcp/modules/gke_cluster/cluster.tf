@@ -66,7 +66,7 @@ resource "google_container_cluster" "cluster" {
     }
     tags            = [local.cluster_network_tag]
     service_account = google_service_account.gke-sa.email
-    oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
+    oauth_scopes    = var.oauth_scopes
   }
 
   resource_labels = {

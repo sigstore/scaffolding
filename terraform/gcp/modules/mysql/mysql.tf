@@ -102,7 +102,7 @@ resource "random_id" "db_name_suffix" {
   byte_length = 4
 }
 
-resource "google_sql_database_instance" "trillian" {
+resource "google_sql_database_instance" "sigstore" {
   project          = var.project_id
   name             = var.instance_name != "" ? var.instance_name : format("%s-mysql-%s", var.cluster_name, random_id.db_name_suffix.hex)
   database_version = var.database_version
@@ -142,11 +142,16 @@ resource "google_sql_database_instance" "trillian" {
   }
 }
 
+moved {
+  from = google_sql_database_instance.trillian
+  to   = google_sql_database_instance.sigstore
+}
+
 resource "google_sql_database_instance" "read_replica" {
   for_each = toset(var.replica_zones)
 
-  name                 = "${google_sql_database_instance.trillian.name}-replica-${each.key}"
-  master_instance_name = google_sql_database_instance.trillian.name
+  name                 = "${google_sql_database_instance.sigstore.name}-replica-${each.key}"
+  master_instance_name = google_sql_database_instance.sigstore.name
   region               = var.region
   database_version     = var.database_version
 
@@ -174,27 +179,35 @@ resource "google_sql_database_instance" "read_replica" {
 resource "google_sql_database" "trillian" {
   name       = var.db_name
   project    = var.project_id
-  instance   = google_sql_database_instance.trillian.name
+  instance   = google_sql_database_instance.sigstore.name
   collation  = "utf8_general_ci"
-  depends_on = [google_sql_database_instance.trillian]
+  depends_on = [google_sql_database_instance.sigstore]
+}
+
+resource "google_sql_database" "searchindexes" {
+  name       = var.index_db_name
+  project    = var.project_id
+  instance   = google_sql_database_instance.sigstore.name
+  collation  = "utf8_general_ci"
+  depends_on = [google_sql_database_instance.sigstore]
 }
 
 resource "random_id" "user-password" {
   keepers = {
-    name = google_sql_database_instance.trillian.name
+    name = google_sql_database_instance.sigstore.name
   }
 
   byte_length = 8
-  depends_on  = [google_sql_database_instance.trillian]
+  depends_on  = [google_sql_database_instance.sigstore]
 }
 
 resource "google_sql_user" "trillian" {
   name       = "trillian"
   project    = var.project_id
-  instance   = google_sql_database_instance.trillian.name
+  instance   = google_sql_database_instance.sigstore.name
   password   = random_id.user-password.hex
   host       = "%"
-  depends_on = [google_sql_database_instance.trillian]
+  depends_on = [google_sql_database_instance.sigstore]
 }
 
 resource "google_secret_manager_secret" "mysql-password" {
@@ -239,4 +252,3 @@ resource "google_secret_manager_secret_version" "mysql-database" {
   secret      = google_secret_manager_secret.mysql-database.id
   secret_data = google_sql_database.trillian.name
 }
-

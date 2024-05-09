@@ -22,13 +22,13 @@ output "trillian_serviceaccount" {
 // Used when setting up the GKE cluster to talk to MySQL.
 output "mysql_instance" {
   description = "The generated name of the Cloud SQL instance"
-  value       = google_sql_database_instance.trillian.name
+  value       = google_sql_database_instance.sigstore.name
 }
 
 // Full connection string for the MySQL DB>
 output "mysql_connection" {
   description = "The connection string dynamically generated for storage inside the Kubernetes configmap"
-  value       = format("%s:%s:%s", var.project_id, var.region, google_sql_database_instance.trillian.name)
+  value       = format("%s:%s:%s", var.project_id, var.region, google_sql_database_instance.sigstore.name)
 }
 
 // MySQL DB username.

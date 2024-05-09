@@ -29,9 +29,10 @@ resource "google_project_service" "service" {
 }
 
 resource "google_dns_record_set" "A_dex" {
-  name = "oauth2.${var.dns_domain_name}"
-  type = "A"
-  ttl  = 60
+  count = var.dns_domain_name == "" ? 0 : 1
+  name  = "oauth2.${var.dns_domain_name}"
+  type  = "A"
+  ttl   = 60
 
   project      = var.project_id
   managed_zone = var.dns_zone_name

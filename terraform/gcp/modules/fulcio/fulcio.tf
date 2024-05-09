@@ -28,9 +28,10 @@ module "ca" {
 }
 
 resource "google_dns_record_set" "A_fulcio" {
-  name = "fulcio.${var.dns_domain_name}"
-  type = "A"
-  ttl  = 60
+  count = var.dns_domain_name == "" ? 0 : 1
+  name  = "fulcio.${var.dns_domain_name}"
+  type  = "A"
+  ttl   = 60
 
   project      = var.project_id
   managed_zone = var.dns_zone_name

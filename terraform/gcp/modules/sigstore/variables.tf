@@ -23,11 +23,8 @@ variable "project_id" {
 }
 
 variable "project_number" {
-  type = string
-  validation {
-    condition     = length(var.project_number) > 0
-    error_message = "Must specify project_number variable."
-  }
+  type    = string
+  default = ""
 }
 
 variable "region" {

@@ -60,6 +60,7 @@ module "tuf" {
 
   tuf_bucket          = var.tuf_bucket
   tuf_preprod_bucket  = var.tuf_preprod_bucket
+  tuf_bucket_member   = var.tuf_bucket_member
   gcs_logging_enabled = var.gcs_logging_enabled
   gcs_logging_bucket  = var.gcs_logging_bucket
   storage_class       = var.tuf_storage_class
@@ -150,6 +151,8 @@ module "gke-cluster" {
   monitoring_components = var.cluster_monitoring_components
 
   security_group = var.gke_cluster_security_group
+
+  oauth_scopes = var.gke_oauth_scopes
 
   depends_on = [
     module.network,

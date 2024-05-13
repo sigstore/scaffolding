@@ -23,11 +23,8 @@ variable "project_id" {
 }
 
 variable "project_number" {
-  type = string
-  validation {
-    condition     = length(var.project_number) > 0
-    error_message = "Must specify project_number variable."
-  }
+  type    = string
+  default = ""
 }
 
 variable "region" {
@@ -72,6 +69,12 @@ variable "tuf_bucket" {
 variable "tuf_preprod_bucket" {
   type        = string
   description = "Name of GCS bucket for preprod/staged TUF root."
+}
+
+variable "tuf_bucket_member" {
+  type        = string
+  description = "User(s) to grant access to the TUF GCS buckets."
+  default     = "allUsers"
 }
 
 variable "tuf_storage_class" {
@@ -315,11 +318,13 @@ variable "oslogin" {
 variable "dns_zone_name" {
   description = "Name of DNS Zone object in Google Cloud DNS"
   type        = string
+  default     = ""
 }
 
 variable "dns_domain_name" {
   description = "Name of DNS domain name in Google Cloud DNS"
   type        = string
+  default     = ""
 }
 
 variable "ctlog_shards" {
@@ -396,4 +401,10 @@ variable "cluster_monitoring_components" {
 variable "gke_cluster_security_group" {
   description = "name of Google Group used for GKE Group RBAC; must be gke-security-groups@<yourdomain>"
   type        = string
+}
+
+variable "gke_oauth_scopes" {
+  description = "OAuth scopes to assign to the cluster node config"
+  type        = list(string)
+  default     = ["https://www.googleapis.com/auth/cloud-platform"]
 }

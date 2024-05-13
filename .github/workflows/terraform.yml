@@ -23,7 +23,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
-      - uses: hashicorp/setup-terraform@97f030cf6dc0b4f5e0da352c7bca9cca34579800 # v2.0.0
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v2.0.0
         with:
           # TODO: extract terraform from the tf file when we have pinned
           terraform_version: 1.8.0
@@ -43,7 +43,7 @@ jobs:
       - name: 'Checkout'
         uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
 
-      - uses: hashicorp/setup-terraform@97f030cf6dc0b4f5e0da352c7bca9cca34579800 # v2.0.0
+      - uses: hashicorp/setup-terraform@651471c36a6092792c552e8b1bef71e592b462d8 # v2.0.0
         with:
           # TODO: extract terraform from the tf file when we have pinned
           terraform_version: 1.8.0

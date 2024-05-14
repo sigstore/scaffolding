@@ -37,3 +37,9 @@ variable "mysql_dbname" {
   description = "Name of MySQL database."
   default     = "trillian"
 }
+
+variable "rekor_mysql_dbname" {
+  type        = string
+  description = "Name of the MySQL database for Rekor search indexes."
+  default     = "searchindexes"
+}

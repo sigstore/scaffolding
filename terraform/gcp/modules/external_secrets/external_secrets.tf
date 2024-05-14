@@ -112,3 +112,42 @@ YAML
     kubectl_manifest.trillian_namespace
   ]
 }
+
+resource "kubectl_manifest" "rekor_namespace" {
+  yaml_body = <<YAML
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: rekor-system
+YAML
+}
+
+resource "kubectl_manifest" "rekor_mysql_external_secret" {
+  yaml_body = <<YAML
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
+metadata:
+  name: rekor-mysql
+  namespace: rekor-system
+spec:
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: gcp-backend
+  target:
+    name: rekor-mysql
+    template:
+      data:
+        mysql-database: "${var.rekor_mysql_dbname}"
+        mysql-password: "{{ .mysqlPassword | toString }}"  # <-- convert []byte to string
+        mysql-user: trillian
+  data:
+  - secretKey: mysqlPassword
+    remoteRef:
+      key: mysql-password
+YAML
+
+  depends_on = [
+    kubectl_manifest.secretstore_gcp_backend,
+    kubectl_manifest.rekor_namespace
+  ]
+}

@@ -32,10 +32,9 @@ jobs:
           - 1.22.x
 
     env:
-      RELEASE_VERSION: "v0.6.9"
+      RELEASE_VERSION: "v0.6.17"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: ~/ko
-      COSIGN_EXPERIMENTAL: "true"
 
     steps:
     - uses: chainguard-dev/actions/setup-mirror@main
@@ -63,7 +62,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.8.x"
+        version: "1.11.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

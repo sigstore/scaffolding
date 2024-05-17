@@ -34,7 +34,6 @@ jobs:
           - test github action with TUF
     env:
       KO_DOCKER_REPO: registry.local:5000/knative
-      COSIGN_EXPERIMENTAL: "true"
 
     steps:
     - name: Checkout the current action

@@ -19,7 +19,7 @@ set -o pipefail
 set -o xtrace
 
 # Default
-RELEASE_VERSION="v0.6.9"
+RELEASE_VERSION="v0.7.1"
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"

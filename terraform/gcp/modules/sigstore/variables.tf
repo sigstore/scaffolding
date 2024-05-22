@@ -239,6 +239,12 @@ variable "mysql_binary_log_backup_enabled" {
   default     = true
 }
 
+variable "mysql_collation" {
+  type        = string
+  description = "collation setting for database"
+  default     = "utf8_general_ci"
+}
+
 variable "fulcio_keyring_name" {
   type        = string
   description = "Name of Fulcio keyring."

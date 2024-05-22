@@ -174,6 +174,7 @@ module "mysql" {
   database_version  = var.mysql_db_version
   tier              = var.mysql_tier
   availability_type = var.mysql_availability_type
+  collation         = var.mysql_collation
 
   replica_zones = var.mysql_replica_zones
   replica_tier  = var.mysql_replica_tier
@@ -373,6 +374,7 @@ module "ctlog_shards" {
   require_ssl               = var.mysql_require_ssl
   backup_enabled            = var.mysql_backup_enabled
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+  collation                 = var.mysql_collation
 
 
   depends_on = [
@@ -423,6 +425,7 @@ module "standalone_mysqls" {
   require_ssl               = var.mysql_require_ssl
   backup_enabled            = var.mysql_backup_enabled
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
+  collation                 = var.mysql_collation
 
 
   depends_on = [

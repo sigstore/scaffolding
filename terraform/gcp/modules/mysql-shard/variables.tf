@@ -122,3 +122,9 @@ variable "password" {
   description = "mysql password within the database"
   sensitive   = true
 }
+
+variable "collation" {
+  type        = string
+  description = "collation setting for database"
+  default     = "utf8_general_ci"
+}

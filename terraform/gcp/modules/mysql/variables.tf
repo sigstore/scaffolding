@@ -121,3 +121,9 @@ variable "deletion_protection" {
   description = "Deletion protection for MYSQL database. Must be set to false for `terraform apply` or `terraform destroy` to delete the db."
   default     = true
 }
+
+variable "collation" {
+  type        = string
+  description = "collation setting for database"
+  default     = "utf8_general_ci"
+}

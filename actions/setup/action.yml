@@ -45,9 +45,9 @@ inputs:
     required: true
     default: 'cluster.local'
   k8s-version:
-    description: 'kubernetes version to install (v1.25.x, v1.26.x, v1.27.x, v1.28.x, v1.29.x), default: v1.25.x'
+    description: 'kubernetes version to install (v1.27.x, v1.28.x, v1.29.x, v1.30.x), default: v1.27.x'
     required: true
-    default: 'v1.25.x'
+    default: 'v1.27.x'
 runs:
   using: "composite"
   steps:

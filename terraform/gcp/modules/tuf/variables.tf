@@ -94,3 +94,9 @@ variable "tuf_key_viewers" {
   description = "List of members who can view the public key. See https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/google_kms_key_ring_iam#argument-reference for supported values"
   default     = []
 }
+
+variable "main_page_suffix" {
+  type        = string
+  description = "Behaves as the bucket's directory index where missing objects are treated as potential directories"
+  default     = ""
+}

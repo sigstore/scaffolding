@@ -64,6 +64,7 @@ module "tuf" {
   gcs_logging_enabled = var.gcs_logging_enabled
   gcs_logging_bucket  = var.gcs_logging_bucket
   storage_class       = var.tuf_storage_class
+  main_page_suffix    = var.tuf_main_page_suffix
 
   tuf_service_account_name = var.tuf_service_account_name
 

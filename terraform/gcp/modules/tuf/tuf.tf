@@ -64,6 +64,10 @@ resource "google_storage_bucket" "tuf" {
       log_bucket = var.gcs_logging_bucket
     }
   }
+
+  website {
+    main_page_suffix = var.main_page_suffix
+  }
 }
 
 resource "google_storage_bucket_iam_member" "public_tuf_member" {
@@ -122,6 +126,10 @@ resource "google_storage_bucket" "tuf_preprod" {
     content {
       log_bucket = var.gcs_logging_bucket
     }
+  }
+
+  website {
+    main_page_suffix = var.main_page_suffix
   }
 }
 

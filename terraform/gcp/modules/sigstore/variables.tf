@@ -107,6 +107,12 @@ variable "tuf_kms_location" {
   default     = "global"
 }
 
+variable "tuf_main_page_suffix" {
+  type        = string
+  description = "path to tuf bucket's directory index when missing object is treated as potential directories"
+  default     = ""
+}
+
 variable "ca_pool_name" {
   description = "Certificate authority pool name"
   type        = string

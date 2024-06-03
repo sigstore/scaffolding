@@ -493,7 +493,7 @@ resource "google_monitoring_alert_policy" "redis_memory_usage" {
   display_name = "Redis Memory Usage > 90%"
 
   documentation {
-    content   = "Redis using >90% of max memory. You need to allocate more via Terraform with redis_cluster_memory_size_gb."
+    content   = "Redis using >90% of max memory. Playbook: https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/redis-memory.md"
     mime_type = "text/markdown"
   }
 
@@ -539,7 +539,7 @@ resource "google_monitoring_alert_policy" "redis_out_of_memory" {
   display_name = "Redis Out of Memory (99%)"
 
   documentation {
-    content   = "Redis is out of memory. Please investigate and allocate more via Terraform with redis_cluster_memory_size_gb."
+    content   = "Redis is out of memory. Playbook: https://github.com/sigstore/public-good-instance/blob/main/playbooks/alerting/alerts/redis-memory.md"
     mime_type = "text/markdown"
   }
 

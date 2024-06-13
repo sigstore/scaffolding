@@ -211,7 +211,7 @@ echo '::endgroup::'
 #############################################################
 echo '::group:: Setup metallb'
 
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 
 # Wait for Metallb to be ready (or webhook will reject CRDs)

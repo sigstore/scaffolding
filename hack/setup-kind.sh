@@ -222,7 +222,7 @@ done
 # And allow for few seconds for things to settle just to make sure things are up
 sleep 5
 
-network=$(docker network inspect kind -f "{{(index .IPAM.Config 0).Subnet}}" | cut -d '.' -f1,2)
+network=$(docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Subnet | test("^[0-9]+\\.")) | .Subnet' | cut -d '.' -f1,2)
 cat <<EOF >>./metallb-crds.yaml
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool

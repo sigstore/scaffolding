@@ -1,8 +1,8 @@
 module github.com/sigstore/scaffolding
 
-go 1.21
+go 1.21.0
 
-toolchain go1.21.1
+toolchain go1.22.3
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -12,7 +12,7 @@ require (
 	github.com/go-openapi/swag v0.23.0
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/golang/glog v1.2.1
-	github.com/google/certificate-transparency-go v1.1.8
+	github.com/google/certificate-transparency-go v1.2.1
 	github.com/google/go-cmp v0.6.0
 	github.com/google/trillian v1.6.0
 	github.com/google/uuid v1.6.0
@@ -180,6 +180,7 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.19.1 // indirect
+	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/vault/api v1.12.2 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/in-toto/in-toto-golang v0.9.0 // indirect
@@ -222,7 +223,7 @@ require (
 	github.com/prometheus/common v0.51.1 // indirect
 	github.com/prometheus/procfs v0.12.0 // indirect
 	github.com/prometheus/prometheus v0.47.2 // indirect
-	github.com/rs/cors v1.10.1 // indirect
+	github.com/rs/cors v1.11.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
 	github.com/sassoftware/relic v7.2.1+incompatible // indirect

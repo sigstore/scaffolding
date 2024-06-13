@@ -209,9 +209,9 @@ echo '::endgroup::'
 #    Setup metallb
 #
 #############################################################
-echo '::group:: Setup metallb'
+echo '::group:: Setup metallb 0.14.5'
 
-kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.13.5/config/manifests/metallb-native.yaml
+kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.5/config/manifests/metallb-native.yaml
 kubectl create secret generic -n metallb-system memberlist --from-literal=secretkey="$(openssl rand -base64 128)"
 
 # Wait for Metallb to be ready (or webhook will reject CRDs)
@@ -222,7 +222,7 @@ done
 # And allow for few seconds for things to settle just to make sure things are up
 sleep 5
 
-network=$(docker network inspect kind -f "{{(index .IPAM.Config 0).Subnet}}" | cut -d '.' -f1,2)
+network=$(docker network inspect kind | jq -r '.[0].IPAM.Config[] | select(.Subnet | test("^[0-9]+\\.")) | .Subnet' | cut -d '.' -f1,2)
 cat <<EOF >>./metallb-crds.yaml
 apiVersion: metallb.io/v1beta1
 kind: IPAddressPool

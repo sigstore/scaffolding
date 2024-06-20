@@ -83,6 +83,7 @@ resource "google_project_iam_member" "logserver_iam" {
     "roles/logging.logWriter",
     "roles/monitoring.metricWriter",
     "roles/stackdriver.resourceMetadata.writer",
+    "roles/cloudsql.client",
     "roles/cloudtrace.agent"
   ])
   project    = var.project_id

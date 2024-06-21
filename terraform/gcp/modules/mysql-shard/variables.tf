@@ -106,7 +106,7 @@ variable "db_name" {
 variable "database_version" {
   type        = string
   description = "MySQL database version."
-  default     = "MYSQL_5_7"
+  default     = "MYSQL_8_0_37"
 }
 
 variable "deletion_protection" {
@@ -126,5 +126,5 @@ variable "password" {
 variable "collation" {
   type        = string
   description = "collation setting for database"
-  default     = "utf8_general_ci"
+  default     = "utf8mb3_general_ci"
 }

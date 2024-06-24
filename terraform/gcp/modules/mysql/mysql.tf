@@ -111,8 +111,6 @@ resource "google_sql_database_instance" "sigstore" {
 
   # Set to false to delete this database using terraform
   deletion_protection = var.deletion_protection
-  # this sets the flag on the GCP platform to prevent deletion across all API surfaces
-  deletion_protection_enabled = var.deletion_protection
 
   depends_on = [google_service_networking_connection.private_vpc_connection]
 
@@ -120,6 +118,9 @@ resource "google_sql_database_instance" "sigstore" {
     tier              = var.tier
     activation_policy = "ALWAYS"
     availability_type = var.availability_type
+
+    # this sets the flag on the GCP platform to prevent deletion across all API surfaces
+    deletion_protection_enabled = var.deletion_protection
 
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled

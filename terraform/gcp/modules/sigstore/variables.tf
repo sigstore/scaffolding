@@ -342,6 +342,8 @@ variable "dns_domain_name" {
 variable "ctlog_shards" {
   type = map(object({
     mysql_db_version = string
+    mysql_tier       = string
+    instance_name    = optional(string)
   }))
 
   description = "Map of CTLog shards to create. If keys are '2022' and '2023', it would create 2 independent CTLog Cloud MySql instances named sigstore-staging-ctlog-2022 and sigstore-staging-ctlog-2023."

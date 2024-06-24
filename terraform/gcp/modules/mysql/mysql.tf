@@ -143,10 +143,12 @@ resource "google_sql_database_instance" "sigstore" {
   }
 }
 
+/*
 moved {
   from = google_sql_database_instance.trillian
   to   = google_sql_database_instance.sigstore
 }
+*/
 
 resource "google_sql_database_instance" "read_replica" {
   for_each = toset(var.replica_zones)

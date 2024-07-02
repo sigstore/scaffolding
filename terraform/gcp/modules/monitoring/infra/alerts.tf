@@ -275,6 +275,52 @@ resource "google_monitoring_alert_policy" "cloud_sql_disk_utilization" {
 }
 
 
+### Cloud SQL Proxy Alerts
+
+# Cloud SQL Proxy Connection Failures
+resource "google_monitoring_alert_policy" "cloudsqlconn_connection_failure" {
+  # In the absence of data, incident will auto-close in 7 days
+  alert_strategy {
+    auto_close = "604800s"
+  }
+
+  combiner = "OR"
+
+  # Connection failures are greater than 0
+  conditions {
+    condition_threshold {
+      aggregations {
+        alignment_period   = "60s"
+        per_series_aligner = "ALIGN_RATE"
+      }
+
+      comparison      = "COMPARISON_GT"
+      duration        = "300s"
+      filter          = "metric.type=\"prometheus.googleapis.com/cloudsqlconn_dial_failure_count/counter\" resource.type=\"prometheus_target\""
+      threshold_value = "0"
+
+      trigger {
+        count   = "1"
+        percent = "0"
+      }
+    }
+
+    display_name = "Cloud SQL Proxy connections failing"
+  }
+
+  display_name = "Cloud SQL Proxy connections failing"
+
+  documentation {
+    content   = "Cloud SQL Proxy connections have been failing for at least 5 minutes.\n"
+    mime_type = "text/markdown"
+  }
+
+  enabled               = "true"
+  notification_channels = local.notification_channels
+  project               = var.project_id
+}
+
+
 ### KMS Alerts
 
 resource "google_monitoring_alert_policy" "kms_read_request_alert" {

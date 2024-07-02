@@ -238,7 +238,12 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			cert, err := fulcioWriteEndpoint(ctx, priv)
 			if err != nil {
 				hasErr = true
-				Logger.Errorf("error running fulcio write prober: %v", err)
+				Logger.Errorf("error running fulcio v2 write prober: %v", err)
+			}
+			_, err = fulcioWriteLegacyEndpoint(ctx, priv)
+			if err != nil {
+				hasErr = true
+				Logger.Errorf("error running fulcio v1 write prober: %v", err)
 			}
 			if err := rekorWriteEndpoint(ctx, cert, priv); err != nil {
 				hasErr = true

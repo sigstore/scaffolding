@@ -24,6 +24,7 @@ import (
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -52,8 +53,9 @@ const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
 	defaultOIDCClientID = "sigstore"
 
-	fulcioEndpoint = "/api/v2/signingCert"
-	rekorEndpoint  = "/api/v1/log/entries"
+	fulcioEndpoint       = "/api/v2/signingCert"
+	fulcioLegacyEndpoint = "/api/v1/signingCert"
+	rekorEndpoint        = "/api/v1/log/entries"
 )
 
 func setHeaders(req *retryablehttp.Request, token string) {
@@ -68,8 +70,75 @@ func setHeaders(req *retryablehttp.Request, token string) {
 	req.Header.Set("X-Cloud-Trace-Context", uuid.Must(uuid.NewV7()).String())
 }
 
-// fulcioWriteEndpoint tests the only write endpoint for Fulcio
-// which is "/api/v2/signingCert", which requests a cert from Fulcio
+// fulcioWriteLegacyEndpoint tests the /api/v1/signingCert write endpoint for Fulcio.
+func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+	if !all.Enabled(ctx) {
+		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
+	}
+	tok, err := providers.Provide(ctx, "sigstore")
+	if err != nil {
+		return nil, fmt.Errorf("getting provider: %w", err)
+	}
+	b, err := legacyCertificateRequest(ctx, tok, priv)
+	if err != nil {
+		return nil, fmt.Errorf("certificate response: %w", err)
+	}
+
+	// Construct the API endpoint for this handler
+	endpoint := fulcioLegacyEndpoint
+	hostPath := fulcioURL + endpoint
+
+	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
+	if err != nil {
+		return nil, fmt.Errorf("new request: %w", err)
+	}
+
+	setHeaders(req, tok)
+
+	t := time.Now()
+	resp, err := retryableClient.Do(req)
+	latency := time.Since(t).Milliseconds()
+	if err != nil {
+		Logger.Errorf("error requesting cert: %v", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("invalid status code '%s' when requesting a cert from Fulcio with body '%s'", resp.Status, string(body))
+	}
+
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		Logger.Errorf("error reading response from Fulcio: %v", err)
+		return nil, err
+	}
+	certBlock, chainPEM := pem.Decode(responseBody)
+	if certBlock == nil || chainPEM == nil {
+		Logger.Errorf("did not find expected certificates")
+	}
+	intermediateBlock, rootPEM := pem.Decode(chainPEM)
+	if intermediateBlock == nil || rootPEM == nil {
+		Logger.Errorf("did not find expected certificate chain in response from Fulcio")
+	}
+	certPEM := pem.EncodeToMemory(certBlock)
+	cert, err := cryptoutils.UnmarshalCertificatesFromPEM(certPEM)
+	if err != nil {
+		Logger.Errorf("error unmarshalling leaf certificate from Fulcio: %v", err)
+		return nil, err
+	}
+	if len(cert) != 1 {
+		Logger.Errorf("unexpected number of certificates after unmarshalling got %d, expected 1", len(cert))
+		return nil, err
+	}
+
+	// Export data to prometheus
+	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
+	return cert[0], nil
+}
+
+// fulcioWriteEndpoint tests the /api/v2/signingCert write endpoint for Fulcio.
 func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
@@ -290,8 +359,41 @@ func certificateRequest(_ context.Context, idToken string, priv *ecdsa.PrivateKe
 	return json.Marshal(req)
 }
 
+func legacyCertificateRequest(_ context.Context, idToken string, priv *ecdsa.PrivateKey) ([]byte, error) {
+	pubBytesPEM, err := cryptoutils.MarshalPublicKeyToPEM(priv.Public())
+	if err != nil {
+		return nil, err
+	}
+
+	tok, err := oauthflow.OIDConnect(defaultOIDCIssuer, defaultOIDCClientID, "", "", &oauthflow.StaticTokenGetter{RawToken: idToken})
+	if err != nil {
+		return nil, err
+	}
+
+	// Sign the email address as part of the request
+	h := sha256.Sum256([]byte(tok.Subject))
+	proof, err := ecdsa.SignASN1(rand.Reader, priv, h[:])
+	if err != nil {
+		return nil, err
+	}
+
+	req := SigningCertificateRequestLegacy{
+		PublicKey: PublicKeyLegacy{
+			Content: pubBytesPEM,
+		},
+		SignedEmailAddress: proof,
+	}
+
+	return json.Marshal(req)
+}
+
 type SigningCertificateRequest struct {
 	PublicKeyRequest PublicKeyRequest `json:"publicKeyRequest"`
+}
+
+type SigningCertificateRequestLegacy struct {
+	PublicKey          PublicKeyLegacy `json:"publicKey"`
+	SignedEmailAddress []byte          `json:"signedEmailAddress"`
 }
 
 type SigningCertificateResponse struct {
@@ -313,4 +415,8 @@ type PublicKeyRequest struct {
 
 type PublicKey struct {
 	Content string `json:"content"`
+}
+
+type PublicKeyLegacy struct {
+	Content []byte `json:"content"`
 }

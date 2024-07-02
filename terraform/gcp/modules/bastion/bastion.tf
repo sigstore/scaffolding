@@ -113,7 +113,7 @@ resource "google_compute_instance" "bastion" {
   boot_disk {
     kms_key_self_link = google_kms_crypto_key.disk-key.id
     initialize_params {
-      image = "debian-cloud/debian-11"
+      image = "debian-cloud/debian-12"
     }
   }
 

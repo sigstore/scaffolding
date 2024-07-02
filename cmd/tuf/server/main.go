@@ -39,27 +39,42 @@ var (
 	// root = Which holds 1.root.json
 	// repository - Compressed repo, which has been tar/gzipped.
 	secretName = flag.String("rootsecret", "tuf-root", "Name of the secret to create for the initial root file")
+	noK8s = flag.Bool("no-k8s", false, "Run in a non-k8s environment")
 )
 
-func main() {
-	flag.Parse()
+func getNamespaceAndClientset(noK8s bool) (string, *kubernetes.Clientset, error) {
+	if noK8s {
+		return "", nil, nil
+	}
 
 	ns := os.Getenv("NAMESPACE")
 	if ns == "" {
 		panic("env variable NAMESPACE must be set")
 	}
+
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed to get InClusterConfig: %v", err)
+	}
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return "", nil, fmt.Errorf("Failed to get clientset: %v", err)
+	}
+
+	return ns, clientset, nil
+}
+
+func main() {
+	flag.Parse()
+
 	ctx := signals.NewContext()
 
 	versionInfo := version.GetVersionInfo()
 	logging.FromContext(ctx).Infof("running create_repo Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
-	config, err := rest.InClusterConfig()
+	ns, clientset, err := getNamespaceAndClientset(*noK8s)
 	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to get InClusterConfig: %v", err)
-	}
-	clientset, err := kubernetes.NewForConfig(config)
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
+		logging.FromContext(ctx).Panicf("Failed to get namespace and clientset: %v", err)
 	}
 
 	tufFiles, err := os.ReadDir(*dir)
@@ -129,10 +144,13 @@ func main() {
 	}
 	data["repository"] = compressed.Bytes()
 
-	nsSecret := clientset.CoreV1().Secrets(ns)
-	if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
-		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
+	if !*noK8s {
+		nsSecret := clientset.CoreV1().Secrets(ns)
+		if err := secret.ReconcileSecret(ctx, *secretName, ns, data, nsSecret); err != nil {
+			logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
+		}
 	}
+
 	// Serve the TUF repository.
 	logging.FromContext(ctx).Infof("tuf repository was created in: %s", dir)
 	serveDir := filepath.Join(dir, "repository")

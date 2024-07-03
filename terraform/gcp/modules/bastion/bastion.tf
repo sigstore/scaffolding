@@ -147,6 +147,33 @@ resource "google_compute_instance" "bastion" {
   depends_on = [google_project_service.service, google_kms_crypto_key_iam_binding.disk-key]
 }
 
+resource "google_os_config_patch_deployment" "patch" {
+  patch_deployment_id = "patch-deploy"
+
+  instance_filter {
+    instances = [google_compute_instance.bastion.id]
+  }
+
+  patch_config {
+    apt {
+      type = "DIST"
+    }
+  }
+
+  recurring_schedule {
+    time_zone {
+      id = "Etc/UTC"
+    }
+
+    time_of_day {
+      hours   = 0
+      minutes = 0
+      seconds = 0
+      nanos   = 0
+    }
+  }
+}
+
 // Grant tunnel access to the GA team 
 resource "google_project_iam_member" "ga_tunnel_accessor_verifier_member" {
   project = var.project_id

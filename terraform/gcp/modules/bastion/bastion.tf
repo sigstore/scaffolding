@@ -162,7 +162,7 @@ resource "google_os_config_patch_deployment" "patch" {
 
   recurring_schedule {
     time_zone {
-      id = "America/New_York"
+      id = "Etc/UTC"
     }
 
     time_of_day {

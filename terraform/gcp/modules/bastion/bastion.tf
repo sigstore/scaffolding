@@ -166,10 +166,10 @@ resource "google_os_config_patch_deployment" "patch" {
     }
 
     time_of_day {
-      hours = 0
+      hours   = 0
       minutes = 0
       seconds = 0
-      nanos = 0
+      nanos   = 0
     }
   }
 }

@@ -20,6 +20,7 @@ resource "google_project_service" "service" {
     "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
     "compute.googleapis.com",  // For compute firewall, instance. roles/compute.securityAdmin, roles/compute.instanceAdmin
     "iam.googleapis.com",      // For creating service accounts and access control. roles/iam.serviceAccountAdmin
+    "osconfig.googleapis.com", // For using OS Config API (patching)
   ])
   service = each.key
 

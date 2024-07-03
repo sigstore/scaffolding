@@ -120,6 +120,7 @@ resource "google_compute_instance" "bastion" {
 
   metadata = {
     block-project-ssh-keys = true
+    enable-osconfig        = "TRUE"
   }
 
   shielded_instance_config {

@@ -174,6 +174,8 @@ resource "google_os_config_patch_deployment" "patch" {
       nanos   = 0
     }
   }
+
+  depends_on = [google_project_service.service]
 }
 
 // Grant tunnel access to the GA team 

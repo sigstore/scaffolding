@@ -384,3 +384,33 @@ vaikas@villes-mbp scaffolding % echo 'eyJfdHlwZSI6Imh0dHBzOi8vaW4tdG90by5pby9TdG
 ```
 
 Notice our predicate is `foobar test attestation` as was in our predicate file.
+
+## Generating trusted_root.json
+
+The TUF mirror in this stack does not serve a
+[`trusted_root.json`](https://github.com/sigstore/protobuf-specs/blob/main/protos/sigstore_trustroot.proto)
+target, but you can generate one to use with certain sigstore clients.
+
+1. Download and install [trtool](https://github.com/kommendorkapten/trtool).
+
+2. Use `cosign initialize` as described above to download targets from the TUF
+   mirror.
+
+3. Initialize the trusted root with the Fulcio CA:
+
+```
+./trtool init -ca ~/.sigstore/root/targets/fulcio_v1.crt.pem -ca-uri $FULCIO_URL -ca-start $(date -Iseconds) | jq > tr.1.json
+```
+
+4. Add the transparency log and certificate transparency log keys:
+
+```
+./trtool add -f tr.1.json -type ctlog -uri $CTLOG_URL -pem ~/.sigstore/root/targets/ctfe.pub -start $(date -Iseconds) | jq > tr.2.json
+./trtool add -f tr.2.json -type tlog -uri $REKOR_URL -pem ~/.sigstore/root/targets/rekor.pub -start $(date -Iseconds) | jq > trusted_root.json
+```
+
+5. Now the trusted_root.json can be used as input for sigstore clients:
+
+```
+sigstore-go -trustedrootJSONpath trusted_root.json -tufTrustedRoot root.json -artifact=blob -expectedSAN=https://kubernetes.io/namespaces/default/serviceaccounts/default -expectedIssuer=https://kubernetes.default.svc.cluster.local bundle.json
+```

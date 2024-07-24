@@ -18,7 +18,14 @@ import (
 	"archive/tar"
 	"compress/gzip"
 	"context"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/elliptic"
+	"crypto/rsa"
+	"crypto/sha256"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
 	"io"
@@ -26,12 +33,30 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
+	v1Common "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	v1 "github.com/sigstore/protobuf-specs/gen/pb-go/trustroot/v1"
 	"github.com/theupdateframework/go-tuf"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"knative.dev/pkg/logging"
 )
+
+const (
+	FulcioTarget  = "Fulcio"
+	RekorTarget   = "Rekor"
+	CTFETarget    = "CTFE"
+	TSATarget     = "TSA"
+	UnknownTarget = "Unknown"
+)
+
+type CreateRepoOptions struct {
+	AddMetadataTargets bool
+	AddTrustedRoot     bool
+}
 
 // TargetWithMetadata describes a TUF target with the given Name, Bytes, and
 // CustomMetadata
@@ -110,7 +135,14 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 	return local, dir, nil
 }
 
-// CreateRepo creates and initializes a TUF repo for Sigstore by adding
+// CreateRepo calls CreateRepoWithOptions, while setting:
+// * CreateRepoOptions.AddMetadataTargets: true
+// * CreateRepoOptions.AddTrustedRoot: false
+func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
+	return CreateRepoWithOptions(ctx, files, CreateRepoOptions{AddMetadataTargets: true, AddTrustedRoot: false})
+}
+
+// CreateRepoWithOptions creates and initializes a TUF repo for Sigstore by adding
 // keys to bytes. keys are typically for a basic setup like:
 // "fulcio_v1.crt.pem" - Fulcio root cert in PEM format
 // "ctfe.pub" - CTLog public key in PEM format
@@ -127,34 +159,268 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 //   - `rekor` = it will get Usage set to `Rekor`
 //   - `tsa` = it will get Usage set to `tsa`.
 //   - Anything else will get set to `Unknown`
-func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
-	targets := make([]TargetWithMetadata, 0, len(files))
+//
+// The targets will be added individually to the TUF repo if CreateRepoOptions.AddMetadataTargets
+// is set to true. The trusted_root.json file will be added if CreateRepoOptions.AddTrustedRoot
+// is set to true. At least one of these has to be true.
+func CreateRepoWithOptions(ctx context.Context, files map[string][]byte, options CreateRepoOptions) (tuf.LocalStore, string, error) {
+	if !options.AddMetadataTargets && !options.AddTrustedRoot {
+		return nil, "", errors.New("failed to create TUF repo: At least one of metadataTargets, trustedRoot must be true")
+	}
+
+	metadataTargets := make([]TargetWithMetadata, 0, len(files))
 	for name, bytes := range files {
-		var usage string
-		switch {
-		case strings.Contains(name, "fulcio"):
-			usage = "Fulcio"
-		case strings.Contains(name, "ctfe"):
-			usage = "CTFE"
-		case strings.Contains(name, "rekor"):
-			usage = "Rekor"
-		case strings.Contains(name, "tsa"):
-			usage = "TSA"
-		default:
-			usage = "Unknown"
-		}
-		scmActive, err := json.Marshal(&sigstoreCustomMetadata{Sigstore: CustomMetadata{Usage: usage, Status: "Active"}})
+		scmActive, err := json.Marshal(&sigstoreCustomMetadata{Sigstore: CustomMetadata{Usage: getTargetUsage(name), Status: "Active"}})
 		if err != nil {
 			return nil, "", fmt.Errorf("failed to marshal custom metadata for %s: %w", name, err)
 		}
-		targets = append(targets, TargetWithMetadata{
+		metadataTargets = append(metadataTargets, TargetWithMetadata{
 			Name:           name,
 			Bytes:          bytes,
 			CustomMetadata: scmActive,
 		})
 	}
 
+	targets := make([]TargetWithMetadata, 0, len(files)+1)
+	if options.AddMetadataTargets {
+		targets = append(targets, metadataTargets...)
+	}
+	if options.AddTrustedRoot {
+		trustedRootTarget, err := constructTrustedRoot(metadataTargets)
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to construct trust root: %w", err)
+		}
+		targets = append(targets, *trustedRootTarget)
+	}
+
 	return CreateRepoWithMetadata(ctx, targets)
+}
+
+func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, error) {
+	tr := v1.TrustedRoot{
+		MediaType: "application/vnd.dev.sigstore.trustedroot+json;version=0.1",
+	}
+
+	var fulcioLeaf, fulcioRoot, tsaLeaf, tsaRoot []byte
+	var fulcioIntermed, tsaIntermed [][]byte
+
+	// we sort the targets by Name, this results in intermediary certs being sorted correctly,
+	// as long as there is less than 10, which is ok to assume for the purposes of this code
+	sort.Slice(targets, func(i, j int) bool {
+		return targets[i].Name < targets[j].Name
+	})
+
+	for _, target := range targets {
+		// NOTE: in the below switch, we are able to process whole certificate chains, but we also support
+		// if they're passed in as individual certificates, already split in individual targets
+		switch getTargetUsage(target.Name) {
+		case FulcioTarget:
+			switch {
+			case strings.Contains(target.Name, "leaf"):
+				fulcioLeaf = target.Bytes
+			case strings.Contains(target.Name, "intermediate"):
+				fulcioIntermed = append(fulcioIntermed, target.Bytes)
+			default:
+				fulcioRoot = target.Bytes
+			}
+		case TSATarget:
+			switch {
+			case strings.Contains(target.Name, "leaf"):
+				tsaLeaf = target.Bytes
+			case strings.Contains(target.Name, "intermediate"):
+				tsaIntermed = append(tsaIntermed, target.Bytes)
+			default:
+				tsaRoot = target.Bytes
+			}
+		case RekorTarget:
+			tlinstance, err := pubkeyToTLogInstance(target.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse rekor key: %w", err)
+			}
+			tr.Tlogs = []*v1.TransparencyLogInstance{tlinstance}
+		case CTFETarget:
+			tlinstance, err := pubkeyToTLogInstance(target.Bytes)
+			if err != nil {
+				return nil, fmt.Errorf("failed to parse ctlog key: %w", err)
+			}
+			tr.Ctlogs = []*v1.TransparencyLogInstance{tlinstance}
+		}
+	}
+	var fulcioAuthority, tsaAuthority *v1.CertificateAuthority
+	var err error
+
+	// concat the fulcio chain and process it into CertificateAuthority
+	fulcioAuthority, err = certChainToAuthority(concatCertChain(fulcioLeaf, fulcioIntermed, fulcioRoot))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse cert chain for Fulcio: %w", err)
+	}
+	tr.CertificateAuthorities = []*v1.CertificateAuthority{fulcioAuthority}
+
+	// concat the tsa chain and process it into CertificateAuthority
+	tsaAuthority, err = certChainToAuthority(concatCertChain(tsaLeaf, tsaIntermed, tsaRoot))
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse cert chain for TSA: %w", err)
+	}
+	tr.TimestampAuthorities = append(tr.TimestampAuthorities, tsaAuthority)
+
+	marshaller := &protojson.MarshalOptions{
+		Indent: "  ",
+	}
+	serialized, err := marshaller.Marshal(&tr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize trust root: %w", err)
+	}
+
+	return &TargetWithMetadata{
+		Name:  "trusted_root.json",
+		Bytes: serialized,
+	}, nil
+}
+
+func concatCertChain(leaf []byte, intermediate [][]byte, root []byte) []byte {
+	var result []byte
+	result = append(result, leaf...)
+	result = append(result, byte('\n'))
+	for _, intermed := range intermediate {
+		result = append(result, intermed...)
+		result = append(result, byte('\n'))
+	}
+	result = append(result, root...)
+	return result
+}
+
+func pubkeyToTLogInstance(key []byte) (*v1.TransparencyLogInstance, error) {
+	logId := sha256.Sum256(key)
+	der, _ := pem.Decode(key)
+	keyDetails, err := getKeyDetails(der.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return &v1.TransparencyLogInstance{
+		BaseUrl:       "",
+		HashAlgorithm: v1Common.HashAlgorithm_SHA2_256, // TODO: make it possible to change this value
+		PublicKey: &v1Common.PublicKey{
+			RawBytes:   der.Bytes,
+			KeyDetails: keyDetails,
+			ValidFor: &v1Common.TimeRange{
+				Start: timestamppb.New(time.Now()),
+			},
+		},
+		LogId: &v1Common.LogId{
+			KeyId: logId[:],
+		},
+	}, nil
+}
+
+func getKeyDetails(key []byte) (v1Common.PublicKeyDetails, error) {
+	var k any
+	var err1, err2 error
+
+	k, err1 = x509.ParsePKCS1PublicKey(key)
+	if err1 != nil {
+		k, err2 = x509.ParsePKIXPublicKey(key)
+		if err2 != nil {
+			return 0, fmt.Errorf("Can't parse public key with PKCS1 or PKIX: %w, %w", err1, err2)
+		}
+	}
+
+	// borrowed from https://github.com/kommendorkapten/trtool/blob/main/cmd/trtool/app/common.go
+	switch v := k.(type) {
+	case *ecdsa.PublicKey:
+		if v.Curve == elliptic.P256() {
+			return v1Common.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256, nil
+		}
+		if v.Curve == elliptic.P384() {
+			return v1Common.PublicKeyDetails_PKIX_ECDSA_P384_SHA_384, nil
+		}
+		if v.Curve == elliptic.P521() {
+			return v1Common.PublicKeyDetails_PKIX_ECDSA_P521_SHA_512, nil
+		}
+		return 0, errors.New("unsupported elliptic curve")
+	case *rsa.PublicKey:
+		/*
+			NOTE: It is not possible to recognize padding from just the public key alone;
+			we will just assume that the padding used is pkcs1v15
+			if padding == RSAPSS {
+				switch v.Size() * 8 {
+				case 2048:
+					return v1Common.PublicKeyDetails_PKIX_RSA_PSS_2048_SHA256, nil
+				case 3072:
+					return v1Common.PublicKeyDetails_PKIX_RSA_PSS_3072_SHA256, nil
+				case 4096:
+					return v1Common.PublicKeyDetails_PKIX_RSA_PSS_4096_SHA256, nil
+				default:
+					return 0, fmt.Errorf("unsupported public modulus %d", v.Size())
+				}
+			}
+		*/
+		switch v.Size() * 8 {
+		case 2048:
+			return v1Common.PublicKeyDetails_PKIX_RSA_PKCS1V15_2048_SHA256, nil
+		case 3072:
+			return v1Common.PublicKeyDetails_PKIX_RSA_PKCS1V15_3072_SHA256, nil
+		case 4096:
+			return v1Common.PublicKeyDetails_PKIX_RSA_PKCS1V15_4096_SHA256, nil
+		default:
+			return 0, fmt.Errorf("unsupported public modulus %d", v.Size())
+		}
+	case ed25519.PublicKey:
+		return v1Common.PublicKeyDetails_PKIX_ED25519, nil
+	default:
+		return 0, errors.New("unknown public key type")
+	}
+}
+
+func certChainToAuthority(certChainPem []byte) (*v1.CertificateAuthority, error) {
+	var cert *x509.Certificate
+	var err error
+	rest := certChainPem
+	certChain := v1Common.X509CertificateChain{Certificates: []*v1Common.X509Certificate{}}
+
+	// skip potential whitespace at end of file (8 is kinda random, but seems to work fine)
+	for len(rest) > 8 {
+		var derCert *pem.Block
+		derCert, rest = pem.Decode(rest)
+		cert, err = x509.ParseCertificate(derCert.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse Fulcio certificate: %w", err)
+		}
+		certChain.Certificates = append(certChain.Certificates, &v1Common.X509Certificate{RawBytes: cert.Raw})
+	}
+
+	// we end up using information from the last certificate, which is the root
+	uri := ""
+	if len(cert.URIs) > 0 {
+		uri = cert.URIs[0].String()
+	}
+	subject := v1Common.DistinguishedName{}
+	if len(cert.Subject.Organization) > 0 {
+		subject.Organization = cert.Subject.Organization[0]
+		subject.CommonName = cert.Subject.CommonName
+	}
+
+	authority := v1.CertificateAuthority{
+		Subject: &subject,
+		Uri:     uri,
+		ValidFor: &v1Common.TimeRange{
+			Start: timestamppb.New(cert.NotBefore),
+			End:   timestamppb.New(cert.NotAfter),
+		},
+		CertChain: &certChain,
+	}
+
+	return &authority, nil
+}
+
+func getTargetUsage(name string) string {
+	for _, knownTargetType := range []string{FulcioTarget, RekorTarget, CTFETarget, TSATarget} {
+		if strings.Contains(name, strings.ToLower(knownTargetType)) {
+			return knownTargetType
+		}
+	}
+
+	return UnknownTarget
 }
 
 func writeStagedTarget(dir, path string, data []byte) error {

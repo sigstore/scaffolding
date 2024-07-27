@@ -1,8 +1,7 @@
 module github.com/sigstore/scaffolding
 
 go 1.22.0
-
-toolchain go1.22.4
+toolchain go1.22.5
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -32,7 +31,7 @@ require (
 	github.com/prometheus/client_golang v1.19.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.2.4
-	github.com/sigstore/fulcio v1.4.5
+	github.com/sigstore/fulcio v1.5.1
 	github.com/sigstore/rekor v1.3.6
 	github.com/sigstore/sigstore v1.8.7
 	github.com/sigstore/timestamp-authority v1.2.2
@@ -42,8 +41,8 @@ require (
 	golang.org/x/crypto v0.25.0
 	golang.org/x/net v0.27.0
 	golang.org/x/time v0.5.0
-	google.golang.org/genproto v0.0.0-20240311173647-c811ad7063a7
-	google.golang.org/grpc v1.64.0
+	google.golang.org/genproto v0.0.0-20240617180043-68d350f18fd4
+	google.golang.org/grpc v1.64.1
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1
@@ -58,20 +57,23 @@ require (
 
 require (
 	bitbucket.org/creachadair/shell v0.0.8 // indirect
-	cloud.google.com/go v0.112.1 // indirect
+	cloud.google.com/go v0.115.0 // indirect
+	cloud.google.com/go/auth v0.5.1 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.2 // indirect
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
-	cloud.google.com/go/iam v1.1.6 // indirect
-	cloud.google.com/go/kms v1.15.8 // indirect
-	cloud.google.com/go/monitoring v1.18.0 // indirect
-	cloud.google.com/go/spanner v1.58.0 // indirect
-	cloud.google.com/go/trace v1.10.5 // indirect
+	cloud.google.com/go/iam v1.1.8 // indirect
+	cloud.google.com/go/kms v1.17.1 // indirect
+	cloud.google.com/go/longrunning v0.5.7 // indirect
+	cloud.google.com/go/monitoring v1.19.0 // indirect
+	cloud.google.com/go/spanner v1.63.0 // indirect
+	cloud.google.com/go/trace v1.10.7 // indirect
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AliyunContainerService/ack-ram-tool/pkg/credentials/alibabacloudsdkgo/helper v0.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go v68.0.0+incompatible // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.11.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.12.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.6.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/internal v1.8.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/internal v1.9.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.0.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
@@ -83,7 +85,8 @@ require (
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
-	github.com/Microsoft/go-winio v0.6.1 // indirect
+	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.0 // indirect
+	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProtonMail/go-crypto v0.0.0-20230923063757-afb1ddc0824c // indirect
 	github.com/ThalesIgnite/crypto11 v1.2.5 // indirect
 	github.com/alibabacloud-go/alibabacloud-gateway-spi v0.0.4 // indirect
@@ -98,7 +101,7 @@ require (
 	github.com/alibabacloud-go/tea-xml v1.1.3 // indirect
 	github.com/aliyun/credentials-go v1.3.1 // indirect
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2 // indirect
-	github.com/aws/aws-sdk-go v1.51.6 // indirect
+	github.com/aws/aws-sdk-go v1.53.10 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.27.2 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.27.18 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.18 // indirect
@@ -110,7 +113,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/ecrpublic v1.18.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.11.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.11 // indirect
-	github.com/aws/aws-sdk-go-v2/service/kms v1.30.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/kms v1.32.2 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.20.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.24.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.28.12 // indirect
@@ -177,11 +180,11 @@ require (
 	github.com/google/s2a-go v0.1.7 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.2 // indirect
-	github.com/googleapis/gax-go/v2 v2.12.3 // indirect
+	github.com/googleapis/gax-go/v2 v2.12.4 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.20.0 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
-	github.com/hashicorp/vault/api v1.12.2 // indirect
+	github.com/hashicorp/vault/api v1.14.0 // indirect
 	github.com/imdario/mergo v0.3.16 // indirect
 	github.com/in-toto/in-toto-golang v0.9.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -216,12 +219,12 @@ require (
 	github.com/opencontainers/image-spec v1.1.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
-	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
+	github.com/pelletier/go-toml/v2 v2.2.2 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/prometheus/client_model v0.6.0 // indirect
-	github.com/prometheus/common v0.51.1 // indirect
-	github.com/prometheus/procfs v0.12.0 // indirect
+	github.com/prometheus/client_model v0.6.1 // indirect
+	github.com/prometheus/common v0.55.0 // indirect
+	github.com/prometheus/procfs v0.15.1 // indirect
 	github.com/prometheus/prometheus v0.47.2 // indirect
 	github.com/rs/cors v1.11.0 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
@@ -230,10 +233,10 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.8.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.3 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.4 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -241,8 +244,8 @@ require (
 	github.com/spf13/cast v1.6.0 // indirect
 	github.com/spf13/cobra v1.8.1 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
-	github.com/spf13/viper v1.18.2 // indirect
-	github.com/spiffe/go-spiffe/v2 v2.2.0 // indirect
+	github.com/spf13/viper v1.19.0 // indirect
+	github.com/spiffe/go-spiffe/v2 v2.3.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
@@ -262,7 +265,7 @@ require (
 	go.opentelemetry.io/otel v1.27.0 // indirect
 	go.opentelemetry.io/otel/metric v1.27.0 // indirect
 	go.opentelemetry.io/otel/trace v1.27.0 // indirect
-	go.step.sm/crypto v0.44.2 // indirect
+	go.step.sm/crypto v0.47.1 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/exp v0.0.0-20240112132812-db7319d0e0e3 // indirect
 	golang.org/x/mod v0.17.0 // indirect
@@ -273,9 +276,9 @@ require (
 	golang.org/x/text v0.16.0 // indirect
 	golang.org/x/tools v0.21.1-0.20240508182429-e35e4ccd0d2d // indirect
 	golang.org/x/xerrors v0.0.0-20231012003039-104605ab7028 // indirect
-	google.golang.org/api v0.172.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20240520151616-dc85e6b867a5 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20240520151616-dc85e6b867a5 // indirect
+	google.golang.org/api v0.185.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20240610135401-a8a62080eff3 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20240617180043-68d350f18fd4 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

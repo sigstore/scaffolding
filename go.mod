@@ -1,6 +1,7 @@
 module github.com/sigstore/scaffolding
 
-go 1.22.4
+go 1.22.5
+
 require (
 	chainguard.dev/exitdir v0.0.1
 	github.com/cenkalti/backoff/v3 v3.2.2

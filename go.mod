@@ -39,13 +39,8 @@ require (
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.25.0
 	golang.org/x/net v0.27.0
-
 	golang.org/x/time v0.6.0
-	google.golang.org/genproto v0.0.0-20240617180043-68d350f18fd4
-
-	golang.org/x/time v0.5.0
 	google.golang.org/genproto v0.0.0-20240708141625-4ad9e859172b
-
 	google.golang.org/grpc v1.65.0
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/square/go-jose.v2 v2.6.0

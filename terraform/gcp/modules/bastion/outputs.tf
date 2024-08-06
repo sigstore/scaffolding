@@ -35,3 +35,7 @@ output "ip_address" {
   description = "private IP address of bastion"
   value       = google_compute_instance.bastion.network_interface.0.network_ip
 }
+
+output "sa_email" {
+  value = google_service_account.bastion.email
+}

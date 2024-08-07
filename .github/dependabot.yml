@@ -1,65 +1,24 @@
 version: 2
 updates:
 - package-ecosystem: docker
-  directory: "/"
-  schedule:
-    interval: daily
-- package-ecosystem: docker
-  directory: "/config/fulcio/fulcio"
-  schedule:
-    interval: daily
-- package-ecosystem: docker
-  directory: "/config/rekor/rekor"
-  schedule:
-    interval: daily
-- package-ecosystem: docker
-  directory: "/config/trillian/trillian-log-server"
-  schedule:
-    interval: daily
-- package-ecosystem: docker
-  directory: "/config/trillian/trillian-log-signer"
-  schedule:
-    interval: daily
-- package-ecosystem: docker
-  directory: "/config/tsa/tsa"
-  schedule:
-    interval: daily
+  directories:
+    - "/"
+    - "/config/**/*"
+
 - package-ecosystem: gomod
   directory: "/"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: weekly
 
 - package-ecosystem: "terraform"
-  directory: "/terraform/gcp/modules/argocd"
-  schedule:
-    interval: monthly
-  groups:
-    terraform:
-      patterns:
-        - "*"
-- package-ecosystem: "terraform"
-  directory: "/terraform/gcp/modules/external_secrets"
-  schedule:
-    interval: monthly
-  groups:
-    terraform:
-      patterns:
-        - "*"
-- package-ecosystem: "terraform"
-  directory: "/terraform/gcp/modules/monitoring/slo"
-  schedule:
-    interval: monthly
-  groups:
-    terraform:
-      patterns:
-        - "*"
-- package-ecosystem: "terraform"
-  directory: "/terraform/gcp/modules/sigstore"
+  directories:
+    - "/terraform/gcp/modules/**/*"
   schedule:
     interval: monthly
   groups:

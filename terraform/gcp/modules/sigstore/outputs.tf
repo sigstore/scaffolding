@@ -121,7 +121,3 @@ output "bastion_kubectl" {
   value       = "HTTPS_PROXY=socks5://localhost:8118 kubectl get pods --all-namespaces"
 }
 
-output "bastion_sa_email" {
-  description = "Email of the SA that the Bastion runs under."
-  value       = module.bastion.sa_email
-}

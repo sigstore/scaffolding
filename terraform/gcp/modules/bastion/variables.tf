@@ -48,6 +48,6 @@ variable "subnetwork" {
 }
 
 variable "tunnel_accessor_sa" {
-  type        = string
+  type        = list(string)
   description = "Email of group to give access to the tunnel to"
 }

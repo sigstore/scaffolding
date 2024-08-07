@@ -180,7 +180,18 @@ resource "google_os_config_patch_deployment" "patch" {
 
 // Grant tunnel access to the GA team 
 resource "google_project_iam_member" "ga_tunnel_accessor_verifier_member" {
+  for_each = toset(var.tunnel_accessor_sa)
+
   project = var.project_id
   role    = "roles/iap.tunnelResourceAccessor"
-  member  = var.tunnel_accessor_sa
+  member  = each.key
+}
+
+// Grant access to impersonate the SA the bastion VM runs as
+resource "google_service_account_iam_member" "bastion_access" {
+  for_each = toset(var.tunnel_accessor_sa)
+
+  service_account_id = google_service_account.bastion.name
+  role               = "roles/iam.serviceAccountUser"
+  member             = each.key
 }

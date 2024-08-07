@@ -310,9 +310,7 @@ module "oslogin" {
     bastion = {
       instance_name = module.bastion.name
       zone          = module.bastion.zone
-      members = [
-        var.tunnel_accessor_sa,
-      ]
+      members       = var.tunnel_accessor_sa
     }
   }
   depends_on = [

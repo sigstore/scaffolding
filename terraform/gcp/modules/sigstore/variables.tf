@@ -164,8 +164,8 @@ variable "cluster_network_tag" {
 }
 
 variable "tunnel_accessor_sa" {
-  type        = string
-  description = "Email of group to give access to the tunnel to"
+  type        = list(string)
+  description = "Email of group to give access to the bastion tunnel to"
 }
 
 variable "github_repo" {

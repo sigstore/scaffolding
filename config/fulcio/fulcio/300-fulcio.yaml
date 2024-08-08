@@ -20,7 +20,7 @@ spec:
       # This doesn't actually use Kubernetes credentials, so don't mount them in.
       automountServiceAccountToken: false
       containers:
-      - image: gcr.io/projectsigstore/fulcio:v1.5.1@sha256:17b914c4a1d05871e3353630b3516b106b653839587aa496d0f96b6e857c8714
+      - image: gcr.io/projectsigstore/fulcio:v1.6.0@sha256:9030be23f59405100bc8d24ce2ca493b9d430639ef49b448541a840b3bfd7771
         name: fulcio
         ports:
         - containerPort: 5555
@@ -90,7 +90,7 @@ spec:
       # This doesn't actually use Kubernetes credentials, so don't mount them in.
       automountServiceAccountToken: false
       containers:
-      - image: gcr.io/projectsigstore/fulcio:v1.5.1@sha256:17b914c4a1d05871e3353630b3516b106b653839587aa496d0f96b6e857c8714
+      - image: gcr.io/projectsigstore/fulcio:v1.6.0@sha256:9030be23f59405100bc8d24ce2ca493b9d430639ef49b448541a840b3bfd7771
         name: fulcio-grpc
         ports:
         - containerPort: 5554

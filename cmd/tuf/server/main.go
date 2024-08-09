@@ -159,7 +159,7 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 			return fmt.Errorf("failed to reconcile secret %s/%s: %v", ns, repoSecretName, err)
 		}
 
-		// If we should also store created keys in a secret, compress the directory and put it into a secret
+		// If we should also store created keys in a secret, read all their files and save them in the secret
 		if keysSecretName != "" {
 			keyFiles, err := os.ReadDir(filepath.Join(dir, "keys"))
 			if err != nil {

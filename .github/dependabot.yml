@@ -4,6 +4,8 @@ updates:
   directories:
     - "/"
     - "/config/**/*"
+  schedule:
+    interval: weekly
 
 - package-ecosystem: gomod
   directory: "/"

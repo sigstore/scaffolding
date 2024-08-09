@@ -161,11 +161,22 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 
 		// If we should also store created keys in a secret, compress the directory and put it into a secret
 		if keysSecretName != "" {
-			var compressedKeys bytes.Buffer
-			if err := repo.CompressFS(os.DirFS(dir), &compressedKeys, map[string]bool{"staged": true, "repository": true}); err != nil {
-				return fmt.Errorf("failed to compress the keys: %v", err)
+			keyFiles, err := os.ReadDir(filepath.Join(dir, "keys"))
+			if err != nil {
+				return fmt.Errorf("failed to list keys directory %v", err)
 			}
-			dataKeys := map[string][]byte{"keys": compressedKeys.Bytes()}
+			dataKeys := map[string][]byte{}
+			for _, keyFile := range keyFiles {
+				if !strings.HasSuffix(keyFile.Name(), ".json") {
+					continue
+				}
+				keyFilePath := filepath.Join(filepath.Join(dir, "keys", keyFile.Name()))
+				content, err := os.ReadFile(keyFilePath)
+				if err != nil {
+					return fmt.Errorf("failed reading file %s: %v", keyFilePath, err)
+				}
+				dataKeys[keyFile.Name()] = content
+			}
 			if err := secret.ReconcileSecret(ctx, keysSecretName, ns, dataKeys, nsSecret); err != nil {
 				return fmt.Errorf("failed to reconcile keys secret %s/%s: %v", ns, keysSecretName, err)
 			}

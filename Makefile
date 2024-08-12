@@ -138,7 +138,7 @@ build-getoidctoken:
 
 .PHONY: build-rekor-createsecret
 build-rekor-createsecret:
-	go build -trimpath ./cmd/rekor/createsecret
+	go build -trimpath ./cmd/rekor/rekor-createsecret
 
 .PHONY: build-trillian-createdb
 build-trillian-createdb:

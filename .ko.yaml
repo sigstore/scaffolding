@@ -186,7 +186,7 @@ builds:
 
   - id: rekor-createsecret
     dir: .
-    main: ./cmd/rekor/createsecret
+    main: ./cmd/rekor/rekor-createsecret
     env:
       - CGO_ENABLED=0
     flags:

@@ -12,6 +12,7 @@ prober
 /createctconfig
 /createdb
 /createsecret
+/rekor-createsecret
 /createtree
 /getoidctoken
 /managectroots

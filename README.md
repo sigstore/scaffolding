@@ -125,7 +125,7 @@ have the following (some stuff omitted for readability) in our Rekor Deployment
 to ensure that Rekor will not start prior to TreeID having been properly
 provisioned.
 Rekor also needs a Signing Key that it will use, and we create one with
-[CreateSecret](./cmd/rekor/createsecret/main.go). It will create two secrets,
+[CreateSecret](./cmd/rekor/rekor-createsecret/main.go). It will create two secrets,
 one holding the Private Signing key as well as the password used to encrypt it
 with. By default the secret is named `rekor-signing-secret` and contains two
 keys:

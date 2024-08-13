@@ -54,7 +54,7 @@ func main() {
 
 	ctx := signals.NewContext()
 	versionInfo := version.GetVersionInfo()
-	logging.FromContext(ctx).Infof("running createsecret Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+	logging.FromContext(ctx).Infof("running rekor-createsecret Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {

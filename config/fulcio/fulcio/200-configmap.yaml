@@ -12,7 +12,7 @@ data:
       https://kubernetes.default.svc.cluster.local:
         issuer-url: https://kubernetes.default.svc.cluster.local
         client-id: sigstore
-        type": kubernetes
+        type: kubernetes
       https://accounts.google.com:
         issuer-url: https://accounts.google.com
         client-id: sigstore

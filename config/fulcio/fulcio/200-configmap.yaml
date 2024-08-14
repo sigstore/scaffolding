@@ -5,35 +5,72 @@ metadata:
   name: fulcio-config
   namespace: fulcio-system
 data:
-  config.json: |-
-    {
-      "OIDCIssuers": {
-        "https://kubernetes.default.svc.cluster.local": {
-          "IssuerURL": "https://kubernetes.default.svc.cluster.local",
-          "ClientID": "sigstore",
-          "Type": "kubernetes"
-        },
-        "https://accounts.google.com": {
-          "IssuerURL": "https://accounts.google.com",
-          "ClientID": "sigstore",
-          "Type": "email"
-        },
-        "https://oauth2.sigstore.dev/auth": {
-          "IssuerURL": "https://oauth2.sigstore.dev/auth",
-          "ClientID": "sigstore",
-          "Type": "email",
-          "IssuerClaim": "$.federated_claims.connector_id"
-        },
-        "https://token.actions.githubusercontent.com": {
-          "IssuerURL": "https://token.actions.githubusercontent.com",
-          "ClientID": "sigstore",
-          "Type": "github-workflow"
-        }
-      },
-      "MetaIssuers": {
-        "https://kubernetes.*.svc": {
-          "ClientID": "sigstore",
-          "Type": "kubernetes"
-        }
-      }
-    }
+  config.yaml: |-
+    define:
+      - github-workflow
+    oidc-issuers:
+      https://kubernetes.default.svc.cluster.local:
+        issuer-url: https://kubernetes.default.svc.cluster.local
+        client-id: sigstore
+        type: kubernetes
+      https://accounts.google.com:
+        issuer-url: https://accounts.google.com
+        client-id: sigstore
+        type: email
+      https://oauth2.sigstore.dev/auth:
+        issuer-url: https://oauth2.sigstore.dev/auth
+        client-id: sigstore
+        type: email
+        issuer-claim: $.federated_claims.connector_id
+      https://token.actions.githubusercontent.com:
+        ci-provider: github-workflow
+        issuer-url: https://token.actions.githubusercontent.com
+        client-id: sigstore
+        type: ci-provider
+    meta-issuers:
+      https://kubernetes.*.svc:
+        client-id: sigstore
+        type: kubernetes
+    ci-issuer-metadata:
+      github-workflow:
+        default-template-values:
+          # url: URL of issuer, https://github.com
+          url: "https://github.com"
+        extension-templates:
+          # event_name: Event that triggered this workflow run. E.g "push", "tag"
+          github-workflow-trigger: "event_name"
+          # sha: Commit SHA being built
+          github-workflow-sha: "sha"
+          # workflow (Deprecated): Name of workflow that is running (mutable)
+          github-workflow-name: "workflow"
+          # repository: Name of repository being built
+          github-workflow-repository: "repository"
+          # ref: Git ref being built
+          github-workflow-ref: "ref"
+          # job_workflow_ref: Specific build instructions (i.e. reusable workflow)
+          build-signer-uri: "{{ .url }}/{{ .job_workflow_ref }}"
+          # job_workflow_sha: Commit SHA to specific build instructions
+          build-signer-digest: "job_workflow_sha"
+          # runner_environment: Whether the build took place in cloud or self-hosted infrastructure
+          runner-environment: "runner_environment"
+          # repository: Name of repository being built
+          source-repository-uri: "{{ .url }}/{{ .repository }}"
+          source-repository-digest: "sha"
+          source-repository-ref: "ref"
+          # repository_id: ID to the source repo
+          source-repository-identifier: "repository_id"
+          # repository_owner: Owner of the source repo (mutable)
+          source-repository-owner-uri: "{{ .url }}/{{ .repository_owner }}"
+          # repository_owner_id: ID of the source repo
+          source-repository-owner-identifier: "repository_owner_id"
+          # workflow_ref: Ref of top-level workflow that is running
+          build-config-uri: "{{ .url }}/{{ .workflow_ref }}"
+          # workflow_sha: Commit SHA of top-level workflow that is running
+          build-config-digest: "workflow_sha"
+          build-trigger: "event_name"
+          # run_id: ID of workflow run
+          # run_attempt: Attempt number of workflow run
+          run-invocation-uri: "{{ .url }}/{{ .repository }}/actions/runs/{{ .run_id }}/attempts/{{ .run_attempt }}"
+          # repository_visibility: Visibility of the source repo
+          source-repository-visibility-at-signing: "repository_visibility"
+        subject-alternative-name-template: "{{ .url }}/{{ .job_workflow_ref }}"

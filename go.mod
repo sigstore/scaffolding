@@ -27,7 +27,7 @@ require (
 	github.com/letsencrypt/boulder v0.0.0-20240620165639-de9c06129bec
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/prometheus/client_golang v1.19.1
+	github.com/prometheus/client_golang v1.20.0
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.4.0
 	github.com/sigstore/fulcio v1.6.2
@@ -202,7 +202,7 @@ require (
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/klauspost/compress v1.17.8 // indirect
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/letsencrypt/pkcs11key/v4 v4.0.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect

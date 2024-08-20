@@ -33,7 +33,7 @@ do
 done
 
 # Defaults
-K8S_VERSION="v1.25.x"
+K8S_VERSION="v1.29.x"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"

@@ -68,8 +68,9 @@ resource "google_container_cluster" "cluster" {
     service_account = google_service_account.gke-sa.email
     oauth_scopes    = var.oauth_scopes
     kubelet_config {
-      cpu_cfs_quota  = false
-      pod_pids_limit = 0
+      cpu_cfs_quota      = false
+      pod_pids_limit     = 0
+      cpu_manager_policy = "none"
     }
   }
 

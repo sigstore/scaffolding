@@ -65,6 +65,12 @@ resource "google_container_node_pool" "cluster_nodes" {
     service_account = google_service_account.gke-sa.email
     oauth_scopes    = ["https://www.googleapis.com/auth/cloud-platform"]
 
+    kubelet_config {
+      cpu_cfs_quota      = false
+      pod_pids_limit     = 0
+      cpu_manager_policy = "none"
+    }
+
     // Protect node metadata and enable Workload Identity
     // for this node pool.  "SECURE" just protects the metadata.
     // "EXPOSE" or not set allows for cluster takeover.

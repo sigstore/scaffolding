@@ -1375,6 +1375,7 @@ github.com/onsi/gomega v1.17.0/go.mod h1:HnhC7FXeEQY45zxNK3PPoIUhzk/80Xly9PcubAl
 github.com/onsi/gomega v1.19.0/go.mod h1:LY+I3pBVzYsTBU1AnDwOSxaYi9WoWiqgwooUqq9yPro=
 github.com/onsi/gomega v1.29.0 h1:KIA/t2t5UBzoirT4H9tsML45GEbo3ouUnBHsCfD2tVg=
 github.com/onsi/gomega v1.29.0/go.mod h1:9sxs+SwGrKI0+PWe4Fxa9tFQQBG5xSsSbMXOI8PPpoQ=
+github.com/onsi/gomega v1.33.1 h1:dsYjIxxSR755MDmKVsaFQTE22ChNBcuuTWgkUDSubOk=
 github.com/open-policy-agent/opa v0.67.0 h1:FOdsO9yNhfmrh+72oVK7ImWmzruG+VSpfbr5IBqEWVs=
 github.com/open-policy-agent/opa v0.67.0/go.mod h1:aqKlHc8E2VAAylYE9x09zJYr/fYzGX+JKne89UGqFzk=
 github.com/opencontainers/go-digest v1.0.0 h1:apOUWs51W5PlhuyGyz9FCeeBIOUDA/6nW8Oi/yOhh5U=
@@ -2417,6 +2418,8 @@ k8s.io/client-go v0.31.0 h1:QqEJzNjbN2Yv1H79SsS+SWnXkBgVu4Pj3CJQgbx0gI8=
 k8s.io/client-go v0.31.0/go.mod h1:Y9wvC76g4fLjmU0BA+rV+h2cncoadjvjjkkIGoTLcGU=
 k8s.io/code-generator v0.30.3 h1:bmtnLJKagDS5f5uOEpLyJiDfIMKXGMKgOLBdde+w0Mc=
 k8s.io/code-generator v0.30.3/go.mod h1:PFgBiv+miFV7TZYp+RXgROkhA+sWYZ+mtpbMLofMke8=
+k8s.io/code-generator v0.31.0 h1:w607nrMi1KeDKB3/F/J4lIoOgAwc+gV9ZKew4XRfMp8=
+k8s.io/code-generator v0.31.0/go.mod h1:84y4w3es8rOJOUUP1rLsIiGlO1JuEaPFXQPA9e/K6U0=
 k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01 h1:pWEwq4Asjm4vjW7vcsmijwBhOr1/shsbSYiWXmNGlks=
 k8s.io/gengo v0.0.0-20230829151522-9cce18d56c01/go.mod h1:FiNAH4ZV3gBg2Kwh89tzAEV2be7d5xI0vBa/VySYy3E=
 k8s.io/gengo/v2 v2.0.0-20240228010128-51d4e06bde70 h1:NGrVE502P0s0/1hudf8zjgwki1X/TByhmAoILTarmzo=

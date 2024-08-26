@@ -72,7 +72,7 @@ func CreateRepoWithMetadata(ctx context.Context, targets []TargetWithMetadata) (
 		return nil, "", fmt.Errorf("failed to NewRepoIndent: %w", err)
 	}
 
-	if err := r.Init(false); err != nil {
+	if err := r.Init(true); err != nil {
 		return nil, "", fmt.Errorf("failed to Init repo: %w", err)
 	}
 

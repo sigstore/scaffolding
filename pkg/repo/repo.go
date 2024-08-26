@@ -20,6 +20,7 @@ import (
 	"context"
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rsa"
 	"crypto/sha256"
@@ -191,7 +192,7 @@ func CreateRepoWithOptions(ctx context.Context, files map[string][]byte, options
 // * CreateRepoOptions.AddMetadataTargets: true
 // * CreateRepoOptions.AddTrustedRoot: false
 func CreateRepo(ctx context.Context, files map[string][]byte) (tuf.LocalStore, string, error) {
-	return CreateRepoWithOptions(ctx, files, CreateRepoOptions{AddMetadataTargets: true, AddTrustedRoot: false})
+	return CreateRepoWithOptions(ctx, files, CreateRepoOptions{AddMetadataTargets: true, AddTrustedRoot: true})
 }
 
 func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, error) {
@@ -334,6 +335,8 @@ func getKeyWithDetails(key []byte) (crypto.PublicKey, crypto.Hash, error) {
 		default:
 			return 0, 0, fmt.Errorf("unsupported public modulus %d", v.Size())
 		}
+	case *ed25519.PublicKey:
+		hashFunc = crypto.SHA512
 	default:
 		return 0, 0, errors.New("unknown public key type")
 	}
@@ -400,7 +403,7 @@ func concatCertChain(leaf []byte, intermediate [][]byte, root []byte) []byte {
 
 func getTargetUsage(name string) string {
 	for _, knownTargetType := range []string{FulcioTarget, RekorTarget, CTFETarget, TSATarget} {
-		if strings.Contains(name, strings.ToLower(knownTargetType)) {
+		if strings.Contains(strings.ToLower(name), strings.ToLower(knownTargetType)) {
 			return knownTargetType
 		}
 	}

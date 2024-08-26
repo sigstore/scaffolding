@@ -123,7 +123,7 @@ func TestCompressUncompressFS(t *testing.T) {
 			"repository",
 			"targets",
 			"6a0d8ce486b4aa7a2b30bf0940a879a00d1bb2738c4874543e179781d42b8ea1d12f34698dc95b3beeb9785036f7f2272e2fc92b994a04ac59ae458b5f4a2a7c.rekor.pub",
-		)
+		),
 	)
 	if err != nil {
 		t.Errorf("Failed to read the roundtripped rekor %v", err)

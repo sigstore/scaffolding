@@ -16,6 +16,7 @@ package repo
 
 import (
 	"archive/tar"
+	"bytes"
 	"compress/gzip"
 	"context"
 	"crypto"
@@ -347,13 +348,14 @@ func getKeyWithDetails(key []byte) (crypto.PublicKey, crypto.Hash, error) {
 func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuthority, error) {
 	var cert *x509.Certificate
 	var err error
-	rest := certChainPem
+	rest := bytes.TrimSpace(certChainPem)
 	certChain := []*x509.Certificate{}
 
 	// skip potential whitespace at end of file (8 is kinda random, but seems to work fine)
-	for len(rest) > 8 {
+	for len(rest) > 0 {
 		var derCert *pem.Block
 		derCert, rest = pem.Decode(rest)
+		rest = bytes.TrimSpace(rest)
 		if derCert == nil {
 			return nil, fmt.Errorf("input is left, but it is not a certificate: %+v", rest)
 		}

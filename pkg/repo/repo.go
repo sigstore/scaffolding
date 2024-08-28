@@ -335,7 +335,7 @@ func getKeyWithDetails(key []byte) (crypto.PublicKey, crypto.Hash, error) {
 		default:
 			return 0, 0, fmt.Errorf("unsupported public modulus %d", v.Size())
 		}
-	case *ed25519.PublicKey:
+	case ed25519.PublicKey:
 		hashFunc = crypto.SHA512
 	default:
 		return 0, 0, errors.New("unknown public key type")

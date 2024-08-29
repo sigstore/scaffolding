@@ -270,7 +270,7 @@ func Uncompress(src io.Reader, dst string) error {
 			}
 		// Write out files
 		case tar.TypeReg:
-			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR, os.FileMode(header.Mode))
+			fileToWrite, err := os.OpenFile(target, os.O_CREATE|os.O_RDWR|os.O_TRUNC, os.FileMode(header.Mode))
 			if err != nil {
 				return err
 			}

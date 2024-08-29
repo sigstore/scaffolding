@@ -351,7 +351,6 @@ func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuth
 	rest := bytes.TrimSpace(certChainPem)
 	certChain := []*x509.Certificate{}
 
-	// skip potential whitespace at end of file (8 is kinda random, but seems to work fine)
 	for len(rest) > 0 {
 		var derCert *pem.Block
 		derCert, rest = pem.Decode(rest)

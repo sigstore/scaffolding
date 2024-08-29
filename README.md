@@ -363,14 +363,14 @@ in all the namespaces, which is not great, so we'll work around that by
 having another step where we manually copy the secrets to `tuf-system` namespace
 so that we can create a proper tuf root that `cosign` can use.
 
-There are two steps in the process, first, copy ctlog, fulcio, and rekor
+There are two steps in the process, first, copy ctlog, fulcio, rekor and TSA
 public secrets into the `tuf-system` namespace, followed by a construction
 of a tuf root from those pieces of information. In addition to that, we'll need
 to have a tuf web server that serves the root information so that tools like
 `cosign` can validate the roots of trust.
 
 For that, we need to copy the following secrets (namespace/secret) with the
-keys in the secrets into the`tuf-system` namespace so that the job there has
+keys in the secrets into the `tuf-system` namespace so that the job there has
 enough information to construct the tuf root:
 
 * fulcio-system/fulcio-pub-key
@@ -382,6 +382,20 @@ enough information to construct the tuf root:
   - public - Holds the public key for Rekor
 * tsa-system/tsa-cert-chain
   - cert-chain - Holds the certificate chain for TimeStamp Authority
+
+Certificate chains for fulcio and TSA can either be provided in a single file
+or in individual files. When providing as individual files, the following
+file naming scheme has to be followed:
+
+* `<target>_root.crt.pem`, e.g. `tsa_root.crt.pem`
+* `<target>_intermediate_0.crt.pem`, e.g. `tsa_intermediate_0.crt.pem`
+* `<target>_intermediate_1.crt.pem`, e.g. `tsa_intermediate_1.crt.pem`
+* (more intermediates, but at most 10 intermediate certificates altogether)
+* `<target>_leaf.crt.pem`, e.g. `tsa_leaf.crt.pem`
+
+Intermediate certificates, if provided, must be ordered correctly:
+`intermediate_0` is signed by `root`, `intermediate_1` is signed by
+`intermediate_0` etc.
 
 Once we have all that information in one place, we can construct a tuf root out
 of it that can be used by tools like `cosign` and `policy-controller`.

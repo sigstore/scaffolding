@@ -105,7 +105,7 @@ variable "tuf_kms_location" {
 variable "tuf_main_page_suffix" {
   type        = string
   description = "path to tuf bucket's directory index when missing object is treated as potential directories"
-  default     = ""
+  default     = "index.html"
 }
 
 variable "ca_pool_name" {

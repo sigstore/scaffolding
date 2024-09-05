@@ -417,7 +417,7 @@ module "standalone_mysqls" {
   db_name = var.mysql_db_name
 
   ipv4_enabled              = var.mysql_ipv4_enabled
-  require_ssl               = var.mysql_require_ssl
+  require_ssl               = var.standalone_mysql_ssl
   backup_enabled            = var.mysql_backup_enabled
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
   collation                 = var.mysql_collation

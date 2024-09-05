@@ -357,6 +357,12 @@ variable "standalone_mysql_tier" {
   default     = "db-n1-standard-4"
 }
 
+variable "standalone_mysql_ssl" {
+  type        = bool
+  description = "force connections to the database to use SSL"
+  default     = true
+}
+
 //  Cluster node pool
 variable "initial_node_count" {
   type    = number

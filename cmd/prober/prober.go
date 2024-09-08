@@ -26,6 +26,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
@@ -196,8 +197,12 @@ func main() {
 }
 
 func NewFulcioGrpcClient() (fulciopb.CAClient, error) {
+	grpcHostname := fulcioGrpcURL
+	if idx := strings.Index(fulcioGrpcURL, ":"); idx != -1 {
+		grpcHostname = fulcioGrpcURL[:idx]
+	}
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
-	transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12})
+	transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
 	opts = append(opts, grpc.WithTransportCredentials(transportCreds))
 	conn, err := grpc.NewClient(fulcioGrpcURL, opts...)
 	if err != nil {

@@ -40,6 +40,6 @@ output "mysql_user" {
 // MySQL DB password.
 output "mysql_pass" {
   sensitive   = true
-  description = "The Cloud SQL Instance Password (Generated)"
+  description = "The Cloud SQL Instance Password"
   value       = google_sql_user.trillian.password
 }

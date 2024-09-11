@@ -200,20 +200,11 @@ resource "google_sql_database" "searchindexes" {
   depends_on = [google_sql_database_instance.sigstore]
 }
 
-resource "random_id" "user-password" {
-  keepers = {
-    name = google_sql_database_instance.sigstore.name
-  }
-
-  byte_length = 8
-  depends_on  = [google_sql_database_instance.sigstore]
-}
-
 resource "google_sql_user" "trillian" {
   name       = "trillian"
   project    = var.project_id
   instance   = google_sql_database_instance.sigstore.name
-  password   = random_id.user-password.hex
+  password   = data.google_secret_manager_secret_version_access.mysql-password.secret_data
   host       = "%"
   depends_on = [google_sql_database_instance.sigstore]
 }
@@ -259,4 +250,8 @@ resource "google_secret_manager_secret" "mysql-database" {
 resource "google_secret_manager_secret_version" "mysql-database" {
   secret      = google_secret_manager_secret.mysql-database.id
   secret_data = google_sql_database.trillian.name
+}
+
+data "google_secret_manager_secret_version_access" "mysql-password" {
+  secret = google_secret_manager_secret.mysql-password.id
 }

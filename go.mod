@@ -43,7 +43,7 @@ require (
 	golang.org/x/net v0.29.0
 	golang.org/x/time v0.6.0
 	google.golang.org/genproto v0.0.0-20240823204242-4ba0660f739c
-	google.golang.org/grpc v1.66.0
+	google.golang.org/grpc v1.66.2
 	google.golang.org/protobuf v1.34.2
 	gopkg.in/square/go-jose.v2 v2.6.0
 	gopkg.in/yaml.v3 v3.0.1

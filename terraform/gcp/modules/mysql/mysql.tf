@@ -218,12 +218,6 @@ resource "google_secret_manager_secret" "mysql-password" {
   depends_on = [google_project_service.service]
 }
 
-resource "google_secret_manager_secret_version" "mysql-password" {
-  secret      = google_secret_manager_secret.mysql-password.id
-  secret_data = google_sql_user.trillian.password
-  depends_on  = [google_secret_manager_secret.mysql-password]
-}
-
 resource "google_secret_manager_secret" "mysql-user" {
   secret_id = "mysql-user"
 

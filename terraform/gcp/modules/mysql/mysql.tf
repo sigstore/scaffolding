@@ -125,6 +125,7 @@ resource "google_sql_database_instance" "sigstore" {
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
       private_network = var.network
+      require_ssl     = var.require_ssl
       ssl_mode        = var.require_ssl ? "TRUSTED_CLIENT_CERTIFICATE_REQUIRED" : "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
     }
 
@@ -172,6 +173,7 @@ resource "google_sql_database_instance" "read_replica" {
     ip_configuration {
       ipv4_enabled    = var.ipv4_enabled
       private_network = var.network
+      require_ssl     = var.require_ssl
       ssl_mode        = var.require_ssl ? "TRUSTED_CLIENT_CERTIFICATE_REQUIRED" : "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
     }
 

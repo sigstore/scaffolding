@@ -1,9 +1,5 @@
 # This Dockerfile simply serves as a trigger for dependabot to notify when a new upstream release of a component is available
 #
-# !!!!!!!!!!!!!!
-# ! READ BELOW !
-# !!!!!!!!!!!!!!
-#
-# If dependabot proposes an update to the container listed below, you should also update the value listed in '.ko.yaml' and cut a new release of scaffolding
+# !!! READ AND ACT ON THIS !!! If dependabot proposes an update to the container listed below, you should also update the value listed in '.ko.yaml' and cut a new release of scaffolding
 FROM gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.13.0-alpine as cloud-sql-proxy
 ENV FOO=BAR

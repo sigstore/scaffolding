@@ -388,7 +388,7 @@ func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuth
 }
 
 func concatCertChain(leaf []byte, intermediate [][]byte, root []byte) []byte {
-  result := []byte{}
+	result := []byte{}
 	if len(leaf) > 0 {
 		// for Fulcio, the leaf will always be empty, don't necessarily append an empty newline
 		result = append(result, leaf...)

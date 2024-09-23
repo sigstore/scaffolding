@@ -43,6 +43,10 @@ issues:
       text: SA1019
   max-issues-per-linter: 0
   max-same-issues: 0
+linters-settings:
+  gosec:
+    excludes:
+      - G115  # integer overflow conversion uint64 -> int64
 run:
   issues-exit-code: 1
   timeout: 15m

@@ -217,6 +217,7 @@ func TestCompressUncompressFS(t *testing.T) {
 	if err = CompressFS(fsys, &buf, map[string]bool{"keys": true, "staged": true}); err != nil {
 		t.Fatalf("Failed to compress: %v", err)
 	}
+	// #nosec G306 -- test
 	if err := os.WriteFile(filepath.Join(t.TempDir(), "newcompressed"), buf.Bytes(), os.ModePerm); err != nil {
 		t.Fatalf("Failed to write compressed output")
 	}

@@ -30,7 +30,7 @@ jobs:
         release-version:
           - "main" # Test explicitly with latest
         go-version:
-          - 1.22.x
+          - 1.23.x
         leg:
           - test github action with TUF
     env:

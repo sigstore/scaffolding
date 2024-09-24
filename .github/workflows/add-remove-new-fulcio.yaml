@@ -35,7 +35,7 @@ jobs:
           - fulcio-key-rotation
 
         go-version:
-          - 1.22.x
+          - 1.23.x
 
     env:
       GOPATH: ${{ github.workspace }}

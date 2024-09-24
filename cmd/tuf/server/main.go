@@ -68,11 +68,11 @@ func getNamespaceAndClientset(noK8s bool) (string, *kubernetes.Clientset, error)
 
 	config, err := rest.InClusterConfig()
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed to get InClusterConfig: %v", err)
+		return "", nil, fmt.Errorf("failed to get InClusterConfig: %w", err)
 	}
 	clientset, err := kubernetes.NewForConfig(config)
 	if err != nil {
-		return "", nil, fmt.Errorf("Failed to get clientset: %v", err)
+		return "", nil, fmt.Errorf("failed to get clientset: %w", err)
 	}
 
 	return ns, clientset, nil
@@ -84,13 +84,13 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 
 	ns, clientset, err := getNamespaceAndClientset(*noK8s)
 	if err != nil {
-		return fmt.Errorf("failed to get namespace and clientset: %v", err)
+		return fmt.Errorf("failed to get namespace and clientset: %w", err)
 	}
 
 	trimDir := strings.TrimSuffix(certsDir, "/")
 	tufFiles, err := os.ReadDir(trimDir)
 	if err != nil {
-		return fmt.Errorf("failed to read dir %s: %v", trimDir, err)
+		return fmt.Errorf("failed to read dir %s: %w", trimDir, err)
 	}
 	files := map[string][]byte{}
 	for _, file := range tufFiles {
@@ -105,7 +105,7 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 			fileName := fmt.Sprintf("%s/%s", trimDir, file.Name())
 			fileBytes, err := os.ReadFile(fileName)
 			if err != nil {
-				return fmt.Errorf("failed to read file %s: %v", fileName, err)
+				return fmt.Errorf("failed to read file %s: %w", fileName, err)
 			}
 			// If it's a TSA file, we need to split it into multiple TUF
 			// targets.
@@ -114,7 +114,7 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 
 				certFiles, err := certs.SplitCertChain(fileBytes, "tsa")
 				if err != nil {
-					return fmt.Errorf("failed to parse %s: %v", fileName, err)
+					return fmt.Errorf("failed to parse %s: %w", fileName, err)
 				}
 				for k, v := range certFiles {
 					logging.FromContext(ctx).Infof("Got tsa cert file %s", k)
@@ -130,16 +130,16 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 	// Create a new TUF root with the listed artifacts.
 	local, dir, err := repo.CreateRepoWithOptions(ctx, files, repo.CreateRepoOptions{AddMetadataTargets: *metadataTargets, AddTrustedRoot: *trustedRoot})
 	if err != nil {
-		return fmt.Errorf("failed to create repo: %v", err)
+		return fmt.Errorf("failed to create repo: %w", err)
 	}
 
 	meta, err := local.GetMeta()
 	if err != nil {
-		return fmt.Errorf("getting meta: %v", err)
+		return fmt.Errorf("getting meta: %w", err)
 	}
 	rootJSON, ok := meta["root.json"]
 	if !ok {
-		return fmt.Errorf("getting root: %v", err)
+		return fmt.Errorf("getting root: %w", err)
 	}
 
 	// Add the initial 1.root.json to secrets.
@@ -151,36 +151,36 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 	// worries here.
 	var compressed bytes.Buffer
 	if err := repo.CompressFS(os.DirFS(dir), &compressed, map[string]bool{"keys": true, "staged": true}); err != nil {
-		return fmt.Errorf("failed to compress the repo: %v", err)
+		return fmt.Errorf("failed to compress the repo: %w", err)
 	}
 	data["repository"] = compressed.Bytes()
 
 	if !*noK8s {
 		nsSecret := clientset.CoreV1().Secrets(ns)
 		if err := secret.ReconcileSecret(ctx, repoSecretName, ns, data, nsSecret); err != nil {
-			return fmt.Errorf("failed to reconcile secret %s/%s: %v", ns, repoSecretName, err)
+			return fmt.Errorf("failed to reconcile secret %s/%s: %w", ns, repoSecretName, err)
 		}
 
 		// If we should also store created keys in a secret, read all their files and save them in the secret
 		if keysSecretName != "" {
 			keyFiles, err := os.ReadDir(filepath.Join(dir, "keys"))
 			if err != nil {
-				return fmt.Errorf("failed to list keys directory %v", err)
+				return fmt.Errorf("failed to list keys directory %w", err)
 			}
 			dataKeys := map[string][]byte{}
 			for _, keyFile := range keyFiles {
 				if !strings.HasSuffix(keyFile.Name(), ".json") {
 					continue
 				}
-				keyFilePath := filepath.Join(filepath.Join(dir, "keys", keyFile.Name()))
+				keyFilePath := filepath.Join(dir, "keys", keyFile.Name())
 				content, err := os.ReadFile(keyFilePath)
 				if err != nil {
-					return fmt.Errorf("failed reading file %s: %v", keyFilePath, err)
+					return fmt.Errorf("failed reading file %s: %w", keyFilePath, err)
 				}
 				dataKeys[keyFile.Name()] = content
 			}
 			if err := secret.ReconcileSecret(ctx, keysSecretName, ns, dataKeys, nsSecret); err != nil {
-				return fmt.Errorf("failed to reconcile keys secret %s/%s: %v", ns, keysSecretName, err)
+				return fmt.Errorf("failed to reconcile keys secret %s/%s: %w", ns, keysSecretName, err)
 			}
 		}
 	}
@@ -189,8 +189,7 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 
 	// Copy repository to the targetDir - until Go 1.23 which has os.CopyFS, we use
 	// a quick hack where we uncompress the compressed repository to the targetDir
-	repo.Uncompress(bytes.NewReader(data["repository"]), targetDir)
-	return nil
+	return repo.Uncompress(bytes.NewReader(data["repository"]), targetDir)
 }
 
 func main() {

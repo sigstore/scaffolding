@@ -20,9 +20,15 @@ jobs:
       COSIGN_EXPERIMENTAL: "true"
 
     steps:
+    - name: Check out code onto GOPATH
+      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
+      with:
+        fetch-depth: 1
+        path: ./src/github.com/${{ github.repository }}
+
     - uses: actions/setup-go@0a12ed9d6a96ab950c8f026ed9f722fe0da7ef32 # v5.0.2
       with:
-        go-version-file: 'go.mod'
+        go-version-file: ./src/github.com/${{ github.repository }}/go.mod
         check-latest: true
 
     - name: Install ko
@@ -42,12 +48,6 @@ jobs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Check out code onto GOPATH
-      uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4.1.7
-      with:
-        fetch-depth: 1
-        path: ./src/github.com/${{ github.repository }}
 
     - name: Get TAG
       id: get_tag

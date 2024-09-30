@@ -36,6 +36,10 @@ spec:
           "--rekor_server.signer-passwd=$(SECRET_SIGNING_PWD)",
           "--enable_attestation_storage=true",
           "--attestation_storage_bucket=file:///tmp/",
+          "--search_index.mysql.conn_max_idletime=300s",
+          "--search_index.mysql.conn_max_lifetime=2100s",
+          "--search_index.mysql.max_open_connections=300",
+          "--search_index.mysql.max_idle_connections=100",
 #          "--rekor_server.timestamp_chain=$(TIMESTAMP_CHAIN)"
         ]
         env:

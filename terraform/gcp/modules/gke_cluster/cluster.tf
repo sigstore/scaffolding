@@ -36,7 +36,6 @@ resource "google_project_service" "service" {
 }
 
 resource "google_container_cluster" "cluster" {
-  provider = google-beta
   # This is where to enable Dataplane v2.
   datapath_provider = var.datapath_provider
 

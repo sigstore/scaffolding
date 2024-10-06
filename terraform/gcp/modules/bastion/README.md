@@ -15,7 +15,6 @@ restricted to a given, private Kubernetes API endpoint.
 |------|---------|
 | <a name="requirement_terraform"></a> [terraform](#requirement\_terraform) | >= 1.1.3, < 1.2.0 |
 | <a name="requirement_google"></a> [google](#requirement\_google) | >= 4.11.0, < 4.12.0 |
-| <a name="requirement_google-beta"></a> [google-beta](#requirement\_google-beta) | >= 4.11.0, < 4.12.0 |
 | <a name="requirement_random"></a> [random](#requirement\_random) | >= 3.1.0, < 3.2.0 |
 
 ## Providers
@@ -33,13 +32,13 @@ No modules.
 
 | Name | Type |
 |------|------|
-| [google_compute_firewall.bastion-egress](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/compute_firewall) | resource |
-| [google_compute_firewall.bastion-ingress](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/compute_firewall) | resource |
-| [google_compute_instance.bastion](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/compute_instance) | resource |
-| [google_service_account.bastion](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/resources/service_account) | resource |
+| [google_compute_firewall.bastion-egress](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_firewall.bastion-ingress](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_firewall) | resource |
+| [google_compute_instance.bastion](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/compute_instance) | resource |
+| [google_service_account.bastion](https://registry.terraform.io/providers/hashicorp/google/latest/docs/resources/service_account) | resource |
 | [random_id.suffix](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/id) | resource |
 | [random_shuffle.bastion_az](https://registry.terraform.io/providers/hashicorp/random/latest/docs/resources/shuffle) | resource |
-| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google-beta/latest/docs/data-sources/compute_zones) | data source |
+| [google_compute_zones.available](https://registry.terraform.io/providers/hashicorp/google/latest/docs/data-sources/compute_zones) | data source |
 
 ## Inputs
 

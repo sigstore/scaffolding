@@ -18,7 +18,6 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
@@ -104,8 +103,6 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	if err != nil {
 		return nil, nil, nil, "", fmt.Errorf("failed to generate ecdsa key: %w", err)
 	}
-	// Extract public component.
-	pub := privateKey.Public()
 
 	serialNumber, err := rand.Int(rand.Reader, new(big.Int).SetInt64(math.MaxInt64))
 	if err != nil {
@@ -128,7 +125,8 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 		BasicConstraintsValid: true,
 		MaxPathLen:            1,
 	}
-	derBytes, err := x509.CreateCertificate(rand.Reader, rootCA, rootCA, pub, privateKey)
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, rootCA, rootCA, privateKey.Public(), privateKey)
 	if err != nil {
 		return nil, nil, nil, "", fmt.Errorf("failed to create certificate: %w", err)
 	}
@@ -160,11 +158,15 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	if privPEM == nil {
 		return nil, nil, nil, "", fmt.Errorf("EncodeToMemory private key failed: %w", err)
 	}
-	// Encode public key to PKCS#1 ASN.1 PEM.
+
+	marshalledPubKey, err := x509.MarshalPKIXPublicKey(privateKey.Public())
+	if err != nil {
+		return nil, nil, nil, "", fmt.Errorf("failed to unmarshal public key: %w", err)
+	}
 	pubPEM := pem.EncodeToMemory(
 		&pem.Block{
-			Type:  "RSA PUBLIC KEY",
-			Bytes: x509.MarshalPKCS1PublicKey(pub.(*rsa.PublicKey)),
+			Type:  "PUBLIC KEY",
+			Bytes: marshalledPubKey,
 		},
 	)
 	if pubPEM == nil {

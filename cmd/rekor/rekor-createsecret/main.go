@@ -24,6 +24,7 @@ import (
 	"os"
 
 	"github.com/sigstore/scaffolding/pkg/secret"
+	"go.step.sm/crypto/pemutil"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
@@ -80,7 +81,7 @@ func main() {
 		Bytes: marshalledPrivKey,
 	}
 	// Encrypt the pem
-	encryptedBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(*signingKeyPassword), x509.PEMCipherAES256) // nolint
+	encryptedBlock, err := pemutil.EncryptPKCS8PrivateKey(rand.Reader, block.Bytes, []byte(*signingKeyPassword), x509.PEMCipherAES256)
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to encrypt private key: %v", err)
 	}

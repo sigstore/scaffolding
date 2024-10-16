@@ -30,6 +30,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sigstore/scaffolding/pkg/secret"
+	"go.step.sm/crypto/pemutil"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"knative.dev/pkg/logging"
@@ -149,7 +150,7 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	pwd := u.String()
 
 	// Encrypt the pem
-	block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(pwd), x509.PEMCipherAES256) // nolint
+	block, err = pemutil.EncryptPKCS8PrivateKey(rand.Reader, block.Bytes, []byte(pwd), x509.PEMCipherAES256)
 	if err != nil {
 		return nil, nil, nil, "", fmt.Errorf("EncryptPEMBlock failed: %w", err)
 	}

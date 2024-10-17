@@ -152,7 +152,7 @@ func createAll() ([]byte, []byte, []byte, string, error) {
 	// Encrypt the pem
 	block, err = pemutil.EncryptPKCS8PrivateKey(rand.Reader, block.Bytes, []byte(pwd), x509.PEMCipherAES256)
 	if err != nil {
-		return nil, nil, nil, "", fmt.Errorf("EncryptPEMBlock failed: %w", err)
+		return nil, nil, nil, "", fmt.Errorf("EncryptPKCS8PrivateKey failed: %w", err)
 	}
 
 	privPEM := pem.EncodeToMemory(block)

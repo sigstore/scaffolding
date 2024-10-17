@@ -25,6 +25,7 @@ import (
 	"os"
 
 	"github.com/google/uuid"
+	"go.step.sm/crypto/pemutil"
 
 	"github.com/sigstore/scaffolding/pkg/secret"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
@@ -98,7 +99,7 @@ func main() {
 	}
 	// Encrypt the pem with a uuid
 	pwd := uuid.New().String()
-	encryptedBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(pwd), x509.PEMCipherAES256) // nolint
+	encryptedBlock, err := pemutil.EncryptPKCS8PrivateKey(rand.Reader, block.Bytes, []byte(pwd), x509.PEMCipherAES256)
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to encrypt private key: %v", err)
 	}

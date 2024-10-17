@@ -326,12 +326,14 @@ func (c *Config) marshalSecrets() (map[string][]byte, error) {
 		Bytes: marshalledPrivKey,
 	}
 	// Encrypt the pem
-	encryptedBlock, err := x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256) // nolint
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt private key: %w", err)
+	if c.PrivKeyPassword != "" {
+		block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256) // nolint
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt private key: %w", err)
+		}
 	}
 
-	privPEM := pem.EncodeToMemory(encryptedBlock)
+	privPEM := pem.EncodeToMemory(block)
 	if privPEM == nil {
 		return nil, fmt.Errorf("failed to encode encrypted private key")
 	}

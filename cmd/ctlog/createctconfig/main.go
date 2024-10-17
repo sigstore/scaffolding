@@ -63,7 +63,7 @@ var (
 	// TODO: Support ed25519
 	keyType     = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
 	curveType   = flag.String("curvetype", "p256", "Curve type to use [p256, p384,p521]")
-	keyPassword = flag.String("key-password", "test", "Password for encrypting the PEM key")
+	keyPassword = flag.String("key-password", "", "Password for encrypting the PEM key")
 
 	// Supported elliptic curve functions.
 	supportedCurves = map[string]elliptic.Curve{

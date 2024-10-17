@@ -33,7 +33,6 @@ import (
 	"github.com/google/certificate-transparency-go/trillian/ctfe/configpb"
 	"github.com/google/trillian/crypto/keyspb"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
-	"go.step.sm/crypto/pemutil"
 	"google.golang.org/protobuf/encoding/prototext"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -327,12 +326,14 @@ func (c *Config) marshalSecrets() (map[string][]byte, error) {
 		Bytes: marshalledPrivKey,
 	}
 	// Encrypt the pem
-	encryptedBlock, err := pemutil.EncryptPKCS8PrivateKey(rand.Reader, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256)
-	if err != nil {
-		return nil, fmt.Errorf("failed to encrypt private key: %w", err)
+	if c.PrivKeyPassword != "" {
+		block, err = x509.EncryptPEMBlock(rand.Reader, block.Type, block.Bytes, []byte(c.PrivKeyPassword), x509.PEMCipherAES256) // nolint
+		if err != nil {
+			return nil, fmt.Errorf("failed to encrypt private key: %w", err)
+		}
 	}
 
-	privPEM := pem.EncodeToMemory(encryptedBlock)
+	privPEM := pem.EncodeToMemory(block)
 	if privPEM == nil {
 		return nil, fmt.Errorf("failed to encode encrypted private key")
 	}

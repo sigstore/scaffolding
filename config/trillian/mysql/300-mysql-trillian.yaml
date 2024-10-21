@@ -20,7 +20,7 @@ metadata:
     app: mysql-trillian
 spec:
   containers:
-    - image: gcr.io/trillian-opensource-ci/db_server@sha256:52cef10c26492206eab60de338d7a02a9aee12f3ce38f9257d34284986b42699
+    - image: gcr.io/trillian-opensource-ci/db_server@sha256:4569876a08de437e1dcce4d31f36a57b48f1322c0192e2bbb7834b11b60b0655
       name: mysql
       env:
         - name: MYSQL_ROOT_PASSWORD

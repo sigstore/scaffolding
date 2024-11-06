@@ -23,9 +23,13 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"flag"
+	"fmt"
+	"io"
 	"log"
+	mrand "math/rand/v2"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
@@ -215,6 +219,12 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	for {
 		hasErr := false
 
+		// populate shard-specific reads from Rekor endpoint
+		if err := determineRekorShardCoverage(rekorURL); err != nil {
+			hasErr = true
+			Logger.Errorf("error determining shard coverage: %v", err)
+		}
+
 		for _, r := range RekorEndpoints {
 			if err := observeRequest(rekorURL, r); err != nil {
 				hasErr = true
@@ -318,4 +328,73 @@ func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error)
 	}
 	req.URL.RawQuery = q.Encode()
 	return req, nil
+}
+
+// determineRekorShardCoverage adds shard-specific reads to ensure we have coverage across all backing logs
+func determineRekorShardCoverage(rekorURL string) error {
+	req, err := retryablehttp.NewRequest("GET", rekorURL+"/api/v1/log", nil)
+	if err != nil {
+		return fmt.Errorf("invalid request for loginfo: %w", err)
+	}
+
+	setHeaders(req, "")
+	resp, err := retryableClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response code received from loginfo endpoint: %w", err)
+	}
+
+	// this is copied from sigstore/rekor/openapi.yaml here without imports to keep this light
+	type InactiveShards struct {
+		TreeID   string `json:"treeID"`
+		TreeSize int    `json:"treeSize"`
+	}
+
+	type LogInfo struct {
+		TreeSize       int              `json:"treeSize"`
+		InactiveShards []InactiveShards `json:"inactiveShards"`
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("reading loginfo body: %w", err)
+	}
+
+	var logInfo LogInfo
+	if err := json.Unmarshal(bodyBytes, &logInfo); err != nil {
+		return fmt.Errorf("parsing loginfo: %w", err)
+	}
+
+	// if there's no entries, then we're done
+	if logInfo.TreeSize == 0 {
+		return nil
+	}
+
+	// extract relevant endpoints based on index math
+	indicesToFetch := make([]int, len(logInfo.InactiveShards)+1)
+	offset := 0
+
+	// inactive shards should come first in computation; choose random index within shard
+	for i, shard := range logInfo.InactiveShards {
+		indicesToFetch[i] = offset + mrand.IntN(shard.TreeSize-offset) // #nosec G404
+		offset += shard.TreeSize
+	}
+
+	// one final index chosen from active shard
+	indicesToFetch[len(indicesToFetch)-1] = offset + mrand.IntN(logInfo.TreeSize) // #nosec G404
+
+	// convert indices into ReadProberChecks
+	for _, index := range indicesToFetch {
+		RekorEndpoints = append(RekorEndpoints, ReadProberCheck{
+			Method:   "GET",
+			Endpoint: "/api/v1/log/entries",
+			Queries:  map[string]string{"logIndex": strconv.Itoa(index)},
+		})
+	}
+
+	return nil
 }

@@ -27,6 +27,7 @@ type ReadProberCheck struct {
 	SLOEndpoint string            `json:"slo-endpoint"`
 }
 
+// FYI: shard-specific reads are computed in determineShardCoverage
 var RekorEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/log/publicKey",
@@ -34,10 +35,6 @@ var RekorEndpoints = []ReadProberCheck{
 	}, {
 		Endpoint: "/api/v1/log",
 		Method:   GET,
-	}, {
-		Endpoint: "/api/v1/log/entries",
-		Method:   GET,
-		Queries:  map[string]string{"logIndex": "10"},
 	}, {
 		Endpoint: "/api/v1/log/proof",
 		Method:   GET,

@@ -64,6 +64,7 @@ func setHeaders(req *retryablehttp.Request, token string) {
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	// Set the content-type to reflect we're sending JSON.
+	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
 	// Set this value (even though it is not coming through an GCP LB) to correlate prober req/response

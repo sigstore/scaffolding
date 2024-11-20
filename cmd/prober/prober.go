@@ -303,6 +303,12 @@ func observeRequest(host string, r ReadProberCheck) error {
 		sloEndpoint = r.Endpoint
 	}
 	exportDataToPrometheus(resp, host, sloEndpoint, r.Method, latency)
+
+	// right we're not doing anything with the body, but let's at least read it all from the server
+	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
+		return fmt.Errorf("error reading response: %w", err)
+	}
+
 	return nil
 }
 

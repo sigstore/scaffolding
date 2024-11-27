@@ -91,6 +91,11 @@ output "cluster_ca_certificate" {
   value       = module.gke-cluster.cluster_ca_certificate
 }
 
+output "cluster_sa_email" {
+  description = "Cluster service account email address"
+  value       = module.gke-cluster.gke_sa_email
+}
+
 output "get_credentials" {
   description = "Gcloud get-credentials command"
   value       = format("gcloud container clusters get-credentials --project %s --region %s --internal-ip %s", var.project_id, var.region, module.gke-cluster.cluster_name)

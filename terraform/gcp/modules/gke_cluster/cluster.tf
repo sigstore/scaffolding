@@ -113,6 +113,7 @@ resource "google_container_cluster" "cluster" {
       display_name = var.display_name
       cidr_block   = format("%s/32", var.bastion_ip_address)
     }
+    private_endpoint_enforcement_enabled = var.enable_private_endpoint
   }
 
   // Configure the cluster to have private nodes and private control plane access only
@@ -120,6 +121,14 @@ resource "google_container_cluster" "cluster" {
     enable_private_endpoint = var.enable_private_endpoint
     enable_private_nodes    = var.enable_private_nodes
     master_ipv4_cidr_block  = var.master_ipv4_cidr_block
+  }
+
+  // Configure the cluster to use DNS endpoint configuration
+  // https://cloud.google.com/blog/products/containers-kubernetes/new-dns-based-endpoint-for-the-gke-control-plane
+  control_plane_endpoints_config {
+    dns_endpoint_config {
+      allow_external_traffic = var.dns_control_plane_endpoint
+    }
   }
 
   # GKE Dataplane v2 comes with network policy, network policy needs to be disabled to enable dataplane v2.

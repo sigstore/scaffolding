@@ -423,3 +423,15 @@ variable "gke_oauth_scopes" {
   type        = list(string)
   default     = ["https://www.googleapis.com/auth/cloud-platform"]
 }
+
+variable "gke_use_dns_endpoint" {
+  description = "Use DNS-based control plane endpoint for GKE cluster"
+  type        = bool
+  default     = false
+}
+
+variable "gke_use_ip_endpoint" {
+  description = "Use IP-based control plane endpoint for GKE cluster"
+  type        = bool
+  default     = true
+}

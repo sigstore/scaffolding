@@ -25,6 +25,11 @@ output "cluster_endpoint" {
   value       = google_container_cluster.cluster.endpoint
 }
 
+output "cluster_dns_endpoint" {
+  description = "Cluster DNS endpoint"
+  value       = google_container_cluster.cluster.control_plane_endpoints_config[0].dns_endpoint_config[0].endpoint
+}
+
 output "cluster_location" {
   description = "Cluster location"
   value       = google_container_cluster.cluster.location

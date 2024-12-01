@@ -154,6 +154,9 @@ module "gke-cluster" {
 
   oauth_scopes = var.gke_oauth_scopes
 
+  enable_private_endpoint    = var.gke_use_ip_endpoint
+  dns_control_plane_endpoint = var.gke_use_dns_endpoint
+
   depends_on = [
     module.network,
     module.bastion,

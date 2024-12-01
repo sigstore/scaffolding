@@ -231,3 +231,9 @@ variable "oauth_scopes" {
   type        = list(string)
   default     = ["https://www.googleapis.com/auth/cloud-platform"]
 }
+
+variable "dns_control_plane_endpoint" {
+  description = "enable DNS-based control plane endpoint"
+  type        = bool
+  default     = false
+}

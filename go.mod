@@ -45,7 +45,7 @@ require (
 	golang.org/x/net v0.32.0
 	golang.org/x/time v0.8.0
 	google.golang.org/genproto v0.0.0-20241113202542-65e8d215514f
-	google.golang.org/grpc v1.68.0
+	google.golang.org/grpc v1.68.1
 	google.golang.org/protobuf v1.35.2
 	gopkg.in/yaml.v3 v3.0.1
 	k8s.io/api v0.31.3

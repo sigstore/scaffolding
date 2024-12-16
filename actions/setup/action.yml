@@ -83,6 +83,9 @@ runs:
       if [ ${{ inputs.sigstore-only }} == "false" ]; then
         # Configure DockerHub mirror
         tmp=$(mktemp)
+        if [ ! -f /etc/docker/daemon.json ]; then
+          echo '{}' > /etc/docker/daemon.json
+        fi
         jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
         sudo mv "$tmp" /etc/docker/daemon.json
         sudo service docker restart

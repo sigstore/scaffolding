@@ -18,7 +18,7 @@ concurrency:
 jobs:
   test-github-action:
     name: Test github action with TUF
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:

@@ -70,7 +70,11 @@ func exportDataToPrometheus(resp *http.Response, host, endpoint, method string, 
 	endpointLatenciesSummary.With(labels).Observe(float64(latency))
 	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
 
-	Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v", method, host+endpoint)
+	if statusCode >= 400 {
+		Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Warnf("[DEBUG] %v %v", method, host+endpoint)
+	} else {
+		Logger.With(zap.Int("status", statusCode), zap.Int("bytes", int(resp.ContentLength)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Debugf("[DEBUG] %v %v", method, host+endpoint)
+	}
 }
 
 func exportGrpcDataToPrometheus(statusCode codes.Code, host string, endpoint string, method string, latency int64) {
@@ -82,7 +86,11 @@ func exportGrpcDataToPrometheus(statusCode codes.Code, host string, endpoint str
 	}
 	endpointLatenciesSummary.With(labels).Observe(float64(latency))
 	endpointLatenciesHistogram.With(labels).Observe(float64(latency))
-	Logger.With(zap.Int32("status", int32(statusCode)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Infof("[DEBUG] %v %v %v", method, endpoint, host)
+	if statusCode != codes.OK {
+		Logger.With(zap.Int32("status", int32(statusCode)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Warnf("[DEBUG] %v %v %v", method, endpoint, host)
+	} else {
+		Logger.With(zap.Int32("status", int32(statusCode)), zap.Duration("latency", time.Duration(latency)*time.Millisecond)).Debugf("[DEBUG] %v %v %v", method, endpoint, host)
+	}
 }
 
 // NewVersionCollector returns a collector that exports metrics about current version

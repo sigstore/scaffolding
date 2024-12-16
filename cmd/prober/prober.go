@@ -147,11 +147,11 @@ func init() {
 	retryableClient.RequestLogHook = func(_ retryablehttp.Logger, r *http.Request, attempt int) {
 		ctx := context.WithValue(r.Context(), attemptCtxKey("attempt_number"), attempt)
 		*r = *r.WithContext(ctx)
-		Logger.Infof("attempt #%d for %v %v", attempt, r.Method, r.URL)
+		Logger.Debugf("attempt #%d for %v %v", attempt, r.Method, r.URL)
 	}
 	retryableClient.ResponseLogHook = func(_ retryablehttp.Logger, r *http.Response) {
 		attempt := r.Request.Context().Value(attemptCtxKey("attempt_number"))
-		Logger.With(zap.Int("bytes", int(r.ContentLength))).Infof("attempt #%d result: %d", attempt, r.StatusCode)
+		Logger.With(zap.Int("bytes", int(r.ContentLength))).Debugf("attempt #%d result: %d", attempt, r.StatusCode)
 	}
 
 	var rekorFlagRequests []ReadProberCheck

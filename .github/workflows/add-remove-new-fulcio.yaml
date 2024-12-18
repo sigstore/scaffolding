@@ -26,10 +26,10 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.27.x
-          - v1.28.x
           - v1.29.x
           - v1.30.x
+          - v1.31.x
+          - v1.32.x
 
         leg:
           - fulcio-key-rotation
@@ -58,6 +58,7 @@ jobs:
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         path: ./src/github.com/sigstore/scaffolding
+        persist-credentials: false
 
     - uses: actions/cache@v4
       with:
@@ -88,7 +89,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@main
       with:
-        version: "1.11.x"
+        version: "1.16.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

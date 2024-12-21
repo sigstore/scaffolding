@@ -20,6 +20,7 @@ resource "google_project_service" "service" {
     "dns.googleapis.com",      // For configuring DNS records
     "storage.googleapis.com",  // For GCS bucket. roles/storage.admin
     "cloudkms.googleapis.com", // For KMS keyring and crypto key. roles/cloudkms.admin
+    "sqladmin.googleapis.com", // For Cloud SQL. roles/cloudsql.admin
   ])
   project = var.project_id
   service = each.key

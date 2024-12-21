@@ -56,13 +56,6 @@ resource "google_service_account_iam_member" "gke_sa_iam_member_rekor_server" {
   depends_on         = [google_service_account.rekor-sa]
 }
 
-resource "google_project_iam_member" "db_admin_member_rekor" {
-  project    = var.project_id
-  role       = "roles/cloudsql.client"
-  member     = "serviceAccount:${google_service_account.rekor-sa.email}"
-  depends_on = [google_service_account.rekor-sa]
-}
-
 resource "google_project_iam_member" "logserver_iam" {
   # // Give rekor permission to export metrics to Stackdriver
   for_each = toset([

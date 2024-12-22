@@ -15,10 +15,10 @@
  */
 
 resource "google_sql_database" "searchindexes" {
-  name       = "searchindexes"
-  project    = var.project_id
-  instance   = var.index_database_instance_name
-  collation  = "utf8mb3_general_ci"
+  name      = "searchindexes"
+  project   = var.project_id
+  instance  = var.index_database_instance_name
+  collation = "utf8mb3_general_ci"
 }
 
 // be sure to manually GRANT SELECT, INSERT, CREATE privileges for this user

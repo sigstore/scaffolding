@@ -190,14 +190,6 @@ resource "google_sql_database" "trillian" {
   depends_on = [google_sql_database_instance.sigstore]
 }
 
-resource "google_sql_database" "searchindexes" {
-  name       = var.index_db_name
-  project    = var.project_id
-  instance   = google_sql_database_instance.sigstore.name
-  collation  = var.collation
-  depends_on = [google_sql_database_instance.sigstore]
-}
-
 resource "google_sql_user" "trillian" {
   name       = "trillian"
   project    = var.project_id

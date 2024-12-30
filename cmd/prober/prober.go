@@ -164,7 +164,7 @@ func init() {
 		log.Fatal("Failed to parse fulcio-requests: ", err)
 	}
 
-	RekorEndpoints = append(RekorEndpoints, rekorFlagRequests...)
+	ShardlessRekorEndpoints = append(ShardlessRekorEndpoints, rekorFlagRequests...)
 	FulcioEndpoints = append(FulcioEndpoints, fulcioFlagRequests...)
 }
 
@@ -220,12 +220,15 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		hasErr := false
 
 		// populate shard-specific reads from Rekor endpoint
-		if err := determineRekorShardCoverage(rekorURL); err != nil {
+		rekorEndpointsUnderTest, err := determineRekorShardCoverage(rekorURL)
+		if err != nil {
 			hasErr = true
 			Logger.Errorf("error determining shard coverage: %v", err)
 		}
 
-		for _, r := range RekorEndpoints {
+		rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
+
+		for _, r := range rekorEndpointsUnderTest {
 			if err := observeRequest(rekorURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
@@ -337,21 +340,21 @@ func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error)
 }
 
 // determineRekorShardCoverage adds shard-specific reads to ensure we have coverage across all backing logs
-func determineRekorShardCoverage(rekorURL string) error {
+func determineRekorShardCoverage(rekorURL string) ([]ReadProberCheck, error) {
 	req, err := retryablehttp.NewRequest("GET", rekorURL+"/api/v1/log", nil)
 	if err != nil {
-		return fmt.Errorf("invalid request for loginfo: %w", err)
+		return nil, fmt.Errorf("invalid request for loginfo: %w", err)
 	}
 
 	setHeaders(req, "")
 	resp, err := retryableClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)
+		return nil, fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected response code received from loginfo endpoint: %w", err)
+		return nil, fmt.Errorf("unexpected response code received from loginfo endpoint: %w", err)
 	}
 
 	// this is copied from sigstore/rekor/openapi.yaml here without imports to keep this light
@@ -367,17 +370,17 @@ func determineRekorShardCoverage(rekorURL string) error {
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return fmt.Errorf("reading loginfo body: %w", err)
+		return nil, fmt.Errorf("reading loginfo body: %w", err)
 	}
 
 	var logInfo LogInfo
 	if err := json.Unmarshal(bodyBytes, &logInfo); err != nil {
-		return fmt.Errorf("parsing loginfo: %w", err)
+		return nil, fmt.Errorf("parsing loginfo: %w", err)
 	}
 
 	// if there's no entries, then we're done
 	if logInfo.TreeSize == 0 {
-		return nil
+		return nil, nil
 	}
 
 	// extract relevant endpoints based on index math
@@ -393,14 +396,15 @@ func determineRekorShardCoverage(rekorURL string) error {
 	// one final index chosen from active shard
 	indicesToFetch[len(indicesToFetch)-1] = offset + mrand.IntN(logInfo.TreeSize) // #nosec G404
 
+	shardSpecificEndpoints := make([]ReadProberCheck, len(indicesToFetch))
 	// convert indices into ReadProberChecks
 	for _, index := range indicesToFetch {
-		RekorEndpoints = append(RekorEndpoints, ReadProberCheck{
+		shardSpecificEndpoints = append(shardSpecificEndpoints, ReadProberCheck{
 			Method:   "GET",
 			Endpoint: "/api/v1/log/entries",
 			Queries:  map[string]string{"logIndex": strconv.Itoa(index)},
 		})
 	}
 
-	return nil
+	return shardSpecificEndpoints, nil
 }

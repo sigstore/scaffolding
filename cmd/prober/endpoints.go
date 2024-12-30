@@ -28,7 +28,7 @@ type ReadProberCheck struct {
 }
 
 // FYI: shard-specific reads are computed in determineShardCoverage
-var RekorEndpoints = []ReadProberCheck{
+var ShardlessRekorEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/log/publicKey",
 		Method:   GET,

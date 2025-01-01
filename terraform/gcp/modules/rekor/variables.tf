@@ -116,3 +116,8 @@ variable "new_entry_pubsub_consumers" {
   type        = list(string)
   default     = []
 }
+
+variable "index_database_instance_name" {
+  description = "name of SQL database instance used to store index lookups"
+  type        = string
+}

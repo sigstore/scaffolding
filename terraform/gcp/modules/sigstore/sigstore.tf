@@ -200,6 +200,10 @@ module "mysql" {
   ]
 }
 
+moved {
+  from = module.mysql.google_sql_database.searchindexes
+  to   = module.rekor.google_sql_database.searchindexes
+}
 
 // Rekor
 module "rekor" {
@@ -230,6 +234,8 @@ module "rekor" {
   new_entry_pubsub_consumers = var.rekor_new_entry_pubsub_consumers
 
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
+
+  index_database_instance_name = module.mysql.mysql_instance
 
   depends_on = [
     module.network,

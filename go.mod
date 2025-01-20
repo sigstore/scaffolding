@@ -32,7 +32,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.4.1
 	github.com/sigstore/fulcio v1.6.5
-	github.com/sigstore/rekor v1.3.7
+	github.com/sigstore/rekor v1.3.8
 	github.com/sigstore/sigstore v1.8.12
 	github.com/sigstore/sigstore-go v0.6.2
 	github.com/sigstore/timestamp-authority v1.2.3
@@ -76,8 +76,8 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.10.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.1.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.0.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.3.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/internal v1.1.0 // indirect
 	github.com/Azure/go-autorest v14.2.0+incompatible // indirect
 	github.com/Azure/go-autorest/autorest v0.11.29 // indirect
 	github.com/Azure/go-autorest/autorest/adal v0.9.23 // indirect
@@ -86,7 +86,7 @@ require (
 	github.com/Azure/go-autorest/autorest/date v0.3.0 // indirect
 	github.com/Azure/go-autorest/logger v0.2.1 // indirect
 	github.com/Azure/go-autorest/tracing v0.6.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.2.2 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.3.1 // indirect
 	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.0 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.24.2 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
@@ -241,11 +241,11 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/protobuf-specs v0.3.2 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.10 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.10 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.10 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.10 // indirect
+	github.com/sigstore/protobuf-specs v0.3.3 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.12 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.12 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.12 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.12 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect

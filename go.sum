@@ -1499,8 +1499,8 @@ github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.12 h1:kweBChR6M9FEvmxN3B
 github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.12/go.mod h1:6+d+A6oYt1W5OgtzgEVb21V7tAZ/C2Ihtzc5MNJbayY=
 github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.12 h1:jvY1B9bjP+tKzdKDyuq5K7O19CG2IKzGJNTy5tuL2Gs=
 github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.8.12/go.mod h1:2uEeOb8xE2RC6OvzxKux1wkS39Zv8gA27z92m49xUTc=
-github.com/sigstore/timestamp-authority v1.2.3 h1:/4YXCKF/+ZQsad89D0Lj2QIz78s5/aRgLa8Nwq2/Kd4=
-github.com/sigstore/timestamp-authority v1.2.3/go.mod h1:q2tJKJzP34hLIbVu3Y1A9bBZTBuZ/gEmMN7MtAoGQKI=
+github.com/sigstore/timestamp-authority v1.2.4 h1:RjXZxOWorEiem/uSr0pFHVtQpyzpcFxgugo5jVqm3mw=
+github.com/sigstore/timestamp-authority v1.2.4/go.mod h1:ExrbobKdEuwuBptZIiKp1IaVBRiUeKbiuSyZTO8Okik=
 github.com/sirupsen/logrus v1.4.1/go.mod h1:ni0Sbl8bgC9z8RoU9G6nDWqqs/fq4eDPysMBDgk/93Q=
 github.com/sirupsen/logrus v1.4.2/go.mod h1:tLMulIdttU9McNUspp0xgXVQah82FyeX6MwdIuYE2rE=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=

@@ -252,17 +252,17 @@ func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, er
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cert chain for Fulcio: %w", err)
 		}
-		fulcioAuthorities = append(fulcioAuthorities, *fulcioAuthority)
+		fulcioAuthorities = append(fulcioAuthorities, fulcioAuthority)
 	}
 
 	tsaChainPem := concatCertChain(tsaLeaf, tsaIntermed, tsaRoot)
-	tsaAuthorities := []root.CertificateAuthority{}
+	tsaAuthorities := []root.TimestampingAuthority{}
 	if len(tsaChainPem) > 0 {
-		tsaAuthority, err := certChainToCertificateAuthority(tsaChainPem)
+		tsaAuthority, err := certChainToTimestampingAuthority(tsaChainPem)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse cert chain for TSA: %w", err)
 		}
-		tsaAuthorities = append(tsaAuthorities, *tsaAuthority)
+		tsaAuthorities = append(tsaAuthorities, tsaAuthority)
 	}
 
 	tr, err := root.NewTrustedRoot(
@@ -345,7 +345,49 @@ func getKeyWithDetails(key []byte) (crypto.PublicKey, crypto.Hash, error) {
 	return k, hashFunc, nil
 }
 
-func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuthority, error) {
+func certChainToTimestampingAuthority(tsaChainPem []byte) (root.TimestampingAuthority, error) {
+	var cert *x509.Certificate
+	var err error
+	rest := bytes.TrimSpace(tsaChainPem)
+	certChain := []*x509.Certificate{}
+
+	for len(rest) > 0 {
+		var derCert *pem.Block
+		derCert, rest = pem.Decode(rest)
+		rest = bytes.TrimSpace(rest)
+		if derCert == nil {
+			return nil, fmt.Errorf("input is left, but it is not a certificate: %+v", rest)
+		}
+		cert, err = x509.ParseCertificate(derCert.Bytes)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse certificate: %w", err)
+		}
+		certChain = append(certChain, cert)
+	}
+	if len(certChain) == 0 {
+		return nil, fmt.Errorf("no certificates found in input")
+	}
+
+	ca := &root.SigstoreTimestampingAuthority{}
+
+	for i, cert := range certChain {
+		switch {
+		case i == 0 && !cert.IsCA:
+			ca.Leaf = cert
+		case i < len(certChain)-1:
+			ca.Intermediates = append(ca.Intermediates, cert)
+		case i == len(certChain)-1:
+			ca.Root = cert
+		}
+	}
+
+	ca.ValidityPeriodStart = certChain[0].NotBefore
+	ca.ValidityPeriodEnd = certChain[0].NotAfter
+
+	return ca, nil
+}
+
+func certChainToCertificateAuthority(certChainPem []byte) (root.CertificateAuthority, error) {
 	var cert *x509.Certificate
 	var err error
 	rest := bytes.TrimSpace(certChainPem)
@@ -368,12 +410,10 @@ func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuth
 		return nil, fmt.Errorf("no certificates found in input")
 	}
 
-	ca := root.CertificateAuthority{}
+	ca := &root.FulcioCertificateAuthority{}
 
 	for i, cert := range certChain {
 		switch {
-		case i == 0 && !cert.IsCA:
-			ca.Leaf = cert
 		case i < len(certChain)-1:
 			ca.Intermediates = append(ca.Intermediates, cert)
 		case i == len(certChain)-1:
@@ -384,7 +424,7 @@ func certChainToCertificateAuthority(certChainPem []byte) (*root.CertificateAuth
 	ca.ValidityPeriodStart = certChain[0].NotBefore
 	ca.ValidityPeriodEnd = certChain[0].NotAfter
 
-	return &ca, nil
+	return ca, nil
 }
 
 func concatCertChain(leaf []byte, intermediate [][]byte, root []byte) []byte {

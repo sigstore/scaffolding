@@ -6,6 +6,19 @@ updates:
     - "/config/**/*"
   schedule:
     interval: weekly
+  ignore:
+    - dependency-name: "cloud-sql-connectors/cloud-sql-proxy"
+- package-ecosystem: docker
+  directories:
+    - "/"
+  schedule:
+    interval: weekly
+  allow:
+    - dependency-name: "cloud-sql-connectors/cloud-sql-proxy"
+  labels:
+    - "dependencies"
+    - "docker"
+    - "cloud-sql-proxy"
 
 - package-ecosystem: gomod
   directory: "/"

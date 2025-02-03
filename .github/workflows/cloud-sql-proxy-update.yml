@@ -1,0 +1,38 @@
+name: Cloud-SQL-Proxy update
+
+on:
+  pull_request:
+    types: [labeled]
+
+permissions: {}
+
+jobs:
+  my_job:
+    runs-on: ubuntu-latest
+    if: github.event.label.name == 'cloud-sql-proxy'
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Update .ko.yaml with latest release version
+        run: |
+          export CLOUD_SQL_PROXY_VERSION="$(awk -F'[:@]' '/FROM gcr.io\/cloud-sql-connectors\/cloud-sql-proxy/{print $2; exit}' Dockerfile.deps)"
+          echo "Detected cloud-sql-proxy ${CLOUD_SQL_PROXY_VERSION}..."
+
+          sed -i 's/\(cloud-sql-proxy:\).*/\1'${CLOUD_SQL_PROXY_VERSION}'/' .ko.yaml
+
+      - name: Amend Dependabot PR
+        env:
+          PULL_REQUEST_HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -sam "Bumping cloud-sql-proxy version in .ko.yaml"
+          git push origin HEAD:${PULL_REQUEST_HEAD_REF}

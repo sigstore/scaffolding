@@ -32,7 +32,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.4.1
 	github.com/sigstore/fulcio v1.6.5
-	github.com/sigstore/rekor v1.3.8
+	github.com/sigstore/rekor v1.3.9
 	github.com/sigstore/sigstore v1.8.12
 	github.com/sigstore/sigstore-go v0.7.0
 	github.com/sigstore/timestamp-authority v1.2.4
@@ -61,8 +61,8 @@ require (
 	bitbucket.org/creachadair/shell v0.0.8 // indirect
 	cel.dev/expr v0.19.0 // indirect
 	cloud.google.com/go v0.116.0 // indirect
-	cloud.google.com/go/auth v0.13.0 // indirect
-	cloud.google.com/go/auth/oauth2adapt v0.2.6 // indirect
+	cloud.google.com/go/auth v0.14.0 // indirect
+	cloud.google.com/go/auth/oauth2adapt v0.2.7 // indirect
 	cloud.google.com/go/compute/metadata v0.6.0 // indirect
 	cloud.google.com/go/iam v1.2.2 // indirect
 	cloud.google.com/go/kms v1.20.4 // indirect
@@ -181,7 +181,7 @@ require (
 	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
-	github.com/google/s2a-go v0.1.8 // indirect
+	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.4 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
@@ -288,9 +288,9 @@ require (
 	golang.org/x/term v0.28.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/tools v0.29.0 // indirect
-	google.golang.org/api v0.216.0 // indirect
+	google.golang.org/api v0.218.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20241209162323-e6fa225c2576 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250102185135-69823020774d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250115164207-1a7da9e5054f // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.12.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect

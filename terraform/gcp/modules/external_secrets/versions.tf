@@ -19,7 +19,7 @@ terraform {
 
   required_providers {
     google = {
-      version = "6.17.0"
+      version = "6.18.1"
       source  = "hashicorp/google"
     }
     kubectl = {

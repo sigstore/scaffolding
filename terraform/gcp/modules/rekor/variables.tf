@@ -121,8 +121,3 @@ variable "index_database_instance_name" {
   description = "name of SQL database instance used to store index lookups"
   type        = string
 }
-
-variable "breakglass_iam_group" {
-  type        = string
-  description = "name of Cloud IAM group to use for database access in case of emergency"
-}

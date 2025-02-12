@@ -239,3 +239,34 @@ resource "google_secret_manager_secret_version" "mysql-database" {
 data "google_secret_manager_secret_version_access" "mysql-password" {
   secret = google_secret_manager_secret.mysql-password.id
 }
+
+// be sure to manually GRANT SELECT, INSERT, CREATE privileges for this user
+resource "google_sql_user" "iam_user" {
+  name     = google_service_account.dbuser_trillian.email
+  instance = google_sql_database_instance.sigstore.name
+  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
+resource "google_project_iam_member" "db_iam_auth" {
+  project    = var.project_id
+  role       = "roles/cloudsql.instanceUser"
+  member     = "serviceAccount:${google_service_account.dbuser_trillian.email}"
+  depends_on = [google_service_account.dbuser_trillian]
+}
+
+resource "google_sql_user" "breakglass_iam_group" {
+  count    = var.breakglass_iam_group != "" ? 1 : 0
+  name     = var.breakglass_iam_group
+  instance = google_sql_database_instance.sigstore.name
+  type     = "CLOUD_IAM_GROUP"
+}
+
+resource "google_project_iam_binding" "breakglass_iam_group_permissions" {
+  for_each = toset([
+    "roles/cloudsql.client",
+    "roles/cloudsql.instanceUser"
+  ])
+  project = var.project_id
+  role    = each.key
+  members = var.breakglass_iam_group != "" ? ["group:${var.breakglass_iam_group}"] : []
+}

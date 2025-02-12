@@ -435,3 +435,9 @@ variable "gke_use_ip_endpoint" {
   type        = bool
   default     = true
 }
+
+variable "breakglass_sql_iam_group" {
+  description = "Cloud IAM Group that should have database access in case of emergency"
+  type        = string
+  default     = ""
+}

@@ -192,6 +192,7 @@ module "mysql" {
   backup_enabled            = var.mysql_backup_enabled
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
 
+  breakglass_iam_group = var.breakglass_sql_iam_group
 
   depends_on = [
     module.network,
@@ -236,6 +237,7 @@ module "rekor" {
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
 
   index_database_instance_name = module.mysql.mysql_instance
+  breakglass_iam_group         = var.breakglass_sql_iam_group
 
   depends_on = [
     module.network,

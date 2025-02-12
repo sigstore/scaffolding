@@ -127,3 +127,8 @@ variable "collation" {
   description = "collation setting for database"
   default     = "utf8_general_ci"
 }
+
+variable "breakglass_iam_group" {
+  type        = string
+  description = "name of Cloud IAM group to use for database access in case of emergency"
+}

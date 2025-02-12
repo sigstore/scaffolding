@@ -237,7 +237,6 @@ module "rekor" {
   redis_cluster_memory_size_gb = var.redis_cluster_memory_size_gb
 
   index_database_instance_name = module.mysql.mysql_instance
-  breakglass_iam_group         = var.breakglass_sql_iam_group
 
   depends_on = [
     module.network,

@@ -42,19 +42,24 @@ resource "google_project_iam_member" "db_iam_auth" {
   depends_on = [google_service_account.rekor-sa]
 }
 
-resource "google_sql_user" "breakglass_iam_group" {
-  count    = var.breakglass_iam_group != "" ? 1 : 0
-  name     = var.breakglass_iam_group
-  instance = var.index_database_instance_name
-  type     = "CLOUD_IAM_GROUP"
-}
+/*
+ * this is created in the mysql module, and since rekor and trillian share a SQL instance
+ * there's no need to create it twice
 
-resource "google_project_iam_binding" "breakglass_iam_group_permissions" {
-  for_each = toset([
-    "roles/cloudsql.client",
-    "roles/cloudsql.instanceUser"
-  ])
-  project = var.project_id
-  role    = each.key
-  members = var.breakglass_iam_group != "" ? ["group:${var.breakglass_iam_group}"] : []
-}
+  resource "google_sql_user" "breakglass_iam_group" {
+    count    = var.breakglass_iam_group != "" ? 1 : 0
+    name     = var.breakglass_iam_group
+    instance = var.index_database_instance_name
+    type     = "CLOUD_IAM_GROUP"
+  }
+
+  resource "google_project_iam_binding" "breakglass_iam_group_permissions" {
+    for_each = toset([
+      "roles/cloudsql.client",
+      "roles/cloudsql.instanceUser"
+    ])
+    project = var.project_id
+    role    = each.key
+    members = var.breakglass_iam_group != "" ? ["group:${var.breakglass_iam_group}"] : []
+  }
+*/

@@ -261,12 +261,12 @@ resource "google_sql_user" "breakglass_iam_group" {
   type     = "CLOUD_IAM_GROUP"
 }
 
-resource "google_project_iam_binding" "breakglass_iam_group_permissions" {
+resource "google_project_iam_member" "breakglass_iam_group_permissions" {
   for_each = toset([
     "roles/cloudsql.client",
     "roles/cloudsql.instanceUser"
   ])
   project = var.project_id
   role    = each.key
-  members = var.breakglass_iam_group != "" ? ["group:${var.breakglass_iam_group}"] : []
+  member  = var.breakglass_iam_group != "" ? "group:${var.breakglass_iam_group}" : null
 }

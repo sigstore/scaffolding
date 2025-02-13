@@ -106,3 +106,32 @@ resource "google_sql_user" "trillian" {
   depends_on = [google_sql_database_instance.trillian]
 }
 
+// be sure to manually GRANT SELECT, INSERT, CREATE privileges for this user
+resource "google_sql_user" "iam_user" {
+  name     = var.cloud_sql_iam_service_account
+  instance = google_sql_database_instance.trillian.name
+  type     = "CLOUD_IAM_SERVICE_ACCOUNT"
+}
+
+resource "google_project_iam_member" "db_iam_auth" {
+  project = var.project_id
+  role    = "roles/cloudsql.instanceUser"
+  member  = "serviceAccount:${var.cloud_sql_iam_service_account}"
+}
+
+resource "google_sql_user" "breakglass_iam_group" {
+  count    = var.breakglass_iam_group != "" ? 1 : 0
+  name     = var.breakglass_iam_group
+  instance = google_sql_database_instance.trillian.name
+  type     = "CLOUD_IAM_GROUP"
+}
+
+resource "google_project_iam_member" "breakglass_iam_group_permissions" {
+  for_each = toset([
+    "roles/cloudsql.client",
+    "roles/cloudsql.instanceUser"
+  ])
+  project = var.project_id
+  role    = each.key
+  member  = var.breakglass_iam_group != "" ? "group:${var.breakglass_iam_group}" : null
+}

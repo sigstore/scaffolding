@@ -268,5 +268,5 @@ resource "google_project_iam_member" "breakglass_iam_group_permissions" {
   ])
   project = var.project_id
   role    = each.key
-  member = var.breakglass_iam_group != "" ? "group:${var.breakglass_iam_group}" : null
+  member  = var.breakglass_iam_group != "" ? "group:${var.breakglass_iam_group}" : null
 }

@@ -128,3 +128,13 @@ variable "collation" {
   description = "collation setting for database"
   default     = "utf8mb3_general_ci"
 }
+
+variable "cloud_sql_iam_service_account" {
+  type        = string
+  description = "name of Cloud SQL IAM service account to create database user for"
+}
+
+variable "breakglass_iam_group" {
+  type        = string
+  description = "name of Cloud IAM group to use for database access in case of emergency"
+}

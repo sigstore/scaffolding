@@ -381,6 +381,8 @@ module "ctlog_shards" {
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
   collation                 = var.mysql_collation
 
+  cloud_sql_iam_service_account = module.mysql.trillian_serviceaccount
+  breakglass_iam_group          = var.breakglass_sql_iam_group
 
   depends_on = [
     module.gke-cluster,
@@ -432,6 +434,8 @@ module "standalone_mysqls" {
   binary_log_backup_enabled = var.mysql_binary_log_backup_enabled
   collation                 = var.mysql_collation
 
+  cloud_sql_iam_service_account = module.mysql.trillian_serviceaccount
+  breakglass_iam_group          = var.breakglass_sql_iam_group
 
   depends_on = [
     module.gke-cluster,

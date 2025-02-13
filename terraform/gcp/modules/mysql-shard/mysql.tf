@@ -114,9 +114,9 @@ resource "google_sql_user" "iam_user" {
 }
 
 resource "google_project_iam_member" "db_iam_auth" {
-  project    = var.project_id
-  role       = "roles/cloudsql.instanceUser"
-  member     = "serviceAccount:${var.cloud_sql_iam_service_account}"
+  project = var.project_id
+  role    = "roles/cloudsql.instanceUser"
+  member  = "serviceAccount:${var.cloud_sql_iam_service_account}"
 }
 
 resource "google_sql_user" "breakglass_iam_group" {

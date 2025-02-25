@@ -8,7 +8,7 @@ require (
 	chainguard.dev/exitdir v0.0.1
 	filippo.io/edwards25519 v1.1.0
 	github.com/cenkalti/backoff/v3 v3.2.2
-	github.com/go-jose/go-jose/v4 v4.0.4
+	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-openapi/strfmt v0.23.0
 	github.com/go-openapi/swag v0.23.0
 	github.com/go-sql-driver/mysql v1.9.0

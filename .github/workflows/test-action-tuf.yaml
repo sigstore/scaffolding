@@ -60,7 +60,7 @@ jobs:
         ./hack/setup-kind.sh \
           --registry-url registry.local:5000 \
           --cluster-suffix cluster.local \
-          --k8s-version ${{ matrix.k8s-version }} ''
+          --k8s-version ${{ matrix.k8s-version }}
 
         ./hack/setup-scaffolding.sh
 

@@ -287,8 +287,8 @@ func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, er
 }
 
 func pubkeyToTransparencyLogInstance(keyBytes []byte, tm time.Time) (*root.TransparencyLog, string, error) {
-	logID := sha256.Sum256(keyBytes)
 	der, _ := pem.Decode(keyBytes)
+	logID := sha256.Sum256(der.Bytes)
 	key, keyDetails, err := getKeyWithDetails(der.Bytes)
 	if err != nil {
 		return nil, "", err

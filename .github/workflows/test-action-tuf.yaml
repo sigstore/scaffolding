@@ -37,13 +37,59 @@ jobs:
       KO_DOCKER_REPO: registry.local:5000/knative
 
     steps:
-    - name: Checkout the current action
+    - name: Checkout scaffolding
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-    - name: Test running the action
-      uses: ./actions/setup
-      with:
-        k8s-version: ${{ matrix.k8s-version }}
-        version: ${{ matrix.release-version }}
+    - name: Setup scaffolding
+      run: |
+        # This is a simplified copy of actions/setup/action.yml: the action cannot really deploy
+        # from the current commit
+
+        set -ex
+
+        # Configure DockerHub mirror
+        tmp=$(mktemp)
+        if [ ! -f /etc/docker/daemon.json ]; then
+          echo '{}' | sudo tee /etc/docker/daemon.json
+        fi
+        jq '."registry-mirrors" = ["https://mirror.gcr.io"]' /etc/docker/daemon.json > "$tmp"
+        sudo mv "$tmp" /etc/docker/daemon.json
+        sudo service docker restart
+
+        echo "Installing kind and knative using setup-kind.sh from current commit"
+
+        ./hack/setup-kind.sh \
+          --registry-url registry.local:5000 \
+          --cluster-suffix cluster.local \
+          --k8s-version ${{ matrix.k8s-version }} ''
+
+        ./hack/setup-scaffolding.sh
+
+        TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
+        echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
+        # Grab the trusted root
+        kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ./root.json
+
+        # Make copy of the tuf root in the default namespace for tests
+        kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
+
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+        ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+
+        # Grab an OIDC token too.
+        OIDC_TOKEN=$(curl -s $ISSUER_URL)
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+        # And set the env variables for workflow visibility
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+        echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
     # Install cosign
     - name: Install cosign

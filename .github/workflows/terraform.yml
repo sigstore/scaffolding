@@ -71,7 +71,7 @@ jobs:
         id: version
         run: |
             go install github.com/hashicorp/terraform-config-inspect@latest
-            echo "terraform-version=$(terraform-config-inspect --json ./terraform/gcp/modules/sigstore | jq -r .required_core[0])" >> "$GITHUB_OUTPUT"
+            echo "terraform-version=$(terraform-config-inspect --json . | jq -r .required_core[0])" >> "$GITHUB_OUTPUT"
 
       - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v2.0.0
         with:

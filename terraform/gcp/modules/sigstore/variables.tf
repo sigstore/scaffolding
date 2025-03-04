@@ -126,6 +126,7 @@ variable "monitoring" {
     enabled                  = bool
     fulcio_url               = string
     rekor_url                = string
+    tsa_url                  = string
     dex_url                  = string
     ctlog_url                = string
     notification_channel_ids = list(string)
@@ -134,6 +135,7 @@ variable "monitoring" {
     enabled                  = false
     fulcio_url               = "fulcio.example.com"
     rekor_url                = "rekor.example.com"
+    tsa_url                  = "tsa.example.com"
     dex_url                  = "oauth2.example.com"
     ctlog_url                = "ctlog.example.com"
     notification_channel_ids = []

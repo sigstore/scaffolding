@@ -34,12 +34,12 @@ module "slos" {
       slos = {
         api-v1-all-methods = {
           display_suffix = "All Methods"
-          label_filter   = "metric.labels.method=\"GET\""
+          label_filter   = ""
           goal           = 0.995
         },
-        api-v1-timestamp-get = {
-          display_suffix = "/api/v1/timestamp - GET"
-          label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"GET\""
+        api-v1-timestamp-post = {
+          display_suffix = "/api/v1/timestamp - POST"
+          label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"POST\""
           goal           = 0.995
         },
         api-v1-timestamp-certchain-get = {
@@ -56,12 +56,12 @@ module "slos" {
       slos = {
         api-v1-all-methods = {
           display_suffix = "All Methods"
-          label_filter   = "metric.labels.method=\"GET\""
+          label_filter   = ""
           goal           = 0.995
         },
-        api-v1-timestamp-get = {
-          display_suffix = "/api/v1/timestamp - GET"
-          label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"GET\""
+        api-v1-timestamp-post = {
+          display_suffix = "/api/v1/timestamp - POST"
+          label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"POST\""
           goal           = 0.995
         },
         api-v1-timestamp-certchain-get = {

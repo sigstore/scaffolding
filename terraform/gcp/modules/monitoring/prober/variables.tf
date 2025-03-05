@@ -73,7 +73,6 @@ variable "timestamp_probed_endpoints" {
   description = "Allow list of probed endpoints to monitor/alert."
   type        = list(string)
   default = [
-    "/api/v1/timestamp",
     "/api/v1/timestamp/certchain",
   ]
 }

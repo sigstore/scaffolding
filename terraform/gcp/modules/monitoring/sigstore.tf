@@ -67,17 +67,17 @@ module "fulcio" {
   ]
 }
 
-// TSA
-module "tsa" {
-  source = "./tsa"
+// Timestamp Authority
+module "timestamp" {
+  source = "./timestamp"
 
   project_id               = var.project_id
   project_number           = var.project_number
   notification_channel_ids = var.notification_channel_ids
-  tsa_url                  = var.tsa_url
+  timestamp_url            = var.timestamp_url
   cluster_name             = var.cluster_name
   cluster_location         = var.cluster_location
-  prober_url               = var.prober_tsa_url
+  prober_url               = var.prober_timestamp_url
   create_slos              = var.create_slos
 
   depends_on = [
@@ -111,7 +111,7 @@ module "prober" {
   notification_channel_ids = var.notification_channel_ids
   rekor_url                = var.prober_rekor_url
   fulcio_url               = var.prober_fulcio_url
-  tsa_url                  = var.prober_tsa_url
+  timestamp_url            = var.prober_timestamp_url
 
   depends_on = [
     google_project_service.service

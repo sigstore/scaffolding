@@ -46,13 +46,13 @@ variable "cluster_name" {
 }
 
 // URLs for Sigstore services
-variable "tsa_url" {
-  description = "TSA URL"
-  default     = "tsa.sigstore.dev"
+variable "timestamp_url" {
+  description = "Timestamp Authority URL"
+  default     = "timestamp.sigstore.dev"
 }
 
 variable "prober_url" {
-  description = "TSA Prober URL"
+  description = "Timestamp Authority Prober URL"
   type        = string
   default     = ""
 }
@@ -61,7 +61,7 @@ variable "prober_url" {
 variable "gke_namespace" {
   description = "GKE Namespace"
   type        = string
-  default     = "tsa-system"
+  default     = "timestamp-system"
 }
 
 // Set-up for notification channel for alerting

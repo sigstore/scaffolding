@@ -15,7 +15,7 @@
  */
 
 // Alert if we see a failure every minute for 5 consecutive minutes
-resource "google_monitoring_alert_policy" "tsa_uptime_alerts" {
+resource "google_monitoring_alert_policy" "timestamp_uptime_alerts" {
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
     auto_close = "604800s"
@@ -33,7 +33,7 @@ resource "google_monitoring_alert_policy" "tsa_uptime_alerts" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_tsa.uptime_check_id)
+      filter          = format("metric.type=\"monitoring.googleapis.com/uptime_check/check_passed\" resource.type=\"uptime_url\" metric.label.\"check_id\"=\"%s\"", google_monitoring_uptime_check_config.uptime_timestamp.uptime_check_id)
       threshold_value = "1"
 
       trigger {
@@ -42,22 +42,22 @@ resource "google_monitoring_alert_policy" "tsa_uptime_alerts" {
       }
     }
 
-    display_name = "Failure of uptime check_id tsa-uptime"
+    display_name = "Failure of uptime check_id timestamp-uptime"
   }
 
-  display_name          = "TSA uptime alert"
+  display_name          = "Timestamp Authority uptime alert"
   enabled               = "true"
   notification_channels = local.notification_channels
   project               = var.project_id
-  depends_on            = [google_monitoring_uptime_check_config.uptime_tsa]
+  depends_on            = [google_monitoring_uptime_check_config.uptime_timestamp]
 }
 
 ### K8s Alerts
 
-resource "google_monitoring_alert_policy" "tsa_k8s_pod_restart_failing_container" {
+resource "google_monitoring_alert_policy" "timestamp_k8s_pod_restart_failing_container" {
   # adding a dependency on the associated metric means that Terraform will 
   # always try to apply changes to the metric before this alert
-  depends_on = [google_logging_metric.tsa_k8s_pod_restart_failing_container]
+  depends_on = [google_logging_metric.timestamp_k8s_pod_restart_failing_container]
 
   # In the absence of data, incident will auto-close in 7 days
   alert_strategy {
@@ -76,7 +76,7 @@ resource "google_monitoring_alert_policy" "tsa_k8s_pod_restart_failing_container
       comparison              = "COMPARISON_GT"
       duration                = "600s"
       evaluation_missing_data = "EVALUATION_MISSING_DATA_NO_OP"
-      filter                  = "metric.type=\"logging.googleapis.com/user/tsa/k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
+      filter                  = "metric.type=\"logging.googleapis.com/user/timestamp/k8s_pod/restarting-failed-container\" resource.type=\"k8s_pod\""
       threshold_value         = "1"
 
       trigger {
@@ -88,7 +88,7 @@ resource "google_monitoring_alert_policy" "tsa_k8s_pod_restart_failing_container
     display_name = "K8s Restart Failing Container for more than ten minutes"
   }
 
-  display_name = "TSA K8s Restart Failing Container"
+  display_name = "Timestamp Authority K8s Restart Failing Container"
 
   documentation {
     content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help.\n"
@@ -100,7 +100,7 @@ resource "google_monitoring_alert_policy" "tsa_k8s_pod_restart_failing_container
   project               = var.project_id
 }
 
-resource "google_monitoring_alert_policy" "tsa_k8s_pod_unschedulable" {
+resource "google_monitoring_alert_policy" "timestamp_k8s_pod_unschedulable" {
   # adding a dependency on the associated metric means that Terraform will 
   # always try to apply changes to the metric before this alert
   depends_on = [google_logging_metric.k8s_pod_unschedulable]
@@ -121,7 +121,7 @@ resource "google_monitoring_alert_policy" "tsa_k8s_pod_unschedulable" {
 
       comparison      = "COMPARISON_GT"
       duration        = "600s"
-      filter          = "metric.type=\"logging.googleapis.com/user/tsa/k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
+      filter          = "metric.type=\"logging.googleapis.com/user/timestamp/k8s_pod/unschedulable\" resource.type=\"k8s_pod\""
       threshold_value = "1"
 
       trigger {
@@ -133,7 +133,7 @@ resource "google_monitoring_alert_policy" "tsa_k8s_pod_unschedulable" {
     display_name = "K8s was unable to schedule a pod for more than ten minutes"
   }
 
-  display_name = "TSA K8s Unscheduable"
+  display_name = "Timestamp Authority K8s Unschedulable"
 
   documentation {
     content   = "K8s is restarting a failing container for longer than the accepted time limit, please see playbook for help."

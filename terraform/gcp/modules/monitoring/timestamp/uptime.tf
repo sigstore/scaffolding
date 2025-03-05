@@ -15,8 +15,8 @@
  */
 
 
-resource "google_monitoring_uptime_check_config" "uptime_tsa" {
-  display_name = "TSA Uptime"
+resource "google_monitoring_uptime_check_config" "uptime_timestamp" {
+  display_name = "Timestamp Authority Uptime"
 
   http_check {
     mask_headers   = "false"
@@ -29,7 +29,7 @@ resource "google_monitoring_uptime_check_config" "uptime_tsa" {
 
   monitored_resource {
     labels = {
-      host       = var.tsa_url
+      host       = var.timestamp_url
       project_id = var.project_id
     }
 

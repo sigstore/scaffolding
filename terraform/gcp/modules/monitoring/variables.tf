@@ -66,9 +66,9 @@ variable "dex_url" {
   default     = "oauth2.sigstore.dev"
 }
 
-variable "tsa_url" {
-  description = "TSA URL"
-  default     = "tsa.sigstore.dev"
+variable "timestamp_url" {
+  description = "Timestamp Authority URL"
+  default     = "timestamp.sigstore.dev"
 }
 
 // Prober variables
@@ -82,9 +82,9 @@ variable "prober_fulcio_url" {
   default = "http://fulcio-server.fulcio-system.svc"
 }
 
-variable "prober_tsa_url" {
+variable "prober_timestamp_url" {
   type    = string
-  default = "http://tsa-server.fulcio-system.svc"
+  default = "http://timestamp-server.fulcio-system.svc"
 }
 
 // Set-up for notification channel for alerting

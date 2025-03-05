@@ -98,7 +98,7 @@ resource "google_monitoring_alert_policy" "prober_fulcio_endpoint_latency" {
   project               = var.project_id
 }
 
-resource "google_monitoring_alert_policy" "prober_tsa_endpoint_latency" {
+resource "google_monitoring_alert_policy" "prober_timestamp_endpoint_latency" {
   alert_strategy {
     auto_close = "604800s"
   }
@@ -116,7 +116,7 @@ resource "google_monitoring_alert_policy" "prober_tsa_endpoint_latency" {
 
       comparison      = "COMPARISON_GT"
       duration        = "300s"
-      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND %s", var.tsa_url, local.tsa_endpoint_filter)
+      filter          = format("resource.type = \"prometheus_target\" AND metric.type = \"prometheus.googleapis.com/api_endpoint_latency/summary\" AND metric.labels.host = \"%s\" AND %s", var.timestamp_url, local.timestamp_endpoint_filter)
       threshold_value = "750"
 
       trigger {
@@ -125,13 +125,13 @@ resource "google_monitoring_alert_policy" "prober_tsa_endpoint_latency" {
       }
     }
 
-    display_name = "API Prober: TSA API Endpoint Latency > 750 ms"
+    display_name = "API Prober: Timestamp API Endpoint Latency > 750 ms"
   }
 
-  display_name = "API Prober: TSA API Endpoint Latency > 750 ms for 5 minutes"
+  display_name = "API Prober: Timestamp API Endpoint Latency > 750 ms for 5 minutes"
 
   documentation {
-    content   = "At least one supported TSA API Endpoint has had latency > 750 ms for 5 minutes."
+    content   = "At least one supported Timestamp API Endpoint has had latency > 750 ms for 5 minutes."
     mime_type = "text/markdown"
   }
 

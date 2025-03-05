@@ -20,15 +20,15 @@ module "slos" {
 
   project_id            = var.project_id
   project_number        = var.project_number
-  service_id            = "tsa"
-  display_name          = "TSA"
+  service_id            = "timestamp"
+  display_name          = "Timestamp Authority"
   resource_name         = format("//container.googleapis.com/projects/%s/locations/%s/clusters/%s/k8s/namespaces/%s", var.project_id, var.cluster_location, var.cluster_name, var.gke_namespace)
   notification_channels = local.notification_channels
 
   availability_slos = {
     server-availability = {
       display_prefix            = "Availability (Server)"
-      base_total_service_filter = "metric.type=\"prometheus.googleapis.com/tsa_qps_by_api/counter\" resource.type=\"prometheus_target\""
+      base_total_service_filter = "metric.type=\"prometheus.googleapis.com/timestamp_qps_by_api/counter\" resource.type=\"prometheus_target\""
       # Only count 500s as server errors since clients can trigger 400s.
       bad_filter = "metric.labels.code=monitoring.regex.full_match(\"5[0-9][0-9]\")"
       slos = {

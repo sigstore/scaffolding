@@ -71,6 +71,8 @@ module "fulcio" {
 module "timestamp" {
   source = "./timestamp"
 
+  count = var.timestamp_enabled ? 1 : 0
+
   project_id               = var.project_id
   project_number           = var.project_number
   notification_channel_ids = var.notification_channel_ids

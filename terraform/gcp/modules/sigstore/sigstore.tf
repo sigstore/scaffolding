@@ -96,6 +96,7 @@ module "monitoring" {
   ctlog_url                = var.monitoring.ctlog_url
   notification_channel_ids = var.monitoring.notification_channel_ids
   create_slos              = var.create_slos
+  timestamp_enabled        = var.timestamp.enabled
 
   depends_on = [
     module.gke-cluster,

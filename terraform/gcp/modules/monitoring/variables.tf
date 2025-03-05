@@ -111,3 +111,9 @@ variable "create_slos" {
   type        = bool
   default     = false
 }
+
+variable "timestamp_enabled" {
+  description = "Enable timestamp monitoring"
+  type        = bool
+  default     = false
+}

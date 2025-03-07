@@ -1,0 +1,128 @@
+#
+# Copyright 2021 The Sigstore Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+services:
+
+# Rekor
+
+  rekor-mysql:
+    platform: linux/amd64
+    image: gcr.io/trillian-opensource-ci/db_server:v1.4.0
+    environment:
+      - MYSQL_ROOT_PASSWORD=zaphod
+      - MYSQL_DATABASE=test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=zaphod
+    restart: always # keep the MySQL server running
+    healthcheck:
+      test: ["CMD", "/etc/init.d/mysql", "status"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+      start_period: 90s
+  redis-server:
+    image: docker.io/redis:6.2
+    command: [
+      "--bind",
+      "0.0.0.0",
+      "--appendonly",
+      "yes",
+      "--requirepass",
+      "test"
+    ]
+    ports:
+      - "6379:6379"
+    restart: always # keep the redis server running
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "test", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+  rekor-trillian-log-server:
+    image: ghcr.io/sigstore/scaffolding/trillian_log_server@sha256:beffee16bb07b5cb051dc4e476d3a1063521ed5ae0b670efc7fe6f3507d94d2b # v1.6.0
+    command: [
+      "--quota_system=noop",
+      "--storage_system=mysql",
+      "--mysql_uri=test:zaphod@tcp(rekor-mysql:3306)/test",
+      "--rpc_endpoint=0.0.0.0:8090",
+      "--http_endpoint=0.0.0.0:8091",
+      "--alsologtostderr",
+    ]
+    restart: always # retry while mysql is starting up
+    ports:
+      - "8090:8090"
+      - "8091:8091"
+    depends_on:
+      rekor-mysql:
+        condition: service_healthy
+  rekor-trillian-log-signer:
+    image: ghcr.io/sigstore/scaffolding/trillian_log_signer@sha256:79d57af375cfa997ed5452cc0c02c0396d909fcc91d11065586f119490aa9214 # v1.6.0
+    command: [
+      "--quota_system=noop",
+      "--storage_system=mysql",
+      "--mysql_uri=test:zaphod@tcp(rekor-mysql:3306)/test",
+      "--rpc_endpoint=0.0.0.0:8090",
+      "--http_endpoint=0.0.0.0:8091",
+      "--force_master",
+      "--alsologtostderr",
+    ]
+    restart: always # retry while mysql is starting up
+    ports:
+      - "8092:8091"
+    depends_on:
+      rekor-mysql:
+        condition: service_healthy
+  rekor-server:
+    build:
+      context: https://github.com/sigstore/rekor.git#main
+      dockerfile: Dockerfile # relative to context, not always needed.
+      target: "deploy"
+    environment:
+      - TMPDIR=/var/run/attestations # workaround for https://github.com/google/go-cloud/issues/3294
+    command: [
+      "rekor-server",
+      "serve",
+      "--trillian_log_server.address=rekor-trillian-log-server",
+      "--trillian_log_server.port=8090",
+      "--redis_server.address=redis-server",
+      "--redis_server.password=test",
+      "--redis_server.port=6379",
+      "--rekor_server.address=0.0.0.0",
+      "--rekor_server.signer=memory",
+      "--enable_attestation_storage",
+      "--attestation_storage_bucket=file:///var/run/attestations",
+      "--enable_stable_checkpoint",
+      "--search_index.storage_provider=mysql",
+      "--search_index.mysql.dsn=test:zaphod@tcp(rekor-mysql:3306)/test",
+      # Uncomment this for production logging
+      # "--log_type=prod",
+      ]
+    volumes:
+    - "/var/run/attestations:/var/run/attestations:z"
+    restart: always # keep the server running
+    ports:
+      - "3000:3000"
+      - "2112:2112"
+    depends_on:
+      - rekor-mysql
+      - redis-server
+      - rekor-trillian-log-server
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

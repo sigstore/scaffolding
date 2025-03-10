@@ -34,6 +34,11 @@ variable "fulcio_url" {
   default     = "https://fulcio.sigstore.dev"
 }
 
+variable "timestamp_url" {
+  description = "Timestamp Authority URL"
+  default     = "https://timestamp.sigstore.dev"
+}
+
 // Set-up for notification channel for alerting
 variable "notification_channel_ids" {
   type        = list(string)
@@ -64,17 +69,32 @@ variable "fulcio_probed_endpoints" {
   ]
 }
 
+variable "timestamp_probed_endpoints" {
+  description = "Allow list of probed endpoints to monitor/alert."
+  type        = list(string)
+  default = [
+    "/api/v1/timestamp/certchain",
+  ]
+}
+
 locals {
-  notification_channels  = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
-  fulcio_endpoint_filter = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", var.fulcio_probed_endpoints))
-  rekor_endpoint_filter  = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", var.rekor_probed_endpoints))
-  all_endpoints_filter   = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", distinct(concat(var.rekor_probed_endpoints, var.fulcio_probed_endpoints))))
+  notification_channels     = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
+  fulcio_endpoint_filter    = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", var.fulcio_probed_endpoints))
+  rekor_endpoint_filter     = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", var.rekor_probed_endpoints))
+  timestamp_endpoint_filter = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", var.timestamp_probed_endpoints))
+
+  # Note: timestamp is not part of "all endpoints" as it may not be enabled
+  all_endpoints_filter = format("metric.labels.endpoint = one_of(\"%s\")", join("\", \"", distinct(concat(var.rekor_probed_endpoints, var.fulcio_probed_endpoints))))
+
   hosts = [{
     host            = var.fulcio_url
     endpoint_filter = local.fulcio_endpoint_filter
     }, {
     host            = var.rekor_url
     endpoint_filter = local.rekor_endpoint_filter
+    }, {
+    host            = var.timestamp_url
+    endpoint_filter = local.timestamp_endpoint_filter
     }
   ]
 }

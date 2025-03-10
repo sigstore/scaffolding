@@ -67,6 +67,26 @@ module "fulcio" {
   ]
 }
 
+// Timestamp Authority
+module "timestamp" {
+  source = "./timestamp"
+
+  count = var.timestamp_enabled ? 1 : 0
+
+  project_id               = var.project_id
+  project_number           = var.project_number
+  notification_channel_ids = var.notification_channel_ids
+  timestamp_url            = var.timestamp_url
+  cluster_name             = var.cluster_name
+  cluster_location         = var.cluster_location
+  prober_url               = var.prober_timestamp_url
+  create_slos              = var.create_slos
+
+  depends_on = [
+    google_project_service.service
+  ]
+}
+
 // Dex
 module "dex" {
   source = "./dex"
@@ -93,6 +113,7 @@ module "prober" {
   notification_channel_ids = var.notification_channel_ids
   rekor_url                = var.prober_rekor_url
   fulcio_url               = var.prober_fulcio_url
+  timestamp_url            = var.prober_timestamp_url
 
   depends_on = [
     google_project_service.service

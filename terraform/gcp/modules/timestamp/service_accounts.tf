@@ -24,7 +24,7 @@ resource "google_service_account" "timestamp-sa" {
 resource "google_service_account_iam_member" "gke_sa_iam_member_timestamp" {
   service_account_id = google_service_account.timestamp-sa.name
   role               = "roles/iam.workloadIdentityUser"
-  member             = "serviceAccount:${var.project_id}.svc.id.goog[timestamp-system/timestamp-server]"
+  member             = "serviceAccount:${var.project_id}.svc.id.goog[tsa-system/timestamp-server]"
   depends_on         = [google_service_account.timestamp-sa]
 }
 

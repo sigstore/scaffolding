@@ -1,5 +1,5 @@
 /**
- * Copyright 2022 The Sigstore Authors
+ * Copyright 2025 The Sigstore Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,8 @@ variable "project_number" {
 }
 
 variable "cluster_location" {
-  type        = string
   description = "Zone or Region to create cluster in."
+  type        = string
   default     = "us-central1"
 }
 
@@ -46,45 +46,22 @@ variable "cluster_name" {
 }
 
 // URLs for Sigstore services
-variable "fulcio_url" {
-  description = "Fulcio URL"
-  default     = "fulcio.sigstore.dev"
-}
-
-variable "rekor_url" {
-  description = "Rekor URL"
-  default     = "rekor.sigstore.dev"
-}
-
-variable "ctlog_url" {
-  description = "CT Log URL"
-  default     = "ctfe.sigstore.dev"
-}
-
-variable "dex_url" {
-  description = "Dex URL"
-  default     = "oauth2.sigstore.dev"
-}
-
 variable "timestamp_url" {
   description = "Timestamp Authority URL"
   default     = "timestamp.sigstore.dev"
 }
 
-// Prober variables
-variable "prober_rekor_url" {
-  type    = string
-  default = "http://rekor-server.rekor-system.svc"
+variable "prober_url" {
+  description = "Timestamp Authority Prober URL"
+  type        = string
+  default     = ""
 }
 
-variable "prober_fulcio_url" {
-  type    = string
-  default = "http://fulcio-server.fulcio-system.svc"
-}
-
-variable "prober_timestamp_url" {
-  type    = string
-  default = "http://timestamp-server.tsa-system.svc"
+// Namespace for monitored service
+variable "gke_namespace" {
+  description = "GKE Namespace"
+  type        = string
+  default     = "tsa-system"
 }
 
 // Set-up for notification channel for alerting
@@ -95,25 +72,10 @@ variable "notification_channel_ids" {
 
 locals {
   notification_channels = toset([for nc in var.notification_channel_ids : format("projects/%v/notificationChannels/%v", var.project_id, nc)])
-  qualified_rekor_url   = format("https://%s", var.rekor_url)
-  qualified_fulcio_url  = format("https://%s", var.fulcio_url)
-}
-
-// Certificate Authority name for alerting
-variable "ca_pool_name" {
-  description = "Certificate authority pool name"
-  type        = string
-  default     = "sigstore"
 }
 
 variable "create_slos" {
-  description = "Creates SLOs when true."
-  type        = bool
-  default     = false
-}
-
-variable "timestamp_enabled" {
-  description = "Enable timestamp monitoring"
+  description = "True to enable SLO creation"
   type        = bool
   default     = false
 }

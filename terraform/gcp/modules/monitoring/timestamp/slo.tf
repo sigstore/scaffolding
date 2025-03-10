@@ -32,19 +32,9 @@ module "slos" {
       # Only count 500s as server errors since clients can trigger 400s.
       bad_filter = "metric.labels.code=monitoring.regex.full_match(\"5[0-9][0-9]\")"
       slos = {
-        api-v1-all-methods = {
-          display_suffix = "All Methods"
-          label_filter   = ""
-          goal           = 0.995
-        },
         api-v1-timestamp-post = {
           display_suffix = "/api/v1/timestamp - POST"
           label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"POST\""
-          goal           = 0.995
-        },
-        api-v1-timestamp-certchain-get = {
-          display_suffix = "/api/v1/timestamp/certchain - GET"
-          label_filter   = "metric.labels.path=\"/api/v1/timestamp/certchain\" metric.labels.method=\"GET\""
           goal           = 0.995
         },
       }
@@ -54,16 +44,6 @@ module "slos" {
       base_total_service_filter = format("metric.type=\"prometheus.googleapis.com/api_endpoint_latency_count/summary\" resource.type=\"prometheus_target\" metric.labels.host=\"%s\"", var.prober_url)
       bad_filter                = "metric.labels.status_code!=monitoring.regex.full_match(\"20[0-1]\")"
       slos = {
-        api-v1-all-methods = {
-          display_suffix = "All Methods"
-          label_filter   = ""
-          goal           = 0.995
-        },
-        api-v1-timestamp-post = {
-          display_suffix = "/api/v1/timestamp - POST"
-          label_filter   = "metric.labels.path=\"/api/v1/timestamp\" metric.labels.method=\"POST\""
-          goal           = 0.995
-        },
         api-v1-timestamp-certchain-get = {
           display_suffix = "/api/v1/timestamp/certchain - GET"
           label_filter   = "metric.labels.path=\"/api/v1/timestamp/certchain\" metric.labels.method=\"GET\""

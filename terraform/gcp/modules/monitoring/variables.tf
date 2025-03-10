@@ -84,7 +84,7 @@ variable "prober_fulcio_url" {
 
 variable "prober_timestamp_url" {
   type    = string
-  default = "http://timestamp-server.fulcio-system.svc"
+  default = "http://timestamp-server.tsa-system.svc"
 }
 
 // Set-up for notification channel for alerting

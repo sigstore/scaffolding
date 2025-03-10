@@ -61,7 +61,7 @@ variable "prober_url" {
 variable "gke_namespace" {
   description = "GKE Namespace"
   type        = string
-  default     = "timestamp-system"
+  default     = "tsa-system"
 }
 
 // Set-up for notification channel for alerting

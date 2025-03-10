@@ -18,7 +18,7 @@
 
 resource "google_logging_metric" "timestamp_k8s_pod_restart_failing_container" {
   description = "Counts the number of logs that contain the \"restarting failed container\" message"
-  filter      = "resource.labels.namespace_name=\"timestamp-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"Back-off restarting failed container\"\n"
+  filter      = "resource.labels.namespace_name=\"tsa-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"Back-off restarting failed container\"\n"
 
   metric_descriptor {
     metric_kind = "DELTA"
@@ -32,7 +32,7 @@ resource "google_logging_metric" "timestamp_k8s_pod_restart_failing_container" {
 
 resource "google_logging_metric" "k8s_pod_unschedulable" {
   description = "Counts the number of k8s_pod resource logs that contain the message \"unschedulable\""
-  filter      = "resource.labels.namespace_name=\"timestamp-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"unschedulable\"\n"
+  filter      = "resource.labels.namespace_name=\"tsa-system\"\nresource.type=k8s_pod AND severity>=WARNING\n\"unschedulable\"\n"
 
   metric_descriptor {
     metric_kind = "DELTA"

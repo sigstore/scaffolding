@@ -31,12 +31,3 @@ updates:
   schedule:
     interval: weekly
 
-- package-ecosystem: "terraform"
-  directories:
-    - "/terraform/gcp/modules/**/*"
-  schedule:
-    interval: monthly
-  groups:
-    terraform:
-      patterns:
-        - "*"

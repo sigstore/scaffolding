@@ -10,7 +10,7 @@ jobs:
       matrix:
         platform:
           - ubuntu-latest
-          - mac-os-latest
+          - macos-latest
           - windows-latest # hold off while rekor still specifies `platform: linux`
     runs-on: ${{ matrix.platform }}
     steps:

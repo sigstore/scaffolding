@@ -33,8 +33,6 @@ services:
       timeout: 3s
       retries: 5
       start_period: 90s
-    networks:
-      rekor:
   redis-server:
     image: docker.io/redis:6.2
     command: [
@@ -54,8 +52,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-    networks:
-      rekor:
   rekor-trillian-log-server:
     image: ghcr.io/sigstore/scaffolding/trillian_log_server@sha256:beffee16bb07b5cb051dc4e476d3a1063521ed5ae0b670efc7fe6f3507d94d2b # v1.6.0
     command: [
@@ -73,8 +69,6 @@ services:
     depends_on:
       rekor-mysql:
         condition: service_healthy
-    networks:
-      rekor:
   rekor-trillian-log-signer:
     image: ghcr.io/sigstore/scaffolding/trillian_log_signer@sha256:79d57af375cfa997ed5452cc0c02c0396d909fcc91d11065586f119490aa9214 # v1.6.0
     command: [
@@ -92,8 +86,6 @@ services:
     depends_on:
       rekor-mysql:
         condition: service_healthy
-    networks:
-      rekor:
   rekor-server:
     build:
       context: https://github.com/sigstore/rekor.git#main
@@ -135,8 +127,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-    networks:
-      rekor:
 
 # Fulcio
 
@@ -174,8 +164,6 @@ services:
     depends_on:
       - dex-idp
     read_only: true
-    networks:
-      - fulcio
   dex-idp:
     # image: dexidp/dex:v2.30.0
     build:
@@ -200,8 +188,6 @@ services:
       timeout: 3s
       retries: 3
       start_period: 5s
-    networks:
-      - fulcio
   ctfe_init:
     build:
       context: https://github.com/sigstore/fulcio.git#main
@@ -211,8 +197,6 @@ services:
       - fulcio-server
     volumes:
       - ctfeConfig:/etc/config/:rw
-    networks:
-      - fulcio
   ct_server:
     image: gcr.io/trillian-opensource-ci/ctfe
     volumes:
@@ -236,8 +220,6 @@ services:
         condition: service_completed_successfully
     ports:
       - "6962:6962"
-    networks:
-      - fulcio
   mysql:
     image: gcr.io/trillian-opensource-ci/db_server:3c8193ebb2d7fedb44d18e9c810d0d2e4dbb7e4d
     environment:
@@ -254,8 +236,6 @@ services:
       start_period: 10s
     volumes:
       - mysql:/var/lib/mysql
-    networks:
-      - fulcio
   trillian-log-server:
     image: gcr.io/trillian-opensource-ci/log_server
     command: [
@@ -271,8 +251,6 @@ services:
       - "8096:8091"
     depends_on:
       - mysql
-    networks:
-      - fulcio
   trillian-log-signer:
     image: gcr.io/trillian-opensource-ci/log_signer
     command: [
@@ -288,8 +266,6 @@ services:
       - "8097:8096"
     depends_on:
       - mysql
-    networks:
-      - fulcio
 
   # fakeoidc
 
@@ -297,11 +273,6 @@ services:
     image: ko.local/fakeoidc
     ports:
       - "8080:8080"
-    networks:
-      - fulcio
 volumes:
   ctfeConfig: {}
   mysql: {}
-networks:
-  rekor:
-  fulcio:

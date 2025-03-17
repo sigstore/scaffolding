@@ -3,7 +3,7 @@ FULCIO_REPO ?= https://github.com/sigstore/fulcio.git
 REKOR_REPO ?= https://github.com/sigstore/rekor.git
 
 # prevent a conflict with rekor-server's metrics port.
-export FULCIO_METRICS_PORT = 2113
+export FULCIO_METRICS_PORT ?= 2113
 
 CHECKOUT_DIR := ./CHECKOUT_DIR
 FULCIO_DIR := $(CHECKOUT_DIR)/fulcio

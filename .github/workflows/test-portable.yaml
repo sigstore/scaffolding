@@ -1,3 +1,4 @@
+name: Portable Test Sigstore Containers
 on:
   push:
   pull_request:

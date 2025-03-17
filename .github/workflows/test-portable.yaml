@@ -6,11 +6,12 @@ on:
 jobs:
   test:
     strategy:
+      fail-fast: false
       matrix:
         platform:
           - ubuntu-latest
           - mac-os-latest
-          # - windows-latest # hold off while rekor still specifies platform: linux
+          - windows-latest # hold off while rekor still specifies `platform: linux`
     runs-on: ${{ matrix.platform }}
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2

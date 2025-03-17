@@ -1,0 +1,8 @@
+name: sigstore portable
+description: launch sigstore cotnainers
+# TODO: add inputs for the FULCIO_REPO and REKOR_REPO env variables.
+runs:
+  using: "composite"
+  steps:
+    - run: make -C ${{ github.action_path }} up
+      shell: bash

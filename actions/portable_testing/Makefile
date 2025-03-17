@@ -1,6 +1,6 @@
 # optionally set these env variables
-REKOR_REPO ?= git@github.com:sigstore/rekor.git
-FULCIO_REPO ?= git@github.com:sigstore/fulcio.git
+FULCIO_REPO ?= https://github.com/sigstore/fulcio.git
+REKOR_REPO ?= https://github.com/sigstore/rekor.git
 
 # prevent a conflict with rekor-server's metrics port.
 export FULCIO_METRICS_PORT = 2113
@@ -43,3 +43,5 @@ ifeq ($(wildcard $(REKOR_DIR)),)
 else
 	@echo "Already cloned rekor"
 endif
+
+.PHONY all up down up-fulcio down-fulcio up-rekor down-rekor checkout

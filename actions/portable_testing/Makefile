@@ -51,3 +51,7 @@ ifeq ($(wildcard $(REKOR_DIR)),)
 else
 	@echo "Already cloned rekor"
 endif
+
+.PHONY: clean
+clean:
+	rm -rf $(FULCIO_DIR) $(REKOR_DIR)

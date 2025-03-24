@@ -27,7 +27,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           # this points back to this file in case there are any changes in the 'go install' command below
           cache-dependency-path: '.github/workflows/terraform.yml'
@@ -62,7 +62,7 @@ jobs:
           persist-credentials: false
 
       - name: Set up Go
-        uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+        uses: actions/setup-go@0aaccfd150d50ccaeb58ebd88d36e91967a5f35b # v5.4.0
         with:
           # this points back to this file in case there are any changes in the 'go install' command below
           cache-dependency-path: '.github/workflows/terraform.yml'

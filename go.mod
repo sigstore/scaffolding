@@ -10,7 +10,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/go-jose/go-jose/v4 v4.0.5
 	github.com/go-openapi/strfmt v0.23.0
-	github.com/go-openapi/swag v0.23.0
+	github.com/go-openapi/swag v0.23.1
 	github.com/go-sql-driver/mysql v1.9.1
 	github.com/golang/glog v1.2.4
 	github.com/google/certificate-transparency-go v1.3.1
@@ -215,7 +215,7 @@ require (
 	github.com/letsencrypt/pkcs11key/v4 v4.0.0 // indirect
 	github.com/lib/pq v1.10.9 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
-	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/mailru/easyjson v0.9.0 // indirect
 	github.com/miekg/pkcs11 v1.1.1 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect

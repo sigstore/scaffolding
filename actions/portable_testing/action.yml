@@ -29,7 +29,8 @@ runs:
     # 0. following this guide, with some alterations: https://www.docker.com/blog/docker-github-actions/
     # 1. doing a local checkout of rekor and fulcio with actions/checkout to ${{ github.action_path }}/CHECKOUT_DIR/[rekor | fulcio]
     # 2. using a hash key `key: ${{ runner.os }}-${{ hashFiles(github.action_path/'CHECKOUT_DIR/') }}`, if that expression can work
-    - name: go cache
+    - name: linux go cache
+      if: runner.os == 'Linux'
       uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
       with:
         # add linux, mac, and linux paths, respectively.
@@ -37,12 +38,6 @@ runs:
         path: |
           ~/.cache/go-build
           ~/go/pkg/mod
-
-          ~/Library/Caches/go-build
-          ~/go/pkg/mod
-
-          ~\AppData\Local\go-build
-          ~\go\pkg\mod
         # key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         key: /home/runner/work/scaffolding/scaffolding/actions/portable_testing/**/go.sum
         restore-keys: |

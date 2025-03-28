@@ -43,7 +43,7 @@ runs:
 
           ~\AppData\Local\go-build
           ~\go\pkg\mod
-        key: ${{ runner.os }}-go-${{ hashFiles(format('{0}', github.action_path)) }}
+        key: ${{ runner.os }}-go-${{ hashFiles('/**/go.sum') }}
         restore-keys: |
           ${{ runner.os }}-go-git 
     - name: docker compose up

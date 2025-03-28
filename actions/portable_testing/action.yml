@@ -18,14 +18,16 @@ description: launch sigstore cotnainers
 runs:
   using: "composite"
   steps:
-    - working-directory: ${{ github.action_path }}
+    - name: checkout
+      working-directory: ${{ github.action_path }}
       shell: bash
       run: make checkout
     # TODO: look into caching the layers of the images, maybe by:
     # 0. following this guide, with some alterations: https://www.docker.com/blog/docker-github-actions/
     # 1. doing a local checkout of rekor and fulcio with actions/checkout to ${{ github.action_path }}/CHECKOUT_DIR/[rekor | fulcio]
     # 2. using a hash key `key: ${{ runner.os }}-${{ hashFiles(github.action_path/'CHECKOUT_DIR/') }}`, if that expression can work
-    - uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
+    - name: go cache
+      uses: actions/cache@d4323d4df104b026a6aa633fdb11d772146be0bf # v4.2.2
       with:
         # add linux, mac, and linux paths, respectively.
         # see https://github.com/actions/cache/blob/main/examples.md#go---modules
@@ -40,7 +42,8 @@ runs:
           ~\go\pkg\mod
         key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
         restore-keys: |
-          ${{ runner.os }}-go-
-    - working-directory: ${{ github.action_path }}
+          ${{ runner.os }}-go-git 
+    - name: docker compose up
+      working-directory: ${{ github.action_path }}
       shell: bash
       run: make up

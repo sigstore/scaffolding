@@ -40,7 +40,8 @@ runs:
 
           ~\AppData\Local\go-build
           ~\go\pkg\mod
-        key: ${{ runner.os }}-go-${{ hashFiles(format('{0}/{1}', github.action_path, '**/go.sum')) }}
+        # key: ${{ runner.os }}-go-${{ hashFiles(format('{0}/{1}', github.action_path, '**/go.sum')) }}
+        key: /home/runner/work/scaffolding/scaffolding/./actions/portable_testing/**/go.sum
         restore-keys: |
           ${{ runner.os }}-go-git 
     - name: docker compose up

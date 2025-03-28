@@ -24,6 +24,7 @@ runs:
       run: make checkout
     - name: Debug - List files
       run: ls -R ${{ github.action_path }}
+      shell: bash
     # TODO: look into caching the layers of the images, maybe by:
     # 0. following this guide, with some alterations: https://www.docker.com/blog/docker-github-actions/
     # 1. doing a local checkout of rekor and fulcio with actions/checkout to ${{ github.action_path }}/CHECKOUT_DIR/[rekor | fulcio]

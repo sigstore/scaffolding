@@ -20,8 +20,8 @@ REKOR_REPO ?= https://github.com/sigstore/rekor.git
 export FULCIO_METRICS_PORT = 2113
 
 CHECKOUT_DIR ?= ./CHECKOUT_DIR
-FULCIO_DIR := $(CHECKOUT_DIR)/fulcio
-REKOR_DIR := $(CHECKOUT_DIR)/rekor
+FULCIO_DIR ?= $(CHECKOUT_DIR)/fulcio
+REKOR_DIR ?= $(CHECKOUT_DIR)/rekor
 
 .PHONY: all
 all: checkout up

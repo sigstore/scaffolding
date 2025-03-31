@@ -26,7 +26,10 @@ runs:
         CHECKOUT_DIR: ${{ github.action_path }}/CHECKOUT_DIR
     - name: ls
       shell: bash
-      run: ls -lah ${{ github.action_path }}/CHECKOUT_DIR
+      run: ls -lahr ${{ github.action_path }}/CHECKOUT_DIR
+    -name: ls fulcio
+      shell: bash
+      run: ls -lahr ${{ github.action_path }}/CHECKOUT_DIR/fulcio/docker-compose.yml
     - uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
       with:
         go-version: 'stable'

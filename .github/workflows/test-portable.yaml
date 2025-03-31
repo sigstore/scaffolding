@@ -1,5 +1,6 @@
 name: Portable Test Sigstore Containers
 on:
+  workflow_dispatch:
   push:
   pull_request:
 

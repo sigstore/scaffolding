@@ -29,10 +29,10 @@ runs:
         CHECKOUT_DIR: ${{ github.action_path }}/CHECKOUT_DIR
     - name: ls
       shell: bash
-      run: ls -lahr ${{ github.action_path }}/CHECKOUT_DIR
+      run: ls -lahR ${{ github.action_path }}/CHECKOUT_DIR
     - name: ls fulcio
       shell: bash
-      run: ls -lahr ${{ github.action_path }}/CHECKOUT_DIR/fulcio/docker-compose.yml
+      run: ls -lahR ${{ github.action_path }}/CHECKOUT_DIR/fulcio/docker-compose.yml
     # buildx bake for building and caching image layers between workflow runs.
     - name: buildx bake fulcio
       uses: docker/bake-action@v6

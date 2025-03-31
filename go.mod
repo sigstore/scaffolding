@@ -2,7 +2,7 @@ module github.com/sigstore/scaffolding
 
 go 1.23.4
 
-toolchain go1.23.5
+toolchain go1.24.1
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -44,7 +44,7 @@ require (
 	go.step.sm/crypto v0.59.1
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.36.0
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/time v0.11.0
 	google.golang.org/genproto v0.0.0-20250122153221-138b5a5a4fd4
 	google.golang.org/grpc v1.71.0

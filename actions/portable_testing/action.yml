@@ -30,7 +30,9 @@ runs:
       with:
         go-version: '1.17'
         check-latest: true
-        cache-dependency-path: ${{ github.workspace }}/CHECKOUT_DIR/**/go.sum
+        cache-dependency-path: |
+          ${{ github.workspace }}/CHECKOUT_DIR/rekor/go.sum
+          ${{ github.workspace }}/CHECKOUT_DIR/fulcio/go.sum
     # TODO: look into caching the layers of the images, maybe by:
     # 0. following this guide, with some alterations: https://www.docker.com/blog/docker-github-actions/
     # 1. doing a local checkout of rekor and fulcio with actions/checkout to ${{ github.action_path }}/CHECKOUT_DIR/[rekor | fulcio]

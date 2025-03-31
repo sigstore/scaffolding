@@ -32,7 +32,7 @@ runs:
         push: false
         source: https://github.com/sigstore/fulcio.git#main
         file: docker-compose.yml
-        - uses: docker/bake-action@v6
+    - uses: docker/bake-action@v6
       with:
         push: false
         source: https://github.com/sigstore/rekor.git#main

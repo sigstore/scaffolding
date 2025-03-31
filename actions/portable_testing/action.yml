@@ -36,13 +36,13 @@ runs:
       with:
         push: false
         source: ${{ github.action_path }}/CHECKOUT_DIR/fulcio
-        files: docker-compose.yml
+        files: ${{ github.action_path }}/CHECKOUT_DIR/fulcio/docker-compose.yml
     - name: buildx bake rekor
       uses: docker/bake-action@v6
       with:
         push: false
         source: ${{ github.action_path }}/CHECKOUT_DIR/rekor
-        files: docker-compose.yml
+        files: ${{ github.action_path }}/CHECKOUT_DIR/rekor/docker-compose.yml
     - name: docker compose up
       working-directory: ${{ github.action_path }}
       shell: bash

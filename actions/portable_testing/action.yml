@@ -23,7 +23,7 @@ runs:
       shell: bash
       run: make checkout
       env:
-        CHECKOUT_DIR: ${{ github.action_path }}/CHECKOUT_DIR
+        CHECKOUT_DIR: ${{ github.action_path }}/CHECKOUT_DIR/fulcio
     - name: ls
       shell: bash
       run: ls -lah ${{ github.action_path }}/CHECKOUT_DIR

@@ -19,7 +19,7 @@ jobs:
         with:
           persist-credentials: false
       - uses: ./actions/portable_testing
-      - name: healthcheck
-        run: |
-          curl http://localhost:5555/healthz
-          curl http://localhost:3000/
+      - name: fulcio healthcheck
+        run: curl http://localhost:5555/healthz
+      - name: rekor healthcheck   
+        run: curl http://localhost:3000/

@@ -31,12 +31,12 @@ runs:
       with:
         push: false
         source: https://github.com/sigstore/fulcio.git#main
-        file: docker-compose.yml
+        files: docker-compose.yml
     - uses: docker/bake-action@v6
       with:
         push: false
         source: https://github.com/sigstore/rekor.git#main
-        file: docker-compose.yml
+        files: docker-compose.yml
     # TODO: look into caching the layers of the images, maybe by:
     # 0. following this guide, with some alterations: https://www.docker.com/blog/docker-github-actions/
     # 1. doing a local checkout of rekor and fulcio with actions/checkout to ${{ github.action_path }}/CHECKOUT_DIR/[rekor | fulcio]

@@ -1,0 +1,86 @@
+# Copyright 2025 The Sigstore Authors
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: sigstore portable
+description: launch sigstore cotnainers
+inputs:
+  fulcio-repo:
+    description: repo for fulcio.
+    required: false
+    default: https://github.com/sigstore/fulcio.git
+  rekor-repo:
+    description: repo for rekor.
+    required: false
+    default: https://github.com/sigstore/rekor-tiles.git
+# TODO: add inputs for the FULCIO_REPO and REKOR_REPO env variables.
+runs:
+  using: "composite"
+  steps:
+    # github.action_path has a dot in it which doesn't work well with the cache inputs.
+    # we need to get the real path of the action directory, without the dot,
+    # so that we can use the path in the cache inputs.
+    # e.g., /home/runner/work/scaffolding/scaffolding/./actions/portable_testing
+    - id: realpath
+      shell: bash
+      run: echo "path=$( realpath $GITHUB_ACTION_PATH )" >> "$GITHUB_OUTPUT"
+    - name: checkout
+      working-directory: ${{ steps.realpath.outputs.path }}
+      shell: bash
+      run: make checkout
+      env:
+        CHECKOUT_DIR: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR
+        FULCIO_REPO: ${{ inputs.fulcio-repo }}
+        REKOR_REPO: ${{ inputs.rekor-repo }}
+    - uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version: 'stable'
+        cache-dependency-path: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR/**/*.sum
+    # docker/setup-docker-action currently doesn't work with macos-14, or macos-latest, which use arm.
+    # This method also doesn't work https://github.com/GoogleContainerTools/container-structure-test/blob/56c7201716d770c0f820a9c19207ba2ea77c34f8/.github/workflows/integration-tests.yml#L24-L30.
+    # See https://github.com/docker/setup-docker-action/pull/53.
+    - uses: docker/setup-docker-action@v4
+    # Builx currently does not support Windows, so we skip setting up the cache for Windows.
+    # See https://github.com/docker/buildx/issues/176.
+    - if: runner.os != 'Windows'
+      uses: docker/setup-buildx-action@v3
+    - if: runner.os != 'Windows'
+      name: buildx bake fulcio
+      uses: docker/bake-action@v6
+      with:
+        load: true
+        provenance: false
+        source: .
+        workdir: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR/fulcio
+        set: |
+          *.cache-from=type=gha
+          *.cache-to=type=gha,mode=max
+    - if: runner.os != 'Windows'
+      name: buildx bake rekor
+      uses: docker/bake-action@v6
+      with:
+        load: true
+        provenance: false
+        source: .
+        workdir: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR/rekor
+        set: |
+          *.cache-from=type=gha
+          *.cache-to=type=gha,mode=max
+    - name: docker compose up
+      working-directory: ${{ steps.realpath.outputs.path }}
+      shell: bash
+      run: make up
+      env:
+        CHECKOUT_DIR: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR
+        FULCIO_REPO: ${{ inputs.fulcio-repo }}
+        REKOR_REPO: ${{ inputs.rekor-repo }}

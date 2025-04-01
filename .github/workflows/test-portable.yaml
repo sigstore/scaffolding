@@ -1,0 +1,31 @@
+name: Portable Test Sigstore Containers
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-latest
+          - macos-13
+          # - macos-latest # docker not supported yet. See https://github.com/marketplace/actions/setup-docker-on-macos#arm64-processors-m1-m2-m3-series-used-on-macos-14-images-are-unsupported.
+          # - windows-latest # hold off while rekor still specifies `platform: linux`
+        rekor-repo:
+          - https://github.com/sigstore/rekor.git
+          - https://github.com/sigstore/rekor-tiles.git
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: ./actions/portable_testing
+        with:
+          rekor-repo: ${{ matrix.rekor-repo }}
+      - name: fulcio healthcheck
+        run: curl http://localhost:5555/healthz
+      - name: rekor healthcheck
+        run: curl http://localhost:3000/

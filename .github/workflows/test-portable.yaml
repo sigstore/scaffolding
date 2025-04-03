@@ -8,6 +8,8 @@ jobs:
   test:
     strategy:
       fail-fast: false
+      # Jobs seem to run more slowly when run concurrently.
+      max-parallel: 1
       matrix:
         platform:
           - ubuntu-latest

@@ -85,8 +85,8 @@ runs:
       working-directory: ${{ steps.realpath.outputs.path }}
       shell: bash
       run: |
-        make up-fulcio
         make up-rekor
+        make up-fulcio
       env:
         CHECKOUT_DIR: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR
         FULCIO_REPO: ${{ inputs.fulcio-repo }}

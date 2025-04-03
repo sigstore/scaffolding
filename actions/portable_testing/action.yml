@@ -23,6 +23,10 @@ inputs:
     description: repo for rekor.
     required: false
     default: https://github.com/sigstore/rekor-tiles.git
+  use-image-cache:
+    description: whether to use Github's Image layer cache.
+    required: false
+    default: false
 # TODO: add inputs for the FULCIO_REPO and REKOR_REPO env variables.
 runs:
   using: "composite"
@@ -55,7 +59,7 @@ runs:
     - if: runner.os != 'Windows'
       uses: docker/setup-buildx-action@v3
     # Caching the layers. See https://docs.docker.com/build/ci/github-actions/cache/#github-cache.
-    - if: runner.os != 'Windows'
+    - if: inputs.use-image-cache == true && runner.os != 'Windows'
       name: buildx bake fulcio
       uses: docker/bake-action@v6
       with:
@@ -66,7 +70,7 @@ runs:
         set: |
           *.cache-from=type=gha
           *.cache-to=type=gha,mode=max
-    - if: runner.os != 'Windows'
+    - if: inputs.use-image-cache == true && runner.os != 'Windows'
       name: buildx bake rekor
       uses: docker/bake-action@v6
       with:

@@ -23,34 +23,10 @@ CHECKOUT_DIR ?= ./CHECKOUT_DIR
 FULCIO_DIR ?= $(CHECKOUT_DIR)/fulcio
 REKOR_DIR ?= $(CHECKOUT_DIR)/rekor
 
+# all
+
 .PHONY: all
-all: checkout up
-
-.PHONY: up
-up:
-# bring up both fulcio and rekor simultaneously.
-	make up-fulcio up-rekor -j 2
-
-.PHONY: down
-down:
-# bring down both fulcio and rekor simultaneously.
-	make down-fulcio down-rekor -j 2
-
-.PHONY: up-fulcio
-up-fulcio:
-	cd $(FULCIO_DIR) && docker compose up --wait
-
-.PHONY: down-fulcio
-down-fulcio:
-	cd $(FULCIO_DIR) && docker compose down
-
-.PHONY: up-rekor
-up-rekor:
-	cd $(REKOR_DIR) && docker compose up --wait
-
-.PHONY: down-rekor
-down-rekor:
-	cd $(REKOR_DIR) && docker compose down
+all: checkout build up
 
 .PHONY: checkout
 checkout:
@@ -69,3 +45,46 @@ endif
 .PHONY: clean
 clean:
 	rm -rf $(FULCIO_DIR) $(REKOR_DIR)
+
+.PHONY: build
+build:
+# bring up both fulcio and rekor simultaneously.
+	make build-fulcio build-rekor -j 2
+
+.PHONY: up
+up:
+# bring up both fulcio and rekor simultaneously.
+	make up-fulcio up-rekor -j 2
+
+.PHONY: down
+down:
+# bring down both fulcio and rekor simultaneously.
+	make down-fulcio down-rekor -j 2
+
+# fulcio
+
+.PHONY: build-fulcio
+build-fulcio:
+	cd $(FULCIO_DIR) && docker compose build
+
+.PHONY: up-fulcio
+up-fulcio:
+	cd $(FULCIO_DIR) && docker compose up --wait
+
+.PHONY: down-fulcio
+down-fulcio:
+	cd $(FULCIO_DIR) && docker compose down
+
+# rekor
+
+.PHONY: build-rekor
+build-rekor:
+	cd $(REKOR_DIR) && docker compose build
+
+.PHONY: up-rekor
+up-rekor:
+	cd $(REKOR_DIR) && docker compose up --wait
+
+.PHONY: down-rekor
+down-rekor:
+	cd $(REKOR_DIR) && docker compose down

@@ -81,6 +81,14 @@ runs:
         set: |
           *.cache-from=type=gha
           *.cache-to=type=gha,mode=max
+    - if: inputs.use-image-cache == false
+      name: docker compose build
+      shell: bash
+      run: make build
+      env:
+        CHECKOUT_DIR: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR
+        FULCIO_REPO: ${{ inputs.fulcio-repo }}
+        REKOR_REPO: ${{ inputs.rekor-repo }}
     - name: docker compose up
       working-directory: ${{ steps.realpath.outputs.path }}
       shell: bash

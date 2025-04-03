@@ -80,7 +80,9 @@ runs:
     - name: docker compose up
       working-directory: ${{ steps.realpath.outputs.path }}
       shell: bash
-      run: make up
+      run: |
+        make up-fulcio
+        make up-rekor
       env:
         CHECKOUT_DIR: ${{ steps.realpath.outputs.path }}/CHECKOUT_DIR
         FULCIO_REPO: ${{ inputs.fulcio-repo }}

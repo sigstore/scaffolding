@@ -57,7 +57,7 @@ runs:
     # Builx currently does not support Windows, so we skip setting up the cache for Windows.
     # See https://github.com/docker/buildx/issues/176.
     - if: runner.os != 'Windows'
-      uses: docker/setup-buildx-action@v3
+      uses: inputs.use-image-cache == true && docker/setup-buildx-action@v3
     # Caching the layers. See https://docs.docker.com/build/ci/github-actions/cache/#github-cache.
     - if: inputs.use-image-cache == true && runner.os != 'Windows'
       name: buildx bake fulcio

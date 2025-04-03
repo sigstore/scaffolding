@@ -13,7 +13,7 @@ jobs:
       matrix:
         platform:
           - ubuntu-latest
-          - macos-13
+          # - macos-13 # not yet working
           # - macos-latest # docker not supported yet. See https://github.com/marketplace/actions/setup-docker-on-macos#arm64-processors-m1-m2-m3-series-used-on-macos-14-images-are-unsupported.
           # - windows-latest # hold off while rekor still specifies `platform: linux`
         rekor-repo:

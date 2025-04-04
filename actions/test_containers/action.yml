@@ -1,0 +1,12 @@
+name: run-containers
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version: "stable"
+        cache-dependency-path: "**/go.sum"
+    - uses: ko-build/setup-ko@d982fec422852203cfb2053a8ec6ad302280d04d # v0.8
+    - shell: bash
+      run: ./run-containers.sh
+      working-directory: ${{ github.action_path }}

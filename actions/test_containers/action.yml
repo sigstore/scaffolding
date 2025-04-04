@@ -8,5 +8,8 @@ runs:
         cache-dependency-path: "**/go.sum"
     - uses: ko-build/setup-ko@d982fec422852203cfb2053a8ec6ad302280d04d # v0.8
     - shell: bash
-      run: ./run-containers.sh
+      run: |
+        ./run-containers.sh
+        echo $OIDC_URL"
+        echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
       working-directory: ${{ github.action_path }}

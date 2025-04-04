@@ -13,40 +13,55 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+version: "2"
+run:
+  issues-exit-code: 1
 linters:
   enable:
     - asciicheck
     - bodyclose
-    - unused
-    - errcheck
     - errorlint
-    - gofmt
-    - goimports
-    - gosec
     - gocritic
+    - gosec
     - importas
+    - misspell
     - prealloc
     - revive
-    - misspell
-    - stylecheck
+    - staticcheck
     - tparallel
     - unconvert
     - unparam
     - whitespace
-output:
-  uniq-by-line: false
+  settings:
+    gosec:
+      excludes:
+        - G115
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      - linters:
+          - staticcheck
+        path: pkg/ctlog/config.go
+        text: SA1019
+    paths:
+      - third_party/.*
+      - builtin$
+      - examples$
 issues:
-  exclude-rules:
-    - path: pkg/ctlog/config.go
-      linters:
-        - staticcheck
-      text: SA1019
   max-issues-per-linter: 0
   max-same-issues: 0
-linters-settings:
-  gosec:
-    excludes:
-      - G115  # integer overflow conversion uint64 -> int64
-run:
-  issues-exit-code: 1
-  timeout: 15m
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party/.*
+      - builtin$
+      - examples$

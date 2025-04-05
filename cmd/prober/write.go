@@ -58,14 +58,26 @@ const (
 	rekorEndpoint        = "/api/v1/log/entries"
 )
 
-func setHeaders(req *retryablehttp.Request, token string) {
+func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
 	if token != "" {
 		// Set the authorization header to our OIDC bearer token.
 		req.Header.Set("Authorization", "Bearer "+token)
 	}
 	// Set the content-type to reflect we're sending JSON.
-	req.Header.Set("Accept", "application/json")
-	req.Header.Set("Content-Type", "application/json")
+	switch rpc.Accept {
+	case "":
+		req.Header.Set("Accept", "application/json")
+	default:
+		req.Header.Set("Accept", rpc.Accept)
+	}
+	if req.ContentLength > 0 {
+		switch rpc.ContentType {
+		case "":
+			req.Header.Set("Content-Type", "application/json")
+		default:
+			req.Header.Set("Content-Type", rpc.ContentType)
+		}
+	}
 	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
 	// Set this value (even though it is not coming through an GCP LB) to correlate prober req/response
 	req.Header.Set("X-Cloud-Trace-Context", uuid.Must(uuid.NewV7()).String())
@@ -94,7 +106,7 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 		return nil, fmt.Errorf("new request: %w", err)
 	}
 
-	setHeaders(req, tok)
+	setHeaders(req, tok, ReadProberCheck{})
 
 	t := time.Now()
 	resp, err := retryableClient.Do(req)
@@ -162,7 +174,7 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 		return nil, fmt.Errorf("new request: %w", err)
 	}
 
-	setHeaders(req, tok)
+	setHeaders(req, tok, ReadProberCheck{})
 
 	t := time.Now()
 	resp, err := retryableClient.Do(req)
@@ -218,7 +230,7 @@ func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath s
 	if err != nil {
 		return nil, -1, fmt.Errorf("new request: %w", err)
 	}
-	setHeaders(req, "")
+	setHeaders(req, "", ReadProberCheck{})
 
 	t := time.Now()
 	resp, err := retryableClient.Do(req)

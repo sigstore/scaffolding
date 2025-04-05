@@ -111,6 +111,7 @@ var (
 	rekorURL       string
 	fulcioURL      string
 	fulcioGrpcURL  string
+	tsaURL         string
 	oneTime        bool
 	runWriteProber bool
 	versionInfo    version.Info
@@ -126,6 +127,8 @@ func init() {
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
+
+	flag.StringVar(&tsaURL, "tsa-url", "https://timestamp.sigstore.dev", "Set to the TSA URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
@@ -241,6 +244,13 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
+		for _, r := range TSAEndpoints {
+			if err := observeRequest(tsaURL, r); err != nil {
+				hasErr = true
+				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+			}
+		}
+
 		// Performing requests for GetTrustBundle against Fulcio gRPC API
 		if err := observeGrcpGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
 			hasErr = true
@@ -325,12 +335,12 @@ func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulc
 }
 
 func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error) {
-	req, err := retryablehttp.NewRequest(r.Method, host+r.Endpoint, bytes.NewBuffer([]byte(r.Body)))
+	req, err := retryablehttp.NewRequest(r.Method, host+r.Endpoint, bytes.NewBuffer(r.Body))
 	if err != nil {
 		return nil, err
 	}
 
-	setHeaders(req, "")
+	setHeaders(req, "", r)
 	q := req.URL.Query()
 	for k, v := range r.Queries {
 		q.Add(k, v)
@@ -346,7 +356,7 @@ func determineRekorShardCoverage(rekorURL string) ([]ReadProberCheck, error) {
 		return nil, fmt.Errorf("invalid request for loginfo: %w", err)
 	}
 
-	setHeaders(req, "")
+	setHeaders(req, "", ReadProberCheck{})
 	resp, err := retryableClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)

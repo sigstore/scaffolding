@@ -14,6 +14,8 @@
 
 package main
 
+import "encoding/base64"
+
 var (
 	GET  = "GET"
 	POST = "POST"
@@ -22,7 +24,9 @@ var (
 type ReadProberCheck struct {
 	Endpoint    string            `json:"endpoint"`
 	Method      string            `json:"method"`
-	Body        string            `json:"body"`
+	Body        []byte            `json:"body"`
+	ContentType string            `json:"contentType"` // if blank and Body != "", defaults to "application/json"
+	Accept      string            `json:"accept"`      // if blank, defaults to "application/json"
 	Queries     map[string]string `json:"queries"`
 	SLOEndpoint string            `json:"slo-endpoint"`
 }
@@ -32,6 +36,7 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/log/publicKey",
 		Method:   GET,
+		Accept:   "application/x-pem-file",
 	}, {
 		Endpoint: "/api/v1/log",
 		Method:   GET,
@@ -42,11 +47,11 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 	}, {
 		Endpoint: "/api/v1/log/entries/retrieve",
 		Method:   POST,
-		Body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
+		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),
 	}, {
 		Endpoint: "/api/v1/index/retrieve",
 		Method:   POST,
-		Body:     "{\"hash\":\"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b\"}",
+		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),
 	},
 }
 
@@ -54,11 +59,28 @@ var FulcioEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/rootCert",
 		Method:   GET,
+		Accept:   "application/pem-certificate-chain",
 	}, {
 		Endpoint: "/api/v2/configuration",
 		Method:   GET,
 	}, {
 		Endpoint: "/api/v2/trustBundle",
 		Method:   GET,
+	},
+}
+
+var tsReq, _ = base64.StdEncoding.DecodeString("ME8CAQEwMTANBglghkgBZQMEAgEFAAQg6lDWJ0V9nVEPspa3bDKpG71ef/PswFWOcCjDxLBpe0cCFHsLm2h6a5KYc06qrKCtCIDhwZdmAQH/")
+var TSAEndpoints = []ReadProberCheck{
+	{
+		Endpoint: "/api/v1/timestamp/certchain",
+		Method:   GET,
+		Accept:   "application/pem-certificate-chain",
+	},
+	{
+		Endpoint:    "/api/v1/timestamp",
+		Method:      POST,
+		Accept:      "application/timestamp-reply",
+		ContentType: "application/timestamp-query",
+		Body:        tsReq,
 	},
 }

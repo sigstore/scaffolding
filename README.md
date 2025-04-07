@@ -22,8 +22,11 @@ Nathan Smith &lt;sigstore@nfsmith.ca></p>
 If you do not care about the nitty gritty details and just want to stand up a
 local stack, check out the [Getting Started Guide](./getting-started.md)
 If you want to just run sigstore in your GitHub actions, check out the
-[actions](./actions/setup/README.md). If you want to stand up a sigstore
-stack on GCP using Terraform, we also got you [covered there](./terraform/).
+[actions](./actions/setup/README.md).
+
+If you want to stand up a Sigstore stack on Google Cloud Platform using
+Terraform, we provide
+[GCP Terraform modules](https://github.com/sigstore/terraform-modules).
 
 # Background
 

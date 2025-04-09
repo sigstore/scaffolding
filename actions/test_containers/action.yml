@@ -28,3 +28,6 @@ runs:
     - id: rekor-healthcheck
       shell: bash
       run: curl -f http://localhost:3000/
+    - id: tsa-healthcheck
+      shell: bash
+      run: curl -f http://localhost:3004/ping

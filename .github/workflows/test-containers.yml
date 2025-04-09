@@ -16,11 +16,3 @@ jobs:
           persist-credentials: false
       - id: run-test-containers
         uses: ./actions/test_containers
-      - shell: bash
-        run: |
-          echo oidc url $OIDC_URL
-          echo oidc url ${{ steps.run-test-containers.outputs.oidc-url }}
-      - name: fulcio healthcheck
-        run: curl -f http://localhost:5555/healthz
-      - name: rekor healthcheck
-        run: curl -f http://localhost:3000/

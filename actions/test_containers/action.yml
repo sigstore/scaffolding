@@ -25,6 +25,9 @@ runs:
     - name: rekor-healthcheck
       shell: bash
       run: curl -f http://localhost:3000/
+    - name: fakeoidc-healthcheck
+      shell: bash
+      run: curl -f ${{ steps.run-containers.outputs.oidc-url }}/.well-known/openid-configuration
     - name: tsa-healthcheck
       shell: bash
       run: curl -f ${{ steps.run-containers.outputs.tsa-url }}/ping

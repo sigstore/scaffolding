@@ -48,7 +48,7 @@ popd
 pushd $HOME
 
 echo "downloading service repos"
-for repo in rekor fulcio; do
+for repo in rekor fulcio timestamp-authority; do
     if [[ ! -d $repo ]]; then
         git clone https://github.com/sigstore/${repo}.git
     else
@@ -61,7 +61,7 @@ done
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
-for repo in rekor fulcio; do
+for repo in rekor fulcio timestamp-authority; do
     pushd $repo
     if [ "$repo" == "fulcio" ]; then
        yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml

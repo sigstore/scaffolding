@@ -22,9 +22,9 @@ runs:
         echo "OIDC_URL=$(echo $OIDC_URL)" >> "$GITHUB_ENV"
         echo "oidc-url=$(echo $OIDC_URL)" >> "$GITHUB_OUTPUT"
       working-directory: ${{ github.action_path }}
-    - id: fulcio healthcheck
+    - id: fulcio-healthcheck
       shell: bash
       run: curl -f http://localhost:5555/healthz
-    - id: rekor healthcheck
+    - id: rekor-healthcheck
       shell: bash
       run: curl -f http://localhost:3000/

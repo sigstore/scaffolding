@@ -19,6 +19,6 @@ runs:
         oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
         export OIDC_URL="http://${oidc_ip}:8080"
         echo oidc url "$OIDC_URL"
-        echo "OIDC_URL=$(echo $OIDC_URL) >> "$GITHUB_ENV"
+        echo "OIDC_URL=$(echo $OIDC_URL)" >> "$GITHUB_ENV"
         echo "oidc-url=$(echo $OIDC_URL)" >> "$GITHUB_OUTPUT"
       working-directory: ${{ github.action_path }}

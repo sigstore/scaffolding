@@ -3,6 +3,9 @@ outputs:
   oidc-url:
     description: The url of the OIDC provider.
     value: ${{ steps.run-containers.outputs.oidc-url }}
+  tsa-url:
+    description: The url of the Timestamp Authority (TSA).
+    value: ${{ steps.run-containers.outputs.tsa-url }}
 runs:
   using: composite
   steps:
@@ -24,4 +27,4 @@ runs:
       run: curl -f http://localhost:3000/
     - name: tsa-healthcheck
       shell: bash
-      run: curl -f http://localhost:3004/ping
+      run: curl -f ${{ steps.run-containers.outputs.tsa-url }}/ping

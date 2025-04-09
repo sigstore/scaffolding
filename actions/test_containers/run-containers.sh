@@ -89,5 +89,11 @@ for repo in rekor fulcio timestamp-authority; do
     popd
 done
 
+# GitHub action env and outputs
+
 echo "OIDC_URL=$(echo $OIDC_URL)" >> "$GITHUB_ENV"
 echo "oidc-url=$(echo $OIDC_URL)" >> "$GITHUB_OUTPUT"
+
+export TSA_URL="http://$(hostname):3004"
+echo "TSA_URL=$(echo $TSA_URL)" >> "$GITHUB_ENV"
+echo "tsa-url=$(echo $TSA_URL)" >> "$GITHUB_OUTPUT"

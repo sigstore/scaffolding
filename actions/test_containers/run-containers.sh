@@ -58,28 +58,28 @@ for repo in rekor fulcio; do
     fi
 done
 
-echo "starting services"
-export FULCIO_METRICS_PORT=2113
-export FULCIO_CONFIG=/tmp/fulcio-config.json
-for repo in rekor fulcio; do
-    pushd $repo
-    if [ "$repo" == "fulcio" ]; then
-       yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml
-       yq -i e '.services.fulcio-server.networks=["default"]' docker-compose.yml
-    fi
-    ${docker_compose} up -d
-    echo -n "waiting up to 60 sec for system to start"
-    count=0
-    until [ $(${docker_compose} ps | grep -c "(healthy)") == 3 ];
-    do
-        if [ $count -eq 18 ]; then
-           echo "! timeout reached"
-           exit 1
-        else
-           echo -n "."
-           sleep 10
-           let 'count+=1'
-        fi
-    done
-    popd
-done
+# echo "starting services"
+# export FULCIO_METRICS_PORT=2113
+# export FULCIO_CONFIG=/tmp/fulcio-config.json
+# for repo in rekor fulcio; do
+#     pushd $repo
+#     if [ "$repo" == "fulcio" ]; then
+#        yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml
+#        yq -i e '.services.fulcio-server.networks=["default"]' docker-compose.yml
+#     fi
+#     ${docker_compose} up -d
+#     echo -n "waiting up to 60 sec for system to start"
+#     count=0
+#     until [ $(${docker_compose} ps | grep -c "(healthy)") == 3 ];
+#     do
+#         if [ $count -eq 18 ]; then
+#            echo "! timeout reached"
+#            exit 1
+#         else
+#            echo -n "."
+#            sleep 10
+#            let 'count+=1'
+#         fi
+#     done
+#     popd
+# done

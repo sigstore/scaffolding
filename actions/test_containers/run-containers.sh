@@ -70,7 +70,12 @@ for repo in rekor fulcio timestamp-authority; do
     ${docker_compose} up -d
     echo -n "waiting up to 60 sec for system to start"
     count=0
-    until [ $(${docker_compose} ps | grep -c "(healthy)") == 3 ];
+    if [ "$repo" == "timestamp-authority" ]; then
+      target_healthy=1
+    else
+      target_healthy=3
+    fi
+    until [ $(${docker_compose} ps | grep -c "(healthy)") == $target_healthy ];
     do
         if [ $count -eq 18 ]; then
            echo "! timeout reached"

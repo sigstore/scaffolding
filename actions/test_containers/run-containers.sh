@@ -88,3 +88,6 @@ for repo in rekor fulcio timestamp-authority; do
     done
     popd
 done
+
+echo "OIDC_URL=$(echo $OIDC_URL)" >> "$GITHUB_ENV"
+echo "oidc-url=$(echo $OIDC_URL)" >> "$GITHUB_OUTPUT"

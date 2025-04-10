@@ -29,7 +29,7 @@ echo "setting up OIDC provider"
 pushd ./fakeoidc
 oidcimg=$(ko build main.go --local)
 docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc $oidcimg
+docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
 oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
 export OIDC_URL="http://${oidc_ip}:8080"
 cat <<EOF > /tmp/fulcio-config.json
@@ -45,7 +45,7 @@ cat <<EOF > /tmp/fulcio-config.json
 EOF
 popd
 
-pushd $HOME
+pushd "$HOME"
 
 echo "downloading service repos"
 for repo in rekor fulcio timestamp-authority; do
@@ -83,13 +83,13 @@ for repo in rekor fulcio timestamp-authority; do
         else
            echo -n "."
            sleep 10
-           let 'count+=1'
+           (( count+=1 ))
         fi
     done
     popd
 done
 
-export TSA_URL="http://$(hostname):3004"
+TSA_URL="http://$(hostname):3004"
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
   # GitHub action env and outputs

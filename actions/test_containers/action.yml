@@ -31,11 +31,11 @@ runs:
     - name: tsa-healthcheck
       shell: bash
       run: curl -f ${{ steps.run-containers.outputs.tsa-url }}/ping
+    - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
     - name: trusted-root
       shell: bash
       working-directory: ${{ github.action_path }}
       run: |
-        go install github.com/sigstore/cosign/v2/cmd/cosign@latest
         ./build-trusted-root.sh \
           --fulcio http://localhost:5555 ~/fulcio/config/ctfe/pubkey.pem \
           --rekor-v1-url http://localhost:3000  \

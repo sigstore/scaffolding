@@ -26,6 +26,7 @@ jobs:
             --new-bundle-format=true \
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
+            --oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
             --identity-token=$(curl -f ${{ steps.run-test-containers.outputs.oidc-url }}/token) \
             data.txt
       - name: test-verify-with-trusted-root

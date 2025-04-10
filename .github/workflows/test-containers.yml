@@ -1,0 +1,42 @@
+name: test test_containers
+on:
+  workflow_call:
+  push:
+  pull_request:
+jobs:
+  test:
+    strategy:
+      matrix:
+        platform:
+          - ubuntu-latest
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - id: run-test-containers
+        uses: ./actions/test_containers
+      - name: make test data
+        run: echo "gundam" > data.txt
+      - name: test-sign-with-trusted-root
+        run: |
+          SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=~/fulcio/config/ctfe/pubkey.pem cosign sign-blob \
+            -y \
+            --bundle=bundle.json \
+            --new-bundle-format=true \
+            --rekor-url http://localhost:3000 \
+            --fulcio-url http://localhost:5555 \
+            --oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
+            --identity-token=$(curl -f ${{ steps.run-test-containers.outputs.oidc-url }}/token) \
+            data.txt
+      - name: test-verify-with-trusted-root
+        run: |
+          cosign verify-blob \
+            --trusted-root ${{ steps.run-test-containers.outputs.trusted-root }} \
+            --bundle bundle.json \
+            --new-bundle-format=true \
+            --rekor-url http://localhost:3000 \
+            --certificate-identity foo@bar.com \
+            --certificate-oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
+            --insecure-ignore-sct \
+            data.txt

@@ -16,3 +16,25 @@ jobs:
           persist-credentials: false
       - id: run-test-containers
         uses: ./actions/test_containers
+      - name: make test data
+        run: echo "gundam" > data.txt
+      - name: sign
+        run: |
+          SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=~/fulcio/config/ctfe/pubkey.pem cosign sign-blob \
+            -y \
+            --bundle=bundle.json \
+            --new-bundle-format=true \
+            --rekor-url http://localhost:3000 \
+            --fulcio-url http://localhost:5555 \
+            --identity-token=$(curl -f ${{ steps.run-test-containers.outputs.oidc-url }}/token) \
+            data.txt
+      - name: verify
+        run: |
+          cosign verify-blob \
+            --trusted-root trusted_root.json \
+            --bundle bundle.json \
+            --new-bundle-format=true \
+            --rekor-url http://localhost:3000 \
+            --certificate-identity foo@bar.com \
+            --certificate-oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
+            data.txt

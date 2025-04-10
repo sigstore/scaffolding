@@ -6,6 +6,12 @@ outputs:
   tsa-url:
     description: The url of the Timestamp Authority (TSA).
     value: ${{ steps.run-containers.outputs.tsa-url }}
+  trusted-root:
+    description: Path to the trusted root json file.
+    value: ${{ steps.run-containers.outputs.trusted-root }}
+  signing-config:
+    description: Path to the singning config json file.
+    value: ${{ steps.run-containers.outputs.signing-config }}
 runs:
   using: composite
   steps:

@@ -18,7 +18,7 @@ jobs:
         uses: ./actions/test_containers
       - name: make test data
         run: echo "gundam" > data.txt
-      - name: sign
+      - name: test-sign-with-trusted-root
         run: |
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=~/fulcio/config/ctfe/pubkey.pem cosign sign-blob \
             -y \
@@ -28,10 +28,10 @@ jobs:
             --fulcio-url http://localhost:5555 \
             --identity-token=$(curl -f ${{ steps.run-test-containers.outputs.oidc-url }}/token) \
             data.txt
-      - name: verify
+      - name: test-verify-with-trusted-root
         run: |
           cosign verify-blob \
-            --trusted-root trusted_root.json \
+            --trusted-root ${{ steps.run-test-containers.outputs.trusted-root }} \
             --bundle bundle.json \
             --new-bundle-format=true \
             --rekor-url http://localhost:3000 \

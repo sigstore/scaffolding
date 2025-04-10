@@ -38,5 +38,5 @@ jobs:
             --rekor-url http://localhost:3000 \
             --certificate-identity foo@bar.com \
             --certificate-oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
-            --offline \
+            --insecure-ignore-sct \
             data.txt

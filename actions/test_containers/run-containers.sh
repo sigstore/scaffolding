@@ -75,7 +75,7 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     else
       target_healthy=3
     fi
-    until [ $(${docker_compose} ps | grep -c "(healthy)") == $target_healthy ];
+    until [ "$("${docker_compose}" ps | grep -c "(healthy)")" == "$target_healthy" ];
     do
         if [ $count -eq 18 ]; then
            echo "! timeout reached"

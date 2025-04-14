@@ -18,7 +18,7 @@ set -ex
 
 echo "setting up kind"
 go install sigs.k8s.io/kind@v0.20.0
-# kind create cluster
+kind create cluster
 
 docker_compose="docker compose"
 if ! ${docker_compose} version >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ echo "setting up OIDC provider"
 pushd ./fakeoidc
 oidcimg=$(ko build main.go --local)
 docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-# docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
+docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
 oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
 export OIDC_URL="http://${oidc_ip}:8080"
 cat <<EOF > /tmp/fulcio-config.json
@@ -70,7 +70,7 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     ${docker_compose} up -d
     echo -n "waiting up to 60 sec for system to start"
     count=0
-    if [ "$repo" == "timestamp-authority" ]; then
+    if [ "$repo" == "timestamp-authority" ] || [ "$repo" == "rekor-tiles" ]; then
       target_healthy=1
     else
       target_healthy=3

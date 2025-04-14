@@ -28,7 +28,7 @@
 set -euo pipefail
 
 
-[ -f trusted_root.json -o -f signing_config.json ] && echo "trusted_root.json or signing_config.json already exist" && exit 1 
+[ -f trusted_root.json ] || [ -f signing_config.json ] && echo "trusted_root.json or signing_config.json already exist" && exit 1
 
 CMD="cosign trusted-root create"
 WORKDIR=$(mktemp -d)

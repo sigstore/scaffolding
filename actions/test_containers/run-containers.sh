@@ -18,7 +18,7 @@ set -ex
 
 echo "setting up kind"
 go install sigs.k8s.io/kind@v0.20.0
-kind create cluster
+# kind create cluster
 
 docker_compose="docker compose"
 if ! ${docker_compose} version >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ echo "setting up OIDC provider"
 pushd ./fakeoidc
 oidcimg=$(ko build main.go --local)
 docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
+# docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
 oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
 export OIDC_URL="http://${oidc_ip}:8080"
 cat <<EOF > /tmp/fulcio-config.json
@@ -48,7 +48,7 @@ popd
 pushd "$HOME"
 
 echo "downloading service repos"
-for repo in rekor fulcio timestamp-authority; do
+for repo in rekor fulcio timestamp-authority rekor-tiles; do
     if [[ ! -d $repo ]]; then
         git clone https://github.com/sigstore/${repo}.git
     else
@@ -61,7 +61,7 @@ done
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
-for repo in rekor fulcio timestamp-authority; do
+for repo in rekor fulcio timestamp-authority rekor-tiles; do
     pushd $repo
     if [ "$repo" == "fulcio" ]; then
        yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml

@@ -93,9 +93,9 @@ TSA_URL="http://$(hostname):3004"
 
 if [[ -n "$GITHUB_ACTIONS" ]]; then
   # GitHub action env and outputs
-  echo "OIDC_URL=$(echo $OIDC_URL)" >> "$GITHUB_ENV"
-  echo "oidc-url=$(echo $OIDC_URL)" >> "$GITHUB_OUTPUT"
+  echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
+  echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
 
-  echo "TSA_URL=$(echo $TSA_URL)" >> "$GITHUB_ENV"
-  echo "tsa-url=$(echo $TSA_URL)" >> "$GITHUB_OUTPUT"
+  echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
+  echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"
 fi

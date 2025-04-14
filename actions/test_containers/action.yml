@@ -52,6 +52,8 @@ runs:
       shell: bash
       run: curl -f ${{ steps.run-containers.outputs.tsa-url }}/ping
     - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
+      with:
+        cosign-release: main
     - id: trusted-root
       shell: bash
       working-directory: ${{ github.action_path }}

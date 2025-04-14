@@ -88,22 +88,24 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     done
     popd
 done
-
+popd
 echo "building trusted root"
-CMD="
-./build-trusted-root.sh \
+if [[ "$USE_REKORV2_TRUSTED_ROOT" == "true" ]]; then
+  REKOR_ARGS=(--rekor-v2 http://localhost:3003 ~/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem)
+else
+  REKOR_ARGS=(--rekor-v1-url http://localhost:3000)
+fi
+ARGS=(
   --fulcio http://localhost:5555 ~/fulcio/config/ctfe/pubkey.pem \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
-"
-if [[ "$USE_REKORV2_TRUSTED_ROOT" == "true" ]]; then
-  CMD="$CMD --rekor-v2 http://localhost:3003 ~/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
-else
-  CMD="$CMD --rekor-v1-url http://localhost:3000"
-fi
+  "${REKOR_ARGS[@]}"
+)
+./build-trusted-root.sh "${ARGS[@]}"
 
 # set env variables
 TSA_URL="http://$(hostname):3004"
+GITHUB_ACTIONS="${GITHUB_ACTIONS:-}"
 if [[ -n "$GITHUB_ACTIONS" ]]; then
   # GitHub action env and outputs
   echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"

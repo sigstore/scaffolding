@@ -108,9 +108,9 @@ export TRUSTED_ROOT="$CWD/trusted_root.json"
 export SIGNING_CONFIG="$CWD/signing_config.json"
 if [[ -n "$GITHUB_ACTIONS" ]]; then
   # GitHub action env and outputs
-  echo "TRUSTED_ROOT=$(echo "$TRUSTED_ROOT")" >> "$GITHUB_ENV"
-  echo "trusted-root=$(echo "$TRUSTED_ROOT")" >> "$GITHUB_OUTPUT"
+  echo "TRUSTED_ROOT=$TRUSTED_ROOT" >> "$GITHUB_ENV"
+  echo "trusted-root=$TRUSTED_ROOT" >> "$GITHUB_OUTPUT"
 
-  echo "SIGNING_CONFIG=$(echo "$SIGNING_CONFIG")" >> "$GITHUB_ENV"
-  echo "signing-config=$(echo "$SIGNING_CONFIG")" >> "$GITHUB_OUTPUT"
+  echo "SIGNING_CONFIG=$SIGNING_CONFIG" >> "$GITHUB_ENV"
+  echo "signing-config=$SIGNING_CONFIG" >> "$GITHUB_OUTPUT"
 fi

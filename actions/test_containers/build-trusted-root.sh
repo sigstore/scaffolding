@@ -41,8 +41,8 @@ while [[ "$#" -gt 0 ]]; do
             shift
             shift
 
-            FNAME=$(mktemp --tmpdir=$WORKDIR fulcio_cert.XXXX.pem)
-            curl --fail -o $FNAME $FULCIO_URL/api/v1/rootCert
+            FNAME=$(mktemp --tmpdir="$WORKDIR" fulcio_cert.XXXX.pem)
+            curl --fail -o "$FNAME" "$FULCIO_URL"/api/v1/rootCert
             CMD="$CMD --certificate-chain $FNAME"
 
             CMD="$CMD --ctfe-key $KEYFILE"            
@@ -52,8 +52,8 @@ while [[ "$#" -gt 0 ]]; do
             REKOR_URL="$2"
             shift
 
-            FNAME=$(mktemp --tmpdir=$WORKDIR rekorv1_pub.XXXX.pem)
-            curl --fail -o $FNAME $REKOR_URL/api/v1/log/publicKey
+            FNAME=$(mktemp --tmpdir="$WORKDIR" rekorv1_pub.XXXX.pem)
+            curl --fail -o "$FNAME" "$REKOR_URL"/api/v1/log/publicKey
             CMD="$CMD --rekor-key $FNAME"
             ;;
 
@@ -70,8 +70,8 @@ while [[ "$#" -gt 0 ]]; do
             URL="$2"
             shift
 
-            FNAME=$(mktemp --tmpdir=$WORKDIR timestamp_certs.XXXX.pem)
-            curl --fail -o $FNAME $URL/api/v1/timestamp/certchain
+            FNAME=$(mktemp --tmpdir="$WORKDIR" timestamp_certs.XXXX.pem)
+            curl --fail -o "$FNAME" "$URL"/api/v1/timestamp/certchain
             CMD="$CMD --timestamp-certificate-chain $FNAME"
             ;;
 

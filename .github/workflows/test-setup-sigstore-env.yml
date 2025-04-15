@@ -11,7 +11,7 @@ jobs:
         with:
           persist-credentials: false
       - id: setup-sigstore-env
-        uses: ./actions/test_containers
+        uses: ./actions/setup-sigstore-env
       - name: make test data
         run: echo "gundam" > data.txt
       - name: test-sign

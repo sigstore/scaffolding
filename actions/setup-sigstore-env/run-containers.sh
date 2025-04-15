@@ -16,10 +16,6 @@
 
 set -ex
 
-echo "setting up kind"
-go install sigs.k8s.io/kind@v0.20.0
-kind create cluster
-
 docker_compose="docker compose"
 if ! ${docker_compose} version >/dev/null 2>&1; then
     docker_compose="docker-compose"

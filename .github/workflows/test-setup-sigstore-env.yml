@@ -2,7 +2,11 @@ name: test setup-sigstore-env
 on:
   workflow_call:
   push:
+    paths:
+      - 'actions/setup-sigstore-env/**'
   pull_request:
+    paths:
+      - 'actions/setup-sigstore-env/**'
 jobs:
   test:
     runs-on: ubuntu-latest

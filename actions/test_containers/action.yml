@@ -26,10 +26,10 @@ outputs:
     value: ${{ steps.run-containers.outputs.tsa-url }}
   trusted-root:
     description: Path to the trusted root json file.
-    value: ${{ steps.trusted-root.outputs.trusted-root }}
+    value: ${{ steps.run-containers.outputs.trusted-root }}
   signing-config:
     description: Path to the singning config json file.
-    value: ${{ steps.trusted-root.outputs.signing-config }}
+    value: ${{ steps.run-containers.outputs.signing-config }}
 runs:
   using: composite
   steps:
@@ -50,7 +50,12 @@ runs:
         ./run-containers.sh
       env:
         USE_REKORV2_TRUSTED_ROOT: ${{ inputs.use-rekorv2-trusted-root }}
-      working-directory: ${{ github.action_path }}
+      working-directory: ${{ github.action_path }
+    - name: show trusted root and singing config
+      shell: bash
+      run: |
+        cat ${{ steps.run-containers.outputs.trusted-root }}
+        cat ${{ steps.run-containers.outputs.signing-config }}
     - name: fulcio-healthcheck
       shell: bash
       run: curl -f http://localhost:5555/healthz

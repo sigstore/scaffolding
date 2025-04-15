@@ -50,7 +50,7 @@ runs:
         ./run-containers.sh
       env:
         USE_REKORV2_TRUSTED_ROOT: ${{ inputs.use-rekorv2-trusted-root }}
-      working-directory: ${{ github.action_path }
+      working-directory: ${{ github.action_path }}
     - name: show trusted root and singing config
       shell: bash
       run: |

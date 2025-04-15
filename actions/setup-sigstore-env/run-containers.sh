@@ -23,9 +23,9 @@ fi
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc
-oidcimg=$(ko build main.go --local)
+docker build . -t fakeoidc
 docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc "$oidcimg"
+docker network ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc fakeoidc
 oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
 export OIDC_URL="http://${oidc_ip}:8080"
 cat <<EOF > /tmp/fulcio-config.json

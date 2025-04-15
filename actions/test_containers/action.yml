@@ -51,20 +51,3 @@ runs:
       env:
         USE_REKORV2_TRUSTED_ROOT: ${{ inputs.use-rekorv2-trusted-root }}
       working-directory: ${{ github.action_path }}
-    - name: show trusted root and singing config
-      shell: bash
-      run: |
-        cat ${{ steps.run-containers.outputs.trusted-root }}
-        cat ${{ steps.run-containers.outputs.signing-config }}
-    - name: fulcio-healthcheck
-      shell: bash
-      run: curl -f http://localhost:5555/healthz
-    - name: rekor-healthcheck
-      shell: bash
-      run: curl -f http://localhost:3000/
-    - name: fakeoidc-healthcheck
-      shell: bash
-      run: curl -f ${{ steps.run-containers.outputs.oidc-url }}/.well-known/openid-configuration
-    - name: tsa-healthcheck
-      shell: bash
-      run: curl -f ${{ steps.run-containers.outputs.tsa-url }}/ping

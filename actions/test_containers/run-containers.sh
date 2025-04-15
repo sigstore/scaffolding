@@ -89,19 +89,14 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     popd
 done
 popd
+
 echo "building trusted root"
-if [[ "$USE_REKORV2_TRUSTED_ROOT" == "true" ]]; then
-  REKOR_ARGS=(--rekor-v2 http://localhost:3003 ~/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem)
-else
-  REKOR_ARGS=(--rekor-v1-url http://localhost:3000)
-fi
-ARGS=(
+./build-trusted-root.sh \
   --fulcio http://localhost:5555 ~/fulcio/config/ctfe/pubkey.pem \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
-  "${REKOR_ARGS[@]}"
-)
-./build-trusted-root.sh "${ARGS[@]}"
+  --rekor-v1-url http://localhost:3000 \
+  --rekor-v2 http://localhost:3003 ~/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem
 
 # set env variables
 TSA_URL="http://$(hostname):3004"

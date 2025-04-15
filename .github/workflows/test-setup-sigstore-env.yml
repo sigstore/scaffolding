@@ -1,4 +1,4 @@
-name: test test_containers
+name: test setup-sigstore-env
 on:
   workflow_call:
   push:
@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           persist-credentials: false
-      - id: run-test-containers
+      - id: setup-sigstore-env
         uses: ./actions/test_containers
       - name: make test data
         run: echo "gundam" > data.txt
@@ -22,15 +22,15 @@ jobs:
             --new-bundle-format=true \
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
-            --oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
-            --identity-token=$(curl -f ${{ steps.run-test-containers.outputs.oidc-url }}/token) \
+            --oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
+            --identity-token=$(curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}/token) \
             data.txt
       - name: test-verify-with-trusted-root
         run: |
           cosign verify-blob \
-            --trusted-root ${{ steps.run-test-containers.outputs.trusted-root }} \
+            --trusted-root ${{ steps.setup-sigstore-env.outputs.trusted-root }} \
             --bundle bundle.json \
             --new-bundle-format=true \
             --certificate-identity foo@bar.com \
-            --certificate-oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
+            --certificate-oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
             data.txt

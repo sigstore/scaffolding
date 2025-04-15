@@ -31,8 +31,6 @@ jobs:
             --trusted-root ${{ steps.run-test-containers.outputs.trusted-root }} \
             --bundle bundle.json \
             --new-bundle-format=true \
-            --rekor-url http://localhost:3000 \
             --certificate-identity foo@bar.com \
             --certificate-oidc-issuer ${{ steps.run-test-containers.outputs.oidc-url }} \
-            --insecure-ignore-sct \
             data.txt

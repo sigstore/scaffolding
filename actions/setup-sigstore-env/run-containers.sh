@@ -38,7 +38,8 @@ cat <<EOF > /tmp/fulcio-config.json
 EOF
 popd
 
-pushd "$HOME"
+WORKDIR=$(mktemp -d)
+pushd "$WORKDIR"
 
 echo "downloading service repos"
 for repo in rekor fulcio timestamp-authority rekor-tiles; do
@@ -59,7 +60,7 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     ${docker_compose} up --wait || ${docker_compose} up --wait
     if [ "$repo" == "fulcio" ]; then
-       docker network connect fulcio_default fakeoidc
+       docker network inspect fulcio_default | grep fakeoidc || docker network connect fulcio_default fakeoidc
     fi
     popd
 done

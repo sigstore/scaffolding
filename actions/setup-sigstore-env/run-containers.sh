@@ -24,10 +24,8 @@ fi
 echo "setting up OIDC provider"
 pushd ./fakeoidc
 docker build . -t fakeoidc
-docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-docker ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc fakeoidc
-oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
-export OIDC_URL="http://${oidc_ip}:8080"
+docker ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --hostname $(hostname) --name fakeoidc fakeoidc
+export OIDC_URL="http://$(hostname):8080"
 cat <<EOF > /tmp/fulcio-config.json
 {
   "OIDCIssuers": {
@@ -59,12 +57,11 @@ export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
 for repo in rekor fulcio timestamp-authority rekor-tiles; do
     pushd $repo
-    if [ "$repo" == "fulcio" ]; then
-       yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml
-       yq -i e '.services.fulcio-server.networks=["default"]' docker-compose.yml
-    fi
    # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     ${docker_compose} up --wait || ${docker_compose} up --wait
+    if [ "$repo" == "fulcio" ]; then
+       docker network connect --alias $(hostname) fulcio_default fakeoidc
+    fi
     popd
 done
 popd

@@ -33,13 +33,6 @@ runs:
       with:
         go-version: "stable"
         cache-dependency-path: "**/go.sum"
-    - uses: ko-build/setup-ko@d982fec422852203cfb2053a8ec6ad302280d04d # v0.8
-    # Pending https://github.com/sigstore/cosign-installer/issues/187.
-    # - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
-    #   with:
-    #     cosign-release: main
-    - shell: bash
-      run: go install github.com/sigstore/cosign/v2/cmd/cosign@main
     - id: run-containers
       shell: bash
       run: |

@@ -23,9 +23,8 @@ fi
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc
-docker build . -t fakeoidc
-docker ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --hostname $(hostname) --name fakeoidc fakeoidc
-export OIDC_URL="http://$(hostname):8080"
+docker compose up --wait
+export OIDC_URL="http://fakeoidc:8080"
 cat <<EOF > /tmp/fulcio-config.json
 {
   "OIDCIssuers": {
@@ -57,10 +56,10 @@ export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
 for repo in rekor fulcio timestamp-authority rekor-tiles; do
     pushd $repo
-   # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
+    # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     ${docker_compose} up --wait || ${docker_compose} up --wait
     if [ "$repo" == "fulcio" ]; then
-       docker network connect --alias $(hostname) fulcio_default fakeoidc
+       docker network connect fulcio_default fakeoidc
     fi
     popd
 done

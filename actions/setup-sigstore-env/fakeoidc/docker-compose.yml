@@ -1,4 +1,3 @@
-#
 # Copyright 2025 The Sigstore Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.24.1@sha256:52ff1b35ff8de185bf9fd26c70077190cd0bed1e9f16a2d498ce907e5c421268  as build
-
-WORKDIR /go/src/app
-COPY . .
-
-RUN go mod download
-# RUN go vet -v
-RUN go test -v
-
-RUN CGO_ENABLED=0 go build -o /go/bin/app
-
-FROM gcr.io/distroless/base-debian12:debug@sha256:3a59a8d10471fc8487fd2ca93746b0195ed4c3236c14fe8412cf7b2ec4b8c1f3
-
-COPY --from=build /go/bin/app /
-ENTRYPOINT ["/app"]
+services:
+  fakeoidc:
+    container_name: fakeoidc # hardcode the container name
+    build:
+      context: .
+    restart: always # keep the server running
+    ports:
+      - "8080:8080"
+    hostname: fakeoidc
+    domainname: fakeoidc
+    healthcheck:
+      test: ["CMD", "wget", "-O", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s

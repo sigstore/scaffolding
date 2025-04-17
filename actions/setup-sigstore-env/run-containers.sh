@@ -25,7 +25,7 @@ echo "setting up OIDC provider"
 pushd ./fakeoidc
 docker build . -t fakeoidc
 docker network ls | grep fulcio_default || docker network create fulcio_default --label "com.docker.compose.network=fulcio_default"
-docker network ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc fakeoidc
+docker ps | grep fakeoidc || docker run -d --rm -p 8080:8080 --network fulcio_default --name fakeoidc fakeoidc
 oidc_ip=$(docker inspect fakeoidc | jq -r '.[0].NetworkSettings.Networks.fulcio_default.IPAddress')
 export OIDC_URL="http://${oidc_ip}:8080"
 cat <<EOF > /tmp/fulcio-config.json
@@ -63,25 +63,8 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
        yq -i e '.networks={"default":{ "name":"fulcio_default","external":true }}' docker-compose.yml
        yq -i e '.services.fulcio-server.networks=["default"]' docker-compose.yml
     fi
-    ${docker_compose} up -d
-    echo -n "waiting up to 60 sec for system to start"
-    count=0
-    if [ "$repo" == "timestamp-authority" ] || [ "$repo" == "rekor-tiles" ]; then
-      target_healthy=1
-    else
-      target_healthy=3
-    fi
-    until [ "$(${docker_compose} ps | grep -c "(healthy)")" == "$target_healthy" ];
-    do
-        if [ $count -eq 18 ]; then
-           echo "! timeout reached"
-           exit 1
-        else
-           echo -n "."
-           sleep 10
-           (( count+=1 ))
-        fi
-    done
+   # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
+    ${docker_compose} up --wait || ${docker_compose} up --wait
     popd
 done
 popd

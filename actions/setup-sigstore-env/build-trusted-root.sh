@@ -30,9 +30,9 @@ set -euo pipefail
 
 [ -f trusted_root.json ] || [ -f signing_config.json ] && echo "trusted_root.json or signing_config.json already exist" && exit 1
 
-COSIGN_CMD="docker run ghcr.io/sigstore/cosign/cosign@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11"
-CMD="$COSIGN_CMD trusted-root create"
 WORKDIR=$(mktemp -d)
+COSIGN_CMD="docker run -v $WORKDIR/:$WORKDIR/ ghcr.io/sigstore/cosign/cosign@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11"
+CMD="$COSIGN_CMD trusted-root create"
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -41,6 +41,9 @@ while [[ "$#" -gt 0 ]]; do
             KEYFILE="$3"
             shift
             shift
+
+            cp $KEYFILE $WORKDIR/
+            KEYFILE=$WORKDIR/$(basename $KEYFILE)
 
             FNAME=$(mktemp --tmpdir="$WORKDIR" fulcio_cert.XXXX.pem)
             curl --fail -o "$FNAME" "$FULCIO_URL"/api/v1/rootCert
@@ -63,6 +66,9 @@ while [[ "$#" -gt 0 ]]; do
             KEYFILE="$3"
             shift
             shift
+
+            cp $KEYFILE $WORKDIR/
+            KEYFILE=$WORKDIR/$(basename $KEYFILE)
 
             CMD="$CMD --rekor-key $KEYFILE"
             ;;
@@ -87,6 +93,9 @@ while [[ "$#" -gt 0 ]]; do
     esac
     shift
 done
+
+# cosign needs both +r and +x permissions
+chmod a+rx -R $WORKDIR
 
 $CMD > trusted_root.json
 

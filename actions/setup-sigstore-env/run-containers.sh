@@ -68,11 +68,11 @@ popd
 
 echo "building trusted root"
 ./build-trusted-root.sh \
-  --fulcio http://localhost:5555 ~/fulcio/config/ctfe/pubkey.pem \
+  --fulcio http://localhost:5555 "$WORKDIR/fulcio/config/ctfe/pubkey.pem" \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
-  --rekor-v2 http://localhost:3003 ~/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem
+  --rekor-v2 http://localhost:3003 "$WORKDIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
 
 # set env variables
 TSA_URL="http://$(hostname):3004"

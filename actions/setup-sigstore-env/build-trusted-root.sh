@@ -42,8 +42,8 @@ while [[ "$#" -gt 0 ]]; do
             shift
             shift
 
-            cp $KEYFILE $WORKDIR/
-            KEYFILE=$WORKDIR/$(basename $KEYFILE)
+            cp "$KEYFILE" "$WORKDIR"/
+            KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 
             FNAME=$(mktemp --tmpdir="$WORKDIR" fulcio_cert.XXXX.pem)
             curl --fail -o "$FNAME" "$FULCIO_URL"/api/v1/rootCert
@@ -67,8 +67,8 @@ while [[ "$#" -gt 0 ]]; do
             shift
             shift
 
-            cp $KEYFILE $WORKDIR/
-            KEYFILE=$WORKDIR/$(basename $KEYFILE)
+            cp "$KEYFILE" "$WORKDIR"/
+            KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 
             CMD="$CMD --rekor-key $KEYFILE"
             ;;
@@ -95,7 +95,7 @@ while [[ "$#" -gt 0 ]]; do
 done
 
 # cosign needs both +r and +x permissions
-chmod a+rx -R $WORKDIR
+chmod a+rx -R "$WORKDIR"
 
 $CMD > trusted_root.json
 

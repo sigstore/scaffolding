@@ -16,10 +16,6 @@
 
 set -ex
 
-docker_compose="docker compose"
-if ! ${docker_compose} version >/dev/null 2>&1; then
-    docker_compose="docker-compose"
-fi
 echo "setting up OIDC provider"
 pushd ./fakeoidc
 docker compose up --wait
@@ -64,7 +60,7 @@ export FULCIO_CONFIG=/tmp/fulcio-config.json
 for repo in rekor fulcio timestamp-authority rekor-tiles; do
     pushd $repo
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
-    ${docker_compose} up --wait || ${docker_compose} up --wait
+    docker compose up --wait || docker compose up --wait
     if [ "$repo" == "fulcio" ]; then
        docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
     fi

@@ -31,7 +31,7 @@ set -euo pipefail
 [ -f trusted_root.json ] || [ -f signing_config.json ] && echo "trusted_root.json or signing_config.json already exist" && exit 1
 
 WORKDIR=$(mktemp -d)
-COSIGN_CMD="docker run -v $WORKDIR/:$WORKDIR/ ghcr.io/sigstore/cosign/cosign@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11"
+COSIGN_CMD="docker run --rm -v $WORKDIR/:$WORKDIR/ ghcr.io/sigstore/cosign/cosign@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11"
 CMD="$COSIGN_CMD trusted-root create"
 
 while [[ "$#" -gt 0 ]]; do

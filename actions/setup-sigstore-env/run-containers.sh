@@ -20,11 +20,13 @@ docker_compose="docker compose"
 if ! ${docker_compose} version >/dev/null 2>&1; then
     docker_compose="docker-compose"
 fi
-
 echo "setting up OIDC provider"
 pushd ./fakeoidc
 docker compose up --wait
-export OIDC_URL="http://fakeoidc:8080"
+# the faeoidc container's hostname must be the same, both from within fulcio and from this host machine.
+HOST=$(hostname)
+OIDC_URL="http://${HOST}:8080"
+export OIDC_URL
 cat <<EOF > /tmp/fulcio-config.json
 {
   "OIDCIssuers": {
@@ -40,6 +42,10 @@ popd
 
 WORKDIR=$(mktemp -d)
 pushd "$WORKDIR"
+
+OIDC_TOKEN="$WORKDIR"/token
+export OIDC_TOKEN
+curl "$OIDC_URL"/token > "$OIDC_TOKEN"
 
 echo "downloading service repos"
 for repo in rekor fulcio timestamp-authority rekor-tiles; do
@@ -60,7 +66,7 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     ${docker_compose} up --wait || ${docker_compose} up --wait
     if [ "$repo" == "fulcio" ]; then
-       docker network inspect fulcio_default | grep fakeoidc || docker network connect fulcio_default fakeoidc
+       docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
     fi
     popd
 done
@@ -84,4 +90,7 @@ if [[ -n "$GITHUB_ACTIONS" ]]; then
 
   echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
   echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"
+
+  echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
+  echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
 fi

@@ -20,8 +20,6 @@ services:
     restart: always # keep the server running
     ports:
       - "8080:8080"
-    hostname: fakeoidc
-    domainname: fakeoidc
     healthcheck:
       test: ["CMD", "wget", "-O", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
       interval: 10s

@@ -82,9 +82,13 @@ echo "building trusted root"
 
 # set env variables
 TSA_URL="http://$(hostname):3004"
+CT_LOG_KEY="$WORKDIR/fulcio/config/ctfe/pubkey.pem"
 GITHUB_ACTIONS="${GITHUB_ACTIONS:-}"
 if [[ -n "$GITHUB_ACTIONS" ]]; then
   # GitHub action env and outputs
+  echo "CT_LOG_KEY=$CT_LOG_KEY" >> "$GITHUB_ENV"
+  echo "ct-log-key=$CT_LOG_KEY" >> "$GITHUB_OUTPUT"
+
   echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
   echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
 

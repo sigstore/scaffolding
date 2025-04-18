@@ -24,8 +24,10 @@ jobs:
       - name: make test data
         run: echo "gundam" > data.txt
       - name: test-sign
+        env:
+          SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
         run: |
-          SIGSTORE_CT_LOG_PUBLIC_KEY_FILE=~/fulcio/config/ctfe/pubkey.pem cosign sign-blob \
+          cosign sign-blob \
             -y \
             --bundle=bundle.json \
             --new-bundle-format=true \

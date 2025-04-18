@@ -14,6 +14,9 @@
 
 name: setup-sigstore-env
 outputs:
+  ct-log-key:
+    description: Path to the CT log public key.
+    value: ${{ steps.run-containers.outputs.ct-log-key }}
   oidc-url:
     description: The url of the OIDC provider.
     value: ${{ steps.run-containers.outputs.oidc-url }}

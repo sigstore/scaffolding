@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -ex
+# set -e
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc
@@ -61,7 +61,7 @@ for repo in rekor fulcio timestamp-authority rekor-tiles; do
     pushd $repo
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     docker compose up --wait || docker compose up --wait
-    if [ "$repo" == "fulcio" ]; then
+    if [[ "$repo" == "fulcio" ]]; then
        docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
     fi
     popd
@@ -77,10 +77,12 @@ echo "building trusted root"
   --rekor-v2 http://localhost:3003 "$WORKDIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
 
 # set env variables
+CLONE_DIR="$WORKDIR"
+export CLONE_DIR
 TSA_URL="http://$(hostname):3004"
 CT_LOG_KEY="$WORKDIR/fulcio/config/ctfe/pubkey.pem"
-GITHUB_ACTIONS="${GITHUB_ACTIONS:-}"
-if [[ -n "$GITHUB_ACTIONS" ]]; then
+GITHUB_ACTIONS="${GITHUB_ACTIONS:-false}"
+if [[ "$GITHUB_ACTIONS" != "false" ]]; then
   # GitHub action env and outputs
   echo "CT_LOG_KEY=$CT_LOG_KEY" >> "$GITHUB_ENV"
   echo "ct-log-key=$CT_LOG_KEY" >> "$GITHUB_OUTPUT"
@@ -93,4 +95,7 @@ if [[ -n "$GITHUB_ACTIONS" ]]; then
 
   echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
   echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
+
+  echo "CLONE_DIR=$CLONE_DIR" >> "$GITHUB_ENV"
+  echo "clone-dir=$CLONE_DIR" >> "$GITHUB_OUTPUT"
 fi

@@ -32,6 +32,9 @@ outputs:
   signing-config:
     description: Path to the singning config json file.
     value: ${{ steps.run-containers.outputs.signing-config }}
+  clone-dir:
+    description: Path to the directory where the service repositories are cloned.
+    value: ${{ steps.run-containers.outputs.clone-dir }}
 runs:
   using: composite
   steps:

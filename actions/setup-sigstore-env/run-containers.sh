@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -e
+set -ex
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc
@@ -44,11 +44,22 @@ export OIDC_TOKEN
 curl "$OIDC_URL"/token > "$OIDC_TOKEN"
 
 echo "downloading service repos"
-for repo in rekor fulcio timestamp-authority rekor-tiles; do
+FULCIO_REPO="${FULCIO_REPO:-sigstore/fulcio}"
+REKOR_REPO="${REKOR_REPO:-sigstore/rekor}"
+TIMESTAMP_AUTHORITY_REPO="${TIMESTAMP_AUTHORITY_REPO:-sigstore/timestamp-authority}"
+REKOR_TILES_REPO="${REKOR_TILES_REPO:-sigstore/rekor-tiles}"
+OWNER_REPOS=(
+  "$FULCIO_REPO"
+  "$REKOR_REPO"
+  "$TIMESTAMP_AUTHORITY_REPO"
+  "$REKOR_TILES_REPO"
+)
+for owner_repo in "${OWNER_REPOS[@]}"; do
+    repo=$(basename "$owner_repo")
     if [[ ! -d $repo ]]; then
-        git clone https://github.com/sigstore/${repo}.git
+        git clone https://github.com/"${owner_repo}".git
     else
-        pushd $repo
+        pushd "$repo"
         git pull
         popd
     fi
@@ -57,13 +68,17 @@ done
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
-for repo in rekor fulcio timestamp-authority rekor-tiles; do
-    pushd $repo
+for owner_repo in "${OWNER_REPOS[@]}"; do
+    repo=$(basename "$owner_repo")
+    pushd "$repo"
+    if [[ "$repo" == "fulcio" ]]; then
+      # create the fulcio_default network by running `compose up`.
+      docker compose up -d
+      # then quickly attach the fakeoidc container to the fulcio_default network.
+      docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
+    fi
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     docker compose up --wait || docker compose up --wait
-    if [[ "$repo" == "fulcio" ]]; then
-       docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
-    fi
     popd
 done
 popd

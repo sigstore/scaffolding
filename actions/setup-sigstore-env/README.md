@@ -6,7 +6,7 @@ It will clone the rekor and fulcio repos and launch their respective docker-comp
 
 ## Local Use
 
-The script will export env variables you may need.
+The script will export env variables you may need. You may want to first comment the line `set -ex`.
 
 ```shell
 rm signing_config.json trusted_root.json

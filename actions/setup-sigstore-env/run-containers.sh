@@ -79,7 +79,22 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     docker compose up --wait || docker compose up --wait
     popd
 done
+
 popd
+
+stop_services() {
+  pushd ./fakeoidc
+  docker compose down --volumes
+  popd
+  pushd "$WORKDIR"
+  for owner_repo in "${OWNER_REPOS[@]}"; do
+    repo=$(basename "$owner_repo")
+    pushd "$repo"
+    docker compose down --volumes
+    popd
+  done
+  popd
+}
 
 echo "building trusted root"
 ./build-trusted-root.sh \

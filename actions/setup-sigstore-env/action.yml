@@ -47,3 +47,6 @@ runs:
       run: |
         ./run-containers.sh
       working-directory: ${{ github.action_path }}
+      # temporary fix, pending https://github.com/sigstore/fulcio/pull/2013
+      env:
+        FULCIO_REPO: ramonpetgrave64/fulcio

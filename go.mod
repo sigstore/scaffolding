@@ -1,8 +1,7 @@
 module github.com/sigstore/scaffolding
 
 go 1.23.4
-
-toolchain go1.23.5
+toolchain go1.24.1
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -33,9 +32,9 @@ require (
 	github.com/prometheus/client_golang v1.21.1
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.4.3
-	github.com/sigstore/fulcio v1.6.6
+	github.com/sigstore/fulcio v1.7.0
 	github.com/sigstore/rekor v1.3.9
-	github.com/sigstore/sigstore v1.9.0
+	github.com/sigstore/sigstore v1.9.1
 	github.com/sigstore/sigstore-go v0.7.0
 	github.com/sigstore/timestamp-authority v1.2.4
 	github.com/stretchr/testify v1.10.0
@@ -122,7 +121,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.25.3 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.30.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.33.19 // indirect
-	github.com/aws/smithy-go v1.22.2 // indirect
+	github.com/aws/smithy-go v1.22.3 // indirect
 	github.com/awslabs/amazon-ecr-credential-helper/ecr-login v0.9.1 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
@@ -179,7 +178,7 @@ require (
 	github.com/golang/protobuf v1.5.4 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic-models v0.6.9-0.20230804172637-c7be7c783f49 // indirect
-	github.com/google/go-containerregistry v0.20.3 // indirect
+	github.com/google/go-containerregistry v0.20.4-0.20250225234217-098045d5e61f // indirect
 	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
@@ -187,8 +186,9 @@ require (
 	github.com/google/tink/go v1.7.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
+	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.25.1 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.3 // indirect
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/vault/api v1.16.0 // indirect
 	github.com/in-toto/attestation v1.1.0 // indirect
@@ -244,7 +244,7 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/protobuf-specs v0.4.0 // indirect
+	github.com/sigstore/protobuf-specs v0.4.1 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.8.15 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.8.15 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.8.15 // indirect

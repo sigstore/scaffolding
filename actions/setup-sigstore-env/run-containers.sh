@@ -21,8 +21,7 @@ pushd ./fakeoidc
 docker compose up --wait
 # the faeoidc container's hostname must be the same, both from within fulcio and from this host machine.
 HOST=$(hostname)
-OIDC_URL="http://${HOST}:8080"
-export OIDC_URL
+export OIDC_URL="http://${HOST}:8080"
 cat <<EOF > /tmp/fulcio-config.json
 {
   "OIDCIssuers": {
@@ -39,8 +38,7 @@ popd
 WORKDIR=$(mktemp -d)
 pushd "$WORKDIR"
 
-OIDC_TOKEN="$WORKDIR"/token
-export OIDC_TOKEN
+export OIDC_TOKEN="$WORKDIR"/token
 curl "$OIDC_URL"/token > "$OIDC_TOKEN"
 
 echo "downloading service repos"
@@ -92,10 +90,9 @@ echo "building trusted root"
   --rekor-v2 http://localhost:3003 "$WORKDIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
 
 # set env variables
-CLONE_DIR="$WORKDIR"
-export CLONE_DIR
-TSA_URL="http://$(hostname):3004"
-CT_LOG_KEY="$WORKDIR/fulcio/config/ctfe/pubkey.pem"
+export CLONE_DIR="$WORKDIR"
+export TSA_URL="http://${HOST}:3004"
+export CT_LOG_KEY="$WORKDIR/fulcio/config/ctfe/pubkey.pem"
 GITHUB_ACTIONS="${GITHUB_ACTIONS:-false}"
 if [[ "$GITHUB_ACTIONS" != "false" ]]; then
   # GitHub action env and outputs

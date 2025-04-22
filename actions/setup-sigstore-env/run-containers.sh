@@ -73,8 +73,7 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
       # then quickly attach the fakeoidc container to the fulcio_default network.
       docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
     fi
-    # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
-    docker compose up --wait || docker compose up --wait
+    docker compose up --wait
     popd || return
 done
 

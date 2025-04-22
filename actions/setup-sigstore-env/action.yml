@@ -44,6 +44,5 @@ runs:
         cache-dependency-path: "**/go.sum"
     - id: run-containers
       shell: bash
-      run: |
-        ./run-containers.sh
+      run: bash -ex ./run-containers.sh
       working-directory: ${{ github.action_path }}

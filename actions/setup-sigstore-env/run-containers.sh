@@ -14,8 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -ex
-
 echo "setting up OIDC provider"
 pushd ./fakeoidc
 docker compose up --wait

@@ -36,8 +36,8 @@ popd || return
 export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 pushd "$CLONE_DIR" || return
 
-export OIDC_TOKEN="$CLONE_DIR"/token
-curl "$OIDC_URL"/token > "$OIDC_TOKEN"
+OIDC_TOKEN=$(curl "$OIDC_URL"/token)
+export OIDC_TOKEN
 
 echo "downloading service repos"
 FULCIO_REPO="${FULCIO_REPO:-sigstore/fulcio}"

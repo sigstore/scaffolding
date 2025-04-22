@@ -13,7 +13,7 @@ rm signing_config.json trusted_root.json
 source ./run-containers.sh
 ```
 
-Otherwise, invoke the script normally, optionally with `-ex`.
+Otherwise, invoke the script normally, optionally with `-ex`, for debugging the script.
 
 ```shell
 rm signing_config.json trusted_root.json

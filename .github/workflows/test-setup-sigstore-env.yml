@@ -34,7 +34,7 @@ jobs:
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
             --oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
-            --identity-token="${{ steps.setup-sigstore-env.outputs.oidc-token }}" \
+            --identity-token ${{ steps.setup-sigstore-env.outputs.oidc-token }} \
             data.txt
       - name: test-verify-with-trusted-root
         run: |

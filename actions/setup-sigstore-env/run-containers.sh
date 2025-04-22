@@ -33,10 +33,10 @@ cat <<EOF > /tmp/fulcio-config.json
 EOF
 popd || return
 
-WORKDIR=$(mktemp -d)
-pushd "$WORKDIR" || return
+export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
+pushd "$CLONE_DIR" || return
 
-export OIDC_TOKEN="$WORKDIR"/token
+export OIDC_TOKEN="$CLONE_DIR"/token
 curl "$OIDC_URL"/token > "$OIDC_TOKEN"
 
 echo "downloading service repos"
@@ -84,7 +84,7 @@ stop_services() {
   pushd ./fakeoidc || return
   docker compose down --volumes
   popd || return
-  pushd "$WORKDIR" || return
+  pushd "$CLONE_DIR" || return
   for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
     pushd "$repo" || return
@@ -96,16 +96,15 @@ stop_services() {
 
 echo "building trusted root"
 ./build-trusted-root.sh \
-  --fulcio http://localhost:5555 "$WORKDIR/fulcio/config/ctfe/pubkey.pem" \
+  --fulcio http://localhost:5555 "$CLONE_DIR/fulcio/config/ctfe/pubkey.pem" \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
-  --rekor-v2 http://localhost:3003 "$WORKDIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
+  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
 
 # set env variables
-export CLONE_DIR="$WORKDIR"
 export TSA_URL="http://${HOST}:3004"
-export CT_LOG_KEY="$WORKDIR/fulcio/config/ctfe/pubkey.pem"
+export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
 GITHUB_ACTIONS="${GITHUB_ACTIONS:-false}"
 if [[ "$GITHUB_ACTIONS" != "false" ]]; then
   # GitHub action env and outputs

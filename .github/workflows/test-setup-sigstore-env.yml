@@ -1,6 +1,6 @@
 name: test setup-sigstore-env
 on:
-  workflow_call:
+  workflow_dispatch:
   push:
     paths:
       - 'actions/setup-sigstore-env/**'

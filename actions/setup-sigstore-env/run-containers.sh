@@ -15,7 +15,7 @@
 # limitations under the License.
 
 echo "setting up OIDC provider"
-pushd ./fakeoidc || exit
+pushd ./fakeoidc || return
 docker compose up --wait
 # the faeoidc container's hostname must be the same, both from within fulcio and from this host machine.
 HOST=$(hostname)
@@ -31,10 +31,10 @@ cat <<EOF > /tmp/fulcio-config.json
   }
 }
 EOF
-popd || exit
+popd || return
 
 WORKDIR=$(mktemp -d)
-pushd "$WORKDIR" || exit
+pushd "$WORKDIR" || return
 
 export OIDC_TOKEN="$WORKDIR"/token
 curl "$OIDC_URL"/token > "$OIDC_TOKEN"
@@ -55,9 +55,9 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     if [[ ! -d $repo ]]; then
         git clone https://github.com/"${owner_repo}".git
     else
-        pushd "$repo" || exit
+        pushd "$repo" || return
         git pull
-        popd || exit
+        popd || return
     fi
 done
 
@@ -66,7 +66,7 @@ export FULCIO_METRICS_PORT=2113
 export FULCIO_CONFIG=/tmp/fulcio-config.json
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
-    pushd "$repo" || exit
+    pushd "$repo" || return
     if [[ "$repo" == "fulcio" ]]; then
       # create the fulcio_default network by running `compose up`.
       docker compose up -d
@@ -75,23 +75,23 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     fi
     # sometimes the services only become healthy after first becoming unhealthy, so we run this command twice.
     docker compose up --wait || docker compose up --wait
-    popd || exit
+    popd || return
 done
 
-popd || exit
+popd || return
 
 stop_services() {
-  pushd ./fakeoidc || exit
+  pushd ./fakeoidc || return
   docker compose down --volumes
-  popd || exit
-  pushd "$WORKDIR" || exit
+  popd || return
+  pushd "$WORKDIR" || return
   for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
-    pushd "$repo" || exit
+    pushd "$repo" || return
     docker compose down --volumes
-    popd || exit
+    popd || return
   done
-  popd || exit
+  popd || return
 }
 
 echo "building trusted root"

@@ -26,7 +26,7 @@ jobs:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
         run: |
           echo token:
-          curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}
+          curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}/token
           cosign sign-blob \
             -y \
             --bundle=bundle.json \
@@ -34,7 +34,7 @@ jobs:
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
             --oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
-            --identity-token=$(curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}) \
+            --identity-token=$(curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}/token) \
             data.txt
       - name: test-verify-with-trusted-root
         run: |

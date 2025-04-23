@@ -17,7 +17,7 @@
 
 # <cmd> || return is so the script can exit early without quitting your shell.
 
-export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
+CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 CWD="$(pwd)"
 
 echo "setting up OIDC provider"

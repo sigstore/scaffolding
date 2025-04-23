@@ -32,9 +32,6 @@ outputs:
   signing-config:
     description: Path to the singning config json file.
     value: ${{ steps.run-containers.outputs.signing-config }}
-  clone-dir:
-    description: Path to the directory where the service repositories are cloned.
-    value: ${{ steps.run-containers.outputs.clone-dir }}
 runs:
   using: composite
   steps:
@@ -61,9 +58,6 @@ runs:
 
         echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
         echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
-
-        echo "CLONE_DIR=$CLONE_DIR" >> "$GITHUB_ENV"
-        echo "clone-dir=$CLONE_DIR" >> "$GITHUB_OUTPUT"
 
         echo "TRUSTED_ROOT=$TRUSTED_ROOT" >> "$GITHUB_ENV"
         echo "trusted-root=$TRUSTED_ROOT" >> "$GITHUB_OUTPUT"

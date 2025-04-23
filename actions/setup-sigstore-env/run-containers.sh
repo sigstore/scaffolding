@@ -36,13 +36,8 @@ cat <<EOF > "$FULCIO_CONFIG"
 EOF
 popd || return
 
-
-pushd "$CLONE_DIR" || return
-
-export OIDC_TOKEN="$CLONE_DIR"/token
-curl -o "$OIDC_TOKEN" "$OIDC_URL"/token
-
 echo "downloading service repos"
+pushd "$CLONE_DIR" || return
 FULCIO_REPO="${FULCIO_REPO:-sigstore/fulcio}"
 REKOR_REPO="${REKOR_REPO:-sigstore/rekor}"
 TIMESTAMP_AUTHORITY_REPO="${TIMESTAMP_AUTHORITY_REPO:-sigstore/timestamp-authority}"
@@ -78,8 +73,10 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     docker compose up --wait
     popd || return
 done
-
 popd || return
+
+export OIDC_TOKEN="$CLONE_DIR"/token
+curl -o "$OIDC_TOKEN" "$OIDC_URL"/token
 
 stop_services() {
   pushd ./fakeoidc || return

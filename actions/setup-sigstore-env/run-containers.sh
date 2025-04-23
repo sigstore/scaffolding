@@ -15,12 +15,13 @@
 # limitations under the License.
 
 export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
+CWD="$(pwd)"
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
 docker compose up --wait
 # the fakeoidc container's hostname must be the same, both from within fulcio and from this host machine.
-HOST=$(hostname)
+HOST="${HOST:-$(hostname)}"
 export OIDC_URL="http://${HOST}:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
 cat <<EOF > "$FULCIO_CONFIG"
@@ -93,12 +94,14 @@ stop_services() {
 }
 
 echo "building trusted root"
-./build-trusted-root.sh \
+pushd "$CLONE_DIR" || return
+$CWD/build-trusted-root.sh \
   --fulcio http://localhost:5555 "$CLONE_DIR/fulcio/config/ctfe/pubkey.pem" \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
   --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
+popd || return
 
 # set env variables
 export TSA_URL="http://${HOST}:3004"

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.24.1@sha256:52ff1b35ff8de185bf9fd26c70077190cd0bed1e9f16a2d498ce907e5c421268  as build
+FROM golang:1.24.2@sha256:d9db32125db0c3a680cfb7a1afcaefb89c898a075ec148fdc2f0f646cc2ed509 as build
 
 WORKDIR /go/src/app
 COPY . .
@@ -22,7 +22,7 @@ RUN go mod download
 
 RUN CGO_ENABLED=0 go build -o /go/bin/app
 
-FROM gcr.io/distroless/base-debian12:debug@sha256:3a59a8d10471fc8487fd2ca93746b0195ed4c3236c14fe8412cf7b2ec4b8c1f3
+FROM golang:1.24.2@sha256:d9db32125db0c3a680cfb7a1afcaefb89c898a075ec148fdc2f0f646cc2ed509
 
 COPY --from=build /go/bin/app /
 ENTRYPOINT ["/app"]

@@ -14,6 +14,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
+
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
 docker compose up --wait
@@ -21,7 +23,7 @@ docker compose up --wait
 HOST=$(hostname)
 export OIDC_URL="http://${HOST}:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
-cat <<EOF > $FULCIO_CONFIG
+cat <<EOF > "$FULCIO_CONFIG"
 {
   "OIDCIssuers": {
     "$OIDC_URL": {
@@ -34,7 +36,7 @@ cat <<EOF > $FULCIO_CONFIG
 EOF
 popd || return
 
-export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
+
 pushd "$CLONE_DIR" || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token

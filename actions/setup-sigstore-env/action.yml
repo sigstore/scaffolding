@@ -24,7 +24,7 @@ outputs:
     description: The url of the Timestamp Authority (TSA).
     value: ${{ steps.run-containers.outputs.tsa-url }}
   oidc-token:
-    description: Path to a file containing an OIDC token.
+    description: Path to a file containing a temporary 30-minute OIDC token.
     value: ${{ steps.run-containers.outputs.oidc-token }}.
   trusted-root:
     description: Path to the trusted root json file.

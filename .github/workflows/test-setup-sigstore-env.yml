@@ -25,6 +25,8 @@ jobs:
         env:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
         run: |
+          echo token:
+          curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}
           cosign sign-blob \
             -y \
             --bundle=bundle.json \

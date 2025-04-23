@@ -16,11 +16,9 @@ jobs:
           persist-credentials: false
       - id: setup-sigstore-env
         uses: ./actions/setup-sigstore-env
-      # Pending https://github.com/sigstore/cosign-installer/issues/187.
-      # - uses: sigstore/cosign-installer@d7d6bc7722e3daa8354c50bcb52f4837da5e9b6a # v3.8.1
-      #   with:
-      #     cosign-release: main
-      - run: go install github.com/sigstore/cosign/v2/cmd/cosign@main
+      - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+        with:
+          cosign-release: main
       - name: make test data
         run: echo "gundam" > data.txt
       - name: test-sign

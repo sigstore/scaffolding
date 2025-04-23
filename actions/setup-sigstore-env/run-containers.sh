@@ -40,7 +40,7 @@ popd || return
 pushd "$CLONE_DIR" || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
-curl "$OIDC_URL"/token > "$OIDC_TOKEN"
+curl -o "$OIDC_TOKEN" "$OIDC_URL"/token
 
 echo "downloading service repos"
 FULCIO_REPO="${FULCIO_REPO:-sigstore/fulcio}"

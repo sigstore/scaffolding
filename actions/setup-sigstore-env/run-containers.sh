@@ -19,7 +19,7 @@ export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
 docker compose up --wait
-# the faeoidc container's hostname must be the same, both from within fulcio and from this host machine.
+# the fakeoidc container's hostname must be the same, both from within fulcio and from this host machine.
 HOST=$(hostname)
 export OIDC_URL="http://${HOST}:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json

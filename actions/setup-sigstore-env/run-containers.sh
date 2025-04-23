@@ -103,24 +103,5 @@ pushd "$CLONE_DIR" || return
   --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
 popd || return
 
-# set env variables
 export TSA_URL="http://${HOST}:3004"
 export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
-GITHUB_ACTIONS="${GITHUB_ACTIONS:-false}"
-if [[ "$GITHUB_ACTIONS" != "false" ]]; then
-  # GitHub action env and outputs
-  echo "CT_LOG_KEY=$CT_LOG_KEY" >> "$GITHUB_ENV"
-  echo "ct-log-key=$CT_LOG_KEY" >> "$GITHUB_OUTPUT"
-
-  echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
-  echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
-
-  echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
-  echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"
-
-  echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
-  echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
-
-  echo "CLONE_DIR=$CLONE_DIR" >> "$GITHUB_ENV"
-  echo "clone-dir=$CLONE_DIR" >> "$GITHUB_OUTPUT"
-fi

@@ -44,7 +44,28 @@ runs:
         cache-dependency-path: "**/go.sum"
     - id: run-containers
       shell: bash
+      working-directory: ${{ github.action_path }}
       run: |
         set -ex
         source ./run-containers.sh
-      working-directory: ${{ github.action_path }}
+
+        echo "CT_LOG_KEY=$CT_LOG_KEY" >> "$GITHUB_ENV"
+        echo "ct-log-key=$CT_LOG_KEY" >> "$GITHUB_OUTPUT"
+
+        echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
+        echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
+
+        echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
+        echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"
+
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
+        echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
+
+        echo "CLONE_DIR=$CLONE_DIR" >> "$GITHUB_ENV"
+        echo "clone-dir=$CLONE_DIR" >> "$GITHUB_OUTPUT"
+
+        echo "TRUSTED_ROOT=$TRUSTED_ROOT" >> "$GITHUB_ENV"
+        echo "trusted-root=$TRUSTED_ROOT" >> "$GITHUB_OUTPUT"
+
+        echo "SIGNING_CONFIG=$SIGNING_CONFIG" >> "$GITHUB_ENV"
+        echo "signing-config=$SIGNING_CONFIG" >> "$GITHUB_OUTPUT"

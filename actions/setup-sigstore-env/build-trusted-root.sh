@@ -111,12 +111,3 @@ echo "Wrote trusted_root.json & signing_config.json"
 CWD="$(pwd)"
 export TRUSTED_ROOT="$CWD/trusted_root.json"
 export SIGNING_CONFIG="$CWD/signing_config.json"
-GITHUB_ACTIONS="${GITHUB_ACTIONS:-}"
-if [[ -n "$GITHUB_ACTIONS" ]]; then
-  # GitHub action env and outputs
-  echo "TRUSTED_ROOT=$TRUSTED_ROOT" >> "$GITHUB_ENV"
-  echo "trusted-root=$TRUSTED_ROOT" >> "$GITHUB_OUTPUT"
-
-  echo "SIGNING_CONFIG=$SIGNING_CONFIG" >> "$GITHUB_ENV"
-  echo "signing-config=$SIGNING_CONFIG" >> "$GITHUB_OUTPUT"
-fi

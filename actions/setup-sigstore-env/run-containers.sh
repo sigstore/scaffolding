@@ -14,6 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# <cmd> || return is so the script can exit early without quitting your shell.
+
 export CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 CWD="$(pwd)"
 

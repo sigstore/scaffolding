@@ -45,6 +45,7 @@ runs:
     - id: run-containers
       shell: bash
       working-directory: ${{ github.action_path }}
+      # source to receive exported env variables.
       run: |
         set -ex
         source ./run-containers.sh

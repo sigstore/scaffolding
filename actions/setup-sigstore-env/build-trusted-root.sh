@@ -107,7 +107,3 @@ cat << EOF > signing_config.json
 EOF
 
 echo "Wrote trusted_root.json & signing_config.json"
-
-CWD="$(pwd)"
-export TRUSTED_ROOT="$CWD/trusted_root.json"
-export SIGNING_CONFIG="$CWD/signing_config.json"

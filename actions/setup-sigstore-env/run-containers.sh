@@ -59,6 +59,7 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
         popd || return
     fi
 done
+export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
 
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
@@ -74,10 +75,13 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     docker compose up --wait
     popd || return
 done
+export TSA_URL="http://${HOST}:3004"
 popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
 curl -o "$OIDC_TOKEN" "$OIDC_URL"/token
+
+cat "$OIDC_TOKEN"
 
 stop_services() {
   pushd ./fakeoidc || return
@@ -101,7 +105,6 @@ pushd "$CLONE_DIR" || return
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
   --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
+export TRUSTED_ROOT="$CLONE_DIR/trusted_root.json"
+export SIGNING_CONFIG="$CLONE_DIR/signing_config.json"
 popd || return
-
-export TSA_URL="http://${HOST}:3004"
-export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"

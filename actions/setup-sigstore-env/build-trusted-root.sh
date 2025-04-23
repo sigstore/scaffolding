@@ -29,7 +29,7 @@ set -euo pipefail
 
 WORKDIR=$(mktemp -d)
 # run cosign as a container with the current user permissions. This script will copy files into $WORKDIR.
-COSIGN_CMD="docker run --user=$(id -u):$(id -g) --rm -v $WORKDIR/:$WORKDIR/ ghcr.io/sigstore/cosign/cosign@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11"
+COSIGN_CMD="docker run --user=$(id -u):$(id -g) --rm -v $WORKDIR/:$WORKDIR/ ghcr.io/sigstore/cosign/cosign:latest"
 CMD="$COSIGN_CMD trusted-root create"
 
 while [[ "$#" -gt 0 ]]; do

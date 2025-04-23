@@ -20,7 +20,8 @@ docker compose up --wait
 # the faeoidc container's hostname must be the same, both from within fulcio and from this host machine.
 HOST=$(hostname)
 export OIDC_URL="http://${HOST}:8080"
-cat <<EOF > /tmp/fulcio-config.json
+export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
+cat <<EOF > $FULCIO_CONFIG
 {
   "OIDCIssuers": {
     "$OIDC_URL": {
@@ -63,7 +64,6 @@ done
 
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
-export FULCIO_CONFIG=/tmp/fulcio-config.json
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
     pushd "$repo" || return

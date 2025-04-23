@@ -95,7 +95,7 @@ stop_services() {
 
 echo "building trusted root"
 pushd "$CLONE_DIR" || return
-$CWD/build-trusted-root.sh \
+"$CWD"/build-trusted-root.sh \
   --fulcio http://localhost:5555 "$CLONE_DIR/fulcio/config/ctfe/pubkey.pem" \
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \

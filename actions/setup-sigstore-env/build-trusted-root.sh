@@ -42,7 +42,7 @@ while [[ "$#" -gt 0 ]]; do
             shift
             shift
 
-            # copy to our WORKDIR to be mounted in our cosign contaienr.
+            # copy to our WORKDIR to be mounted in our cosign container.
             cp "$KEYFILE" "$WORKDIR"/
             KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 
@@ -68,7 +68,7 @@ while [[ "$#" -gt 0 ]]; do
             shift
             shift
 
-            # copy to our WORKDIR to be mounted in our cosign contaienr.
+            # copy to our WORKDIR to be mounted in our cosign container.
             cp "$KEYFILE" "$WORKDIR"/
             KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 

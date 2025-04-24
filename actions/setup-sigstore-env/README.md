@@ -15,7 +15,7 @@ source ./run-containers.sh
 
 After sourcing, you may invoke `stop_services` to stop all the containers.
 
-Otherwise, invoke the script normally, optionally with `-ex`, for debugging the script.
+If you don't need the variables, invoke the script normally, optionally with `-ex`, for debugging the script.
 
 ```shell
 rm signing_config.json trusted_root.json

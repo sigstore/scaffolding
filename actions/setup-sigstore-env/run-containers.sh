@@ -73,16 +73,16 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
       # create the fulcio_default network by running `compose up`.
       docker compose up -d
       # then quickly attach the fakeoidc container to the fulcio_default network.
-      docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc
+      docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc || return
     fi
-    docker compose up --wait
+    docker compose up --wait || return
     popd || return
 done
 export TSA_URL="http://${HOST}:3004"
 popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
-curl -o "$OIDC_TOKEN" "$OIDC_URL"/token
+curl -o "$OIDC_TOKEN" "$OIDC_URL"/token || return
 
 stop_services() {
   pushd ./fakeoidc || return
@@ -105,7 +105,8 @@ pushd "$CLONE_DIR" || return
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
-  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem"
+  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem" \
+  || return
 export TRUSTED_ROOT="$CLONE_DIR/trusted_root.json"
 export SIGNING_CONFIG="$CLONE_DIR/signing_config.json"
 popd || return

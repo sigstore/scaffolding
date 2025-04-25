@@ -1,0 +1,47 @@
+name: test setup-sigstore-env
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'actions/setup-sigstore-env/**'
+  pull_request:
+    paths:
+      - 'actions/setup-sigstore-env/**'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - id: setup-sigstore-env
+        uses: ./actions/setup-sigstore-env
+      - uses: sigstore/cosign-installer@3454372f43399081ed03b604cb2d021dabca52bb # v3.8.2
+        with:
+          cosign-release: main
+      - name: make test data
+        run: echo "gundam" > data.txt
+      - name: test-sign
+        env:
+          SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
+        run: |
+          echo token:
+          curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}/token
+          cosign sign-blob \
+            -y \
+            --bundle=bundle.json \
+            --new-bundle-format=true \
+            --rekor-url http://localhost:3000 \
+            --fulcio-url http://localhost:5555 \
+            --oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
+            --identity-token ${{ steps.setup-sigstore-env.outputs.oidc-token }} \
+            data.txt
+      - name: test-verify-with-trusted-root
+        run: |
+          cosign verify-blob \
+            --trusted-root ${{ steps.setup-sigstore-env.outputs.trusted-root }} \
+            --bundle bundle.json \
+            --new-bundle-format=true \
+            --certificate-identity foo@bar.com \
+            --certificate-oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
+            data.txt

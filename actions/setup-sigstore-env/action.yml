@@ -1,0 +1,66 @@
+# Copyright 2025 The Sigstore Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: setup-sigstore-env
+outputs:
+  ct-log-key:
+    description: Path to the CT log public key.
+    value: ${{ steps.run-containers.outputs.ct-log-key }}
+  oidc-url:
+    description: The url of the OIDC provider.
+    value: ${{ steps.run-containers.outputs.oidc-url }}
+  tsa-url:
+    description: The url of the Timestamp Authority (TSA).
+    value: ${{ steps.run-containers.outputs.tsa-url }}
+  oidc-token:
+    description: Path to a file containing a temporary 30-minute OIDC token.
+    value: ${{ steps.run-containers.outputs.oidc-token }}
+  trusted-root:
+    description: Path to the trusted root json file.
+    value: ${{ steps.run-containers.outputs.trusted-root }}
+  signing-config:
+    description: Path to the singning config json file.
+    value: ${{ steps.run-containers.outputs.signing-config }}
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-go@f111f3307d8850f501ac008e886eec1fd1932a34 # v5.3.0
+      with:
+        go-version: "stable"
+        cache-dependency-path: "**/go.sum"
+    - id: run-containers
+      shell: bash
+      working-directory: ${{ github.action_path }}
+      # source to receive exported env variables.
+      run: |
+        set -ex
+        source ./run-containers.sh
+
+        echo "CT_LOG_KEY=$CT_LOG_KEY" >> "$GITHUB_ENV"
+        echo "ct-log-key=$CT_LOG_KEY" >> "$GITHUB_OUTPUT"
+
+        echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
+        echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
+
+        echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
+        echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"
+
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> "$GITHUB_ENV"
+        echo "oidc-token=$OIDC_TOKEN" >> "$GITHUB_OUTPUT"
+
+        echo "TRUSTED_ROOT=$TRUSTED_ROOT" >> "$GITHUB_ENV"
+        echo "trusted-root=$TRUSTED_ROOT" >> "$GITHUB_OUTPUT"
+
+        echo "SIGNING_CONFIG=$SIGNING_CONFIG" >> "$GITHUB_ENV"
+        echo "signing-config=$SIGNING_CONFIG" >> "$GITHUB_OUTPUT"

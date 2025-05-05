@@ -37,7 +37,7 @@ require (
 	github.com/sigstore/rekor v1.3.10
 	github.com/sigstore/sigstore v1.9.4
 	github.com/sigstore/sigstore-go v0.7.2
-	github.com/sigstore/timestamp-authority v1.2.5
+	github.com/sigstore/timestamp-authority v1.2.6
 	github.com/stretchr/testify v1.10.0
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399

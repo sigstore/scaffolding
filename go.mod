@@ -36,7 +36,7 @@ require (
 	github.com/sigstore/fulcio v1.7.1
 	github.com/sigstore/rekor v1.3.10
 	github.com/sigstore/sigstore v1.9.4
-	github.com/sigstore/sigstore-go v0.7.2
+	github.com/sigstore/sigstore-go v0.7.3
 	github.com/sigstore/timestamp-authority v1.2.6
 	github.com/stretchr/testify v1.10.0
 	github.com/theupdateframework/go-tuf v0.7.0

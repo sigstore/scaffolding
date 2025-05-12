@@ -37,7 +37,7 @@ require (
 	github.com/sigstore/rekor v1.3.10
 	github.com/sigstore/sigstore v1.9.4
 	github.com/sigstore/sigstore-go v0.7.3
-	github.com/sigstore/timestamp-authority v1.2.6
+	github.com/sigstore/timestamp-authority v1.2.7
 	github.com/stretchr/testify v1.10.0
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
@@ -183,7 +183,6 @@ require (
 	github.com/google/go-github/v55 v55.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
-	github.com/google/tink/go v1.7.0 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
 	github.com/googleapis/gax-go/v2 v2.14.1 // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0 // indirect
@@ -242,10 +241,10 @@ require (
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
 	github.com/sigstore/protobuf-specs v0.4.1 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.9.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.9.3 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.9.3 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.9.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.9.4 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.9.4 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skratchdot/open-golang v0.0.0-20200116055534-eef842397966 // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
@@ -259,6 +258,10 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/theupdateframework/go-tuf/v2 v2.0.2 // indirect
+	github.com/tink-crypto/tink-go-awskms/v2 v2.1.0 // indirect
+	github.com/tink-crypto/tink-go-gcpkms/v2 v2.2.0 // indirect
+	github.com/tink-crypto/tink-go-hcvault/v2 v2.3.0 // indirect
+	github.com/tink-crypto/tink-go/v2 v2.4.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect

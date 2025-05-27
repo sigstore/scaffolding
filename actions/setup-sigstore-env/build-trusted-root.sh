@@ -55,6 +55,7 @@ while [[ "$#" -gt 0 ]]; do
 
         --rekor-v1-url)
             REKOR_URL="$2"
+            REKOR_VER="1"
             shift
 
             FNAME=$(mktemp --tmpdir="$WORKDIR" rekorv1_pub.XXXX.pem)
@@ -64,6 +65,7 @@ while [[ "$#" -gt 0 ]]; do
 
         --rekor-v2)
             REKOR_URL="$2"
+            REKOR_VER="2"
             KEYFILE="$3"
             shift
             shift
@@ -76,11 +78,11 @@ while [[ "$#" -gt 0 ]]; do
             ;;
 
         --timestamp-url)
-            URL="$2"
+            TIMESTAMP_URL="$2"
             shift
 
             FNAME=$(mktemp --tmpdir="$WORKDIR" timestamp_certs.XXXX.pem)
-            curl --fail -o "$FNAME" "$URL"/api/v1/timestamp/certchain
+            curl --fail -o "$FNAME" "$TIMESTAMP_URL"/api/v1/timestamp/certchain
             CMD="$CMD --timestamp-certificate-chain $FNAME"
             ;;
 
@@ -101,13 +103,57 @@ $CMD > trusted_root.json
 # construct a signingconfig as well
 cat << EOF > signing_config.json
 {
-  "mediaType": "application/vnd.dev.sigstore.signingconfig.v0.1+json",
-  "caUrl": "$FULCIO_URL",
-  "oidcUrl": "$OIDC_URL",
-  "tlogUrls": [
-    "$REKOR_URL"
-  ]
+  "mediaType": "application/vnd.dev.sigstore.signingconfig.v0.2+json",
+  "caUrls": [
+    {
+      "url": "$FULCIO_URL",
+      "majorApiVersion": 1,
+      "validFor": { "start": "2025-05-25T00:00:00Z" },
+      "operator": "scaffolding-setup-sigstore-env"
+    }
+  ],
+  "oidcUrls": [
+    {
+      "url": "$OIDC_URL",
+      "majorApiVersion": 1,
+      "validFor": { "start": "2025-05-25T00:00:00Z" },
+      "operator": "scaffolding-setup-sigstore-env"
+    }
+  ],
+  "rekorTlogUrls": [
+    {
+      "url": "$REKOR_URL",
+      "majorApiVersion": $REKOR_VER,
+      "validFor": { "start": "2025-05-25T00:00:00Z" },
+      "operator": "scaffolding-setup-sigstore-env"
+    }
+  ],
+  "tsaUrls": [
+    {
+      "url": "$TIMESTAMP_URL/api/v1/timestamp",
+      "majorApiVersion": 1,
+      "validFor": { "start": "2025-05-25T00:00:00Z" },
+      "operator": "scaffolding-setup-sigstore-env"
+    }
+  ],
+  "rekorTlogConfig": {
+    "selector": "ANY"
+  },
+  "tsaConfig": {
+    "selector": "ANY"
+  }
 }
 EOF
 
-echo "Wrote trusted_root.json & signing_config.json"
+# finally build a trustconfig (trustedroot + signingconfig)
+cat << EOF >trust_config.json
+{
+"mediaType": "application/vnd.dev.sigstore.clienttrustconfig.v0.1+json",
+"trustedRoot": $(cat trusted_root.json),
+"signingConfig": $(cat signing_config.json)
+}
+EOF
+
+
+
+echo "Wrote trusted_root.json, signing_config.json & trust_config.json"

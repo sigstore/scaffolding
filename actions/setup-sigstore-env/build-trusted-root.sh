@@ -18,8 +18,7 @@
 # Build a Sigstore trustedroot.json and signingconfig.json using a running test instance and source dirs
 #
 # Requires cosign binary to be in PATH.
-# Options can be given multiple times (signing config will contain only the last URLs,
-# but trustedroot will contain every instance):
+# Options can be given multiple times:
 #  --fulcio <INSTANCEURL> <KEYFILE>
 #  --rekor-v1-url <INSTANCEURL>
 #  --rekor-v2 <INSTANCEURL> <KEYFILE>
@@ -33,6 +32,36 @@ SCRIPT_DIR=$(dirname "$(realpath "$0")")
 docker build ./ -f "$SCRIPT_DIR"/Dockerfile.cosign -t cosign
 COSIGN_CMD="docker run --user=$(id -u):$(id -g) --rm -v $WORKDIR/:$WORKDIR/ cosign"
 CMD="$COSIGN_CMD trusted-root create"
+
+REKOR_SIGNING_CONFIGS=""
+
+add_rekor_to_signing_config () {
+  if [ -n "$REKOR_SIGNING_CONFIGS" ]; then
+    REKOR_SIGNING_CONFIGS="$REKOR_SIGNING_CONFIGS,
+    "
+  fi
+  REKOR_SIGNING_CONFIGS="$REKOR_SIGNING_CONFIGS{
+      \"url\": \"$1\",
+      \"majorApiVersion\": $2,
+      \"validFor\": { \"start\": \"2025-05-25T00:00:00Z\" },
+      \"operator\": \"scaffolding-setup-sigstore-env\"
+    }"
+}
+
+TSA_SIGNING_CONFIGS=""
+
+add_tsa_to_signing_config () {
+  if [ -n "$TSA_SIGNING_CONFIGS" ]; then
+    TSA_SIGNING_CONFIGS="$TSA_SIGNING_CONFIGS,
+    "
+  fi
+  TSA_SIGNING_CONFIGS="$TSA_SIGNING_CONFIGS{
+      \"url\": \"$1/api/v1/timestamp\",
+      \"majorApiVersion\": 1,
+      \"validFor\": { \"start\": \"2025-05-25T00:00:00Z\" },
+      \"operator\": \"scaffolding-setup-sigstore-env\"
+    }"
+}
 
 while [[ "$#" -gt 0 ]]; do
     case $1 in
@@ -54,21 +83,23 @@ while [[ "$#" -gt 0 ]]; do
             ;;
 
         --rekor-v1-url)
-            REKOR_URL="$2"
-            REKOR_VER="1"
+            URL="$2"
             shift
 
+            add_rekor_to_signing_config "$URL" 1
+
             FNAME=$(mktemp --tmpdir="$WORKDIR" rekorv1_pub.XXXX.pem)
-            curl --fail -o "$FNAME" "$REKOR_URL"/api/v1/log/publicKey
+            curl --fail -o "$FNAME" "$URL"/api/v1/log/publicKey
             CMD="$CMD --rekor-key $FNAME"
             ;;
 
         --rekor-v2)
-            REKOR_URL="$2"
-            REKOR_VER="2"
+            URL="$2"
             KEYFILE="$3"
             shift
             shift
+
+            add_rekor_to_signing_config "$URL" 2
 
             # copy to our WORKDIR to be mounted in our cosign container.
             cp "$KEYFILE" "$WORKDIR"/
@@ -78,11 +109,13 @@ while [[ "$#" -gt 0 ]]; do
             ;;
 
         --timestamp-url)
-            TIMESTAMP_URL="$2"
+            URL="$2"
             shift
 
+            add_tsa_to_signing_config "$URL"
+
             FNAME=$(mktemp --tmpdir="$WORKDIR" timestamp_certs.XXXX.pem)
-            curl --fail -o "$FNAME" "$TIMESTAMP_URL"/api/v1/timestamp/certchain
+            curl --fail -o "$FNAME" "$URL"/api/v1/timestamp/certchain
             CMD="$CMD --timestamp-certificate-chain $FNAME"
             ;;
 
@@ -121,27 +154,13 @@ cat << EOF > signing_config.json
     }
   ],
   "rekorTlogUrls": [
-    {
-      "url": "$REKOR_URL",
-      "majorApiVersion": $REKOR_VER,
-      "validFor": { "start": "2025-05-25T00:00:00Z" },
-      "operator": "scaffolding-setup-sigstore-env"
-    }
+    $REKOR_SIGNING_CONFIGS
   ],
   "tsaUrls": [
-    {
-      "url": "$TIMESTAMP_URL/api/v1/timestamp",
-      "majorApiVersion": 1,
-      "validFor": { "start": "2025-05-25T00:00:00Z" },
-      "operator": "scaffolding-setup-sigstore-env"
-    }
+    $TSA_SIGNING_CONFIGS
   ],
-  "rekorTlogConfig": {
-    "selector": "ANY"
-  },
-  "tsaConfig": {
-    "selector": "ANY"
-  }
+  "rekorTlogConfig": { "selector": "ANY" },
+  "tsaConfig": { "selector": "ANY" }
 }
 EOF
 

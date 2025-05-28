@@ -32,6 +32,9 @@ outputs:
   signing-config:
     description: Path to the singning config json file.
     value: ${{ steps.run-containers.outputs.signing-config }}
+  trust-config:
+    description: Path to the trust config json file.
+    value: ${{ steps.run-containers.outputs.trust-config }}
 runs:
   using: composite
   steps:
@@ -64,3 +67,6 @@ runs:
 
         echo "SIGNING_CONFIG=$SIGNING_CONFIG" >> "$GITHUB_ENV"
         echo "signing-config=$SIGNING_CONFIG" >> "$GITHUB_OUTPUT"
+
+        echo "TRUST_CONFIG=$TRUST_CONFIG" >> "$GITHUB_ENV"
+        echo "trust-config=$TRUST_CONFIG" >> "$GITHUB_OUTPUT"

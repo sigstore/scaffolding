@@ -109,4 +109,5 @@ pushd "$CLONE_DIR" || return
   || return
 export TRUSTED_ROOT="$CLONE_DIR/trusted_root.json"
 export SIGNING_CONFIG="$CLONE_DIR/signing_config.json"
+export TRUST_CONFIG="$CLONE_DIR/trust_config.json"
 popd || return

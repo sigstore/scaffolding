@@ -35,7 +35,7 @@ require (
 	github.com/sigstore/cosign/v2 v2.5.0
 	github.com/sigstore/fulcio v1.7.1
 	github.com/sigstore/rekor v1.3.10
-	github.com/sigstore/sigstore v1.9.4
+	github.com/sigstore/sigstore v1.9.5
 	github.com/sigstore/sigstore-go v1.0.0
 	github.com/sigstore/timestamp-authority v1.2.8
 	github.com/stretchr/testify v1.10.0

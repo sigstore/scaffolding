@@ -13,7 +13,7 @@ require (
 	github.com/go-openapi/swag v0.23.1
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/glog v1.2.5
-	github.com/google/certificate-transparency-go v1.3.1
+	github.com/google/certificate-transparency-go v1.3.2
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.7.2
 	github.com/google/uuid v1.6.0
@@ -202,7 +202,7 @@ require (
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
 	github.com/jackc/pgtype v1.14.3 // indirect
 	github.com/jackc/pgx/v4 v4.18.3 // indirect
-	github.com/jackc/pgx/v5 v5.7.2 // indirect
+	github.com/jackc/pgx/v5 v5.7.5 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
 	github.com/jellydator/ttlcache/v3 v3.3.0 // indirect
@@ -270,9 +270,9 @@ require (
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
 	gitlab.com/gitlab-org/api/client-go v0.127.0 // indirect
-	go.etcd.io/etcd/api/v3 v3.6.0-alpha.0 // indirect
-	go.etcd.io/etcd/client/pkg/v3 v3.6.0-alpha.0 // indirect
-	go.etcd.io/etcd/client/v3 v3.6.0-alpha.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.6.0 // indirect
+	go.etcd.io/etcd/client/pkg/v3 v3.6.0 // indirect
+	go.etcd.io/etcd/client/v3 v3.6.0 // indirect
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect

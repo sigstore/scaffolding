@@ -22,11 +22,12 @@ CWD="$(pwd)"
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
-docker compose up --wait
+docker compose up --wait || return
 # the fakeoidc container's hostname must be the same, both from within fulcio and from this host machine.
 HOST="${HOST:-$(hostname)}"
 export OIDC_URL="http://${HOST}:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
+touch "$FULCIO_CONFIG" || return
 cat <<EOF > "$FULCIO_CONFIG"
 {
   "OIDCIssuers": {
@@ -55,10 +56,10 @@ OWNER_REPOS=(
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
     if [[ ! -d $repo ]]; then
-        git clone https://github.com/"${owner_repo}".git
+        git clone https://github.com/"${owner_repo}".git || return
     else
         pushd "$repo" || return
-        git pull
+        git pull || return
         popd || return
     fi
 done
@@ -71,7 +72,7 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     pushd "$repo" || return
     if [[ "$repo" == "fulcio" ]]; then
       # create the fulcio_default network by running `compose up`.
-      docker compose up -d
+      docker compose up -d || return
       # then quickly attach the fakeoidc container to the fulcio_default network.
       docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc || return
     fi

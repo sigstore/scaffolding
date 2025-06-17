@@ -105,7 +105,7 @@ pushd "$CLONE_DIR" || return
   --timestamp-url http://localhost:3004 \
   --oidc-url http://localhost:8080 \
   --rekor-v1-url http://localhost:3000 \
-  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem" \
+  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem" "rekor-local" \
   || return
 export TRUSTED_ROOT="$CLONE_DIR/trusted_root.json"
 export SIGNING_CONFIG="$CLONE_DIR/signing_config.json"

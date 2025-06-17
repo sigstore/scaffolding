@@ -14,6 +14,6 @@
 
 # We use this dockerfile for cosign so that Github's dependabot can autoupdate.
 
-FROM ghcr.io/sigstore/cosign/cosign:v2.5.0@sha256:e82eb6d42ccb6bc048d8d9e5e598e4d5178e1af6c00e54e02c9b0569c5f3ec11
+FROM ghcr.io/sigstore/cosign/cosign:v2.5.2@sha256:23d07b53d59a1233e1ab5e7d082cf4182fc90067d2f86a662ba3003215cb0c95
 
 ENTRYPOINT [ "cosign" ]

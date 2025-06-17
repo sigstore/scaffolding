@@ -27,7 +27,6 @@ docker compose up --wait || return
 HOST="${HOST:-$(hostname)}"
 export OIDC_URL="http://${HOST}:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
-touch "$FULCIO_CONFIG" || return
 cat <<EOF > "$FULCIO_CONFIG"
 {
   "OIDCIssuers": {

@@ -21,11 +21,14 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
+	"fmt"
 	"time"
 
+	"github.com/davecgh/go-spew/spew"
 	v1 "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	"github.com/sigstore/rekor-tiles/pkg/client/write"
 	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
+	"github.com/transparency-dev/tessera/api/layout"
 )
 
 const (
@@ -72,6 +75,20 @@ func AddRekorV2Entry(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
-	print(string(entry.GetCanonicalizedBody()))
+	spew.Dump(entry)
+
+	logIndex := entry.InclusionProof.LogIndex
+	treeSize := entry.InclusionProof.TreeSize
+	// tileIndex := logIndex / layout.EntryBundleWidth
+	// partial := logIndex % layout.EntryBundleWidth
+
+	path := layout.EntriesPathForLogIndex(uint64(logIndex), uint64(treeSize))
+	print(fmt.Sprintf("\n %s", path))
+	_, partial, err := layout.ParseTileIndexPartial(path)
+	if err != nil {
+		return err
+	}
+	print(fmt.Sprintf("\n %d", partial))
+
 	return nil
 }

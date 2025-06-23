@@ -22,16 +22,20 @@ import (
 	"crypto/sha256"
 	"crypto/x509"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/davecgh/go-spew/spew"
 	v1 "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	"github.com/sigstore/rekor-tiles/pkg/client/read"
 	"github.com/sigstore/rekor-tiles/pkg/client/write"
 	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/transparency-dev/tessera/api/layout"
 )
 
 const (
+	origin            = "log2025-alpha1.rekor.sigstage.dev"
 	defaultRekorV2URL = "https://log2025-alpha1.rekor.sigstage.dev"
 )
 
@@ -43,7 +47,7 @@ func AddRekorV2Entry(ctx context.Context) error {
 	if err != nil {
 		Logger.Fatalf("failed to generate key: %v", err)
 	}
-	signature, err := ecdsa.SignASN1(rand.Reader, privateKey, digest[:])
+	sig, err := ecdsa.SignASN1(rand.Reader, privateKey, digest[:])
 	if err != nil {
 		return err
 	}
@@ -54,7 +58,7 @@ func AddRekorV2Entry(ctx context.Context) error {
 
 	request := &protobuf.HashedRekordRequestV002{
 		Signature: &protobuf.Signature{
-			Content: signature,
+			Content: sig,
 			Verifier: &protobuf.Verifier{
 				Verifier: &protobuf.Verifier_PublicKey{
 					PublicKey: &protobuf.PublicKey{
@@ -79,16 +83,35 @@ func AddRekorV2Entry(ctx context.Context) error {
 
 	logIndex := entry.InclusionProof.LogIndex
 	treeSize := entry.InclusionProof.TreeSize
-	// tileIndex := logIndex / layout.EntryBundleWidth
-	// partial := logIndex % layout.EntryBundleWidth
 
 	path := layout.EntriesPathForLogIndex(uint64(logIndex), uint64(treeSize))
-	print(fmt.Sprintf("\n %s", path))
-	_, partial, err := layout.ParseTileIndexPartial(path)
+	print(fmt.Sprintf("\n %s \n", path))
+	tileIndex, partial, err := layout.ParseTileIndexPartial(strings.TrimPrefix(path, "tile/entries/"))
 	if err != nil {
 		return err
 	}
-	print(fmt.Sprintf("\n %d", partial))
+	print(fmt.Sprintf("\n %d %d \n", tileIndex, partial))
+
+	verifier, err := signature.LoadDefaultSignerVerifier(privateKey)
+	if err != nil {
+		return err
+	}
+	readClient, err := read.NewReader(defaultRekorV2URL, origin, verifier)
+	if err != nil {
+		return err
+	}
+
+	entryBundle, err := readClient.ReadEntryBundle(ctx, tileIndex, partial)
+	if err != nil {
+		return err
+	}
+	spew.Dump(entryBundle)
+
+	// _, partial, err := layout.ParseTileIndexPartial(path)
+	// if err != nil {
+	// 	return err
+	// }
+	// print(fmt.Sprintf("\n %d \n", partial))
 
 	return nil
 }

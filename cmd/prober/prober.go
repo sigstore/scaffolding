@@ -173,6 +173,13 @@ func init() {
 
 func main() {
 	ctx := context.Background()
+
+	err := AddRekorV2Entry(ctx)
+	if err != nil {
+		Logger.Fatal(err)
+	}
+	return
+
 	versionInfo = version.GetVersionInfo()
 	Logger.Infof("running prober Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 

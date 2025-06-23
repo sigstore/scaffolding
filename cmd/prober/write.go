@@ -285,7 +285,7 @@ func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa
 	if err != nil {
 		return fmt.Errorf("getting rekor public keys: %w", err)
 	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys); err == nil {
+	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
 		verified = "true"
 	}
 	return err

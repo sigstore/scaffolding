@@ -174,7 +174,7 @@ func init() {
 func main() {
 	ctx := context.Background()
 
-	err := AddRekorV2Entry(ctx)
+	err := TestAddAndRetrieveEntry(ctx)
 	if err != nil {
 		Logger.Fatal(err)
 	}

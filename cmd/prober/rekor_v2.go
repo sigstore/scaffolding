@@ -72,7 +72,8 @@ func prepareRequest(ctx context.Context, privateKey *ecdsa.PrivateKey) (*protobu
 
 func retrieveEntry(ctx context.Context, privateKey *ecdsa.PrivateKey, logIndex uint64, treeSize uint64) (*protobuf.Entry, error) {
 	tileIndex := treeSize / layout.TileWidth
-	partial := layout.PartialTileSize(0, logIndex, treeSize)
+	level := uint(0) // We always want the items at the botton of the tree (leaf nodes).
+	partial := layout.PartialTileSize(uint64(level), logIndex, treeSize)
 
 	verifier, err := signature.LoadDefaultSignerVerifier(privateKey)
 	if err != nil {

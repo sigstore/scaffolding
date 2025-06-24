@@ -41,25 +41,20 @@ const (
 	readURL              = "https://" + defaultRekorV2Origin + "/api/v2"
 )
 
-func prepareRequest(privateKey *ecdsa.PrivateKey) (*protobuf.HashedRekordRequestV002, error) {
+func prepareRequest(certificate *x509.Certificate, privateKey *ecdsa.PrivateKey) (*protobuf.HashedRekordRequestV002, error) {
 	artifact := []byte(time.Now().String())
 	digest := sha256.Sum256(artifact)
 	sig, err := ecdsa.SignASN1(rand.Reader, privateKey, digest[:])
 	if err != nil {
 		return nil, err
 	}
-	publicKey, err := x509.MarshalPKIXPublicKey(privateKey.Public())
-	if err != nil {
-		return nil, err
-	}
-
 	request := &protobuf.HashedRekordRequestV002{
 		Signature: &protobuf.Signature{
 			Content: sig,
 			Verifier: &protobuf.Verifier{
-				Verifier: &protobuf.Verifier_PublicKey{
-					PublicKey: &protobuf.PublicKey{
-						RawBytes: publicKey,
+				Verifier: &protobuf.Verifier_X509Certificate{
+					X509Certificate: &common_v1.X509Certificate{
+						RawBytes: certificate.Raw,
 					},
 				},
 				KeyDetails: common_v1.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256,
@@ -108,7 +103,11 @@ func TestAddAndRetrieveEntry(ctx context.Context) error {
 	if err != nil {
 		Logger.Fatalf("failed to generate key: %v", err)
 	}
-	request, err := prepareRequest(privateKey)
+	certificate, err := fulcioWriteEndpoint(ctx, privateKey)
+	if err != nil {
+		return err
+	}
+	request, err := prepareRequest(certificate, privateKey)
 	if err != nil {
 		return err
 	}
@@ -124,14 +123,14 @@ func TestAddAndRetrieveEntry(ctx context.Context) error {
 	}
 
 	// submit additional unused requests
-	request2, err := prepareRequest(privateKey)
+	request2, err := prepareRequest(certificate, privateKey)
 	if err != nil {
 		return err
 	}
 	if _, err = writeClient.Add(ctx, request2); err != nil {
 		return err
 	}
-	request3, err := prepareRequest(privateKey)
+	request3, err := prepareRequest(certificate, privateKey)
 	if err != nil {
 		return err
 	}

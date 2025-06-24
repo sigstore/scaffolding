@@ -143,6 +143,8 @@ func init() {
 
 	flag.Parse()
 
+	print("url: " + tsaURL)
+
 	ConfigureLogger(logStyle)
 	retryableClient = retryablehttp.NewClient()
 	retryableClient.Logger = Logger
@@ -174,11 +176,9 @@ func init() {
 func main() {
 	ctx := context.Background()
 
-	err := TestAddAndRetrieveEntry(ctx)
-	if err != nil {
+	if err := rekorV2AndTSA(ctx); err != nil {
 		Logger.Fatal(err)
 	}
-	return
 
 	versionInfo = version.GetVersionInfo()
 	Logger.Infof("running prober Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)

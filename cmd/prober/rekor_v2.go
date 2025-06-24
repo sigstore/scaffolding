@@ -41,7 +41,7 @@ const (
 	readURL              = "https://" + defaultRekorV2Origin + "/api/v2"
 )
 
-func prepareRequest(ctx context.Context, privateKey *ecdsa.PrivateKey) (*protobuf.HashedRekordRequestV002, error) {
+func prepareRequest(privateKey *ecdsa.PrivateKey) (*protobuf.HashedRekordRequestV002, error) {
 	artifact := []byte(time.Now().String())
 	digest := sha256.Sum256(artifact)
 	sig, err := ecdsa.SignASN1(rand.Reader, privateKey, digest[:])
@@ -108,7 +108,7 @@ func TestAddAndRetrieveEntry(ctx context.Context) error {
 	if err != nil {
 		Logger.Fatalf("failed to generate key: %v", err)
 	}
-	request, err := prepareRequest(ctx, privateKey)
+	request, err := prepareRequest(privateKey)
 	if err != nil {
 		return err
 	}
@@ -124,14 +124,14 @@ func TestAddAndRetrieveEntry(ctx context.Context) error {
 	}
 
 	// submit additional unused requests
-	request2, err := prepareRequest(ctx, privateKey)
+	request2, err := prepareRequest(privateKey)
 	if err != nil {
 		return err
 	}
 	if _, err = writeClient.Add(ctx, request2); err != nil {
 		return err
 	}
-	request3, err := prepareRequest(ctx, privateKey)
+	request3, err := prepareRequest(privateKey)
 	if err != nil {
 		return err
 	}

@@ -176,10 +176,6 @@ func init() {
 func main() {
 	ctx := context.Background()
 
-	if err := rekorV2AndTSA(ctx); err != nil {
-		Logger.Fatal(err)
-	}
-
 	versionInfo = version.GetVersionInfo()
 	Logger.Infof("running prober Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
@@ -284,6 +280,11 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}
+		}
+
+		if err := rekorV2AndTSA(ctx); err != nil {
+			hasErr = true
+			Logger.Errorf("error running rekorv2 and tsa read and write prober: %v", err)
 		}
 
 		if runOnce {

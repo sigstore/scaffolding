@@ -55,6 +55,23 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 	},
 }
 
+// rekorV2ReadEndpoints are the read endpoints for rekorV2.
+// see https://github.com/sigstore/rekor-tiles/blob/98cd4a77300f81eb79ca50f5b8d70ee2a00cbd50/api/proto/rekor/v2/rekor_service.proto#L74.
+var rekorV2ReadEndpoints = []ReadProberCheck{
+	{
+		Endpoint: "/api/v2/checkpoint",
+		Method:   GET,
+	},
+	{
+		Endpoint: "/api/v2/tile/entries/000",
+		Method:   GET,
+	},
+	{
+		Endpoint: "/api/v2/tile/0/000",
+		Method:   GET,
+	},
+}
+
 var FulcioEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/rootCert",

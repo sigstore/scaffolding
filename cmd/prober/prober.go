@@ -109,6 +109,7 @@ var (
 	retries        uint
 	addr           string
 	rekorURL       string
+	rekorV2URL     string
 	fulcioURL      string
 	fulcioGrpcURL  string
 	tsaURL         string
@@ -125,6 +126,7 @@ func init() {
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
 
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
+	flag.StringVar(&rekorV2URL, "rekor-v2-url", "https://log2025-alpha1.rekor.sigstage.dev", "Set to the Rekor V2 URL to run probers against")
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
 
@@ -142,6 +144,8 @@ func init() {
 	flag.UintVar(&retries, "retry", 4, "maximum number of retries before marking HTTP request as failed")
 
 	flag.Parse()
+
+	print("url: " + tsaURL)
 
 	ConfigureLogger(logStyle)
 	retryableClient = retryablehttp.NewClient()
@@ -173,6 +177,7 @@ func init() {
 
 func main() {
 	ctx := context.Background()
+
 	versionInfo = version.GetVersionInfo()
 	Logger.Infof("running prober Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
 
@@ -237,6 +242,14 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
 		}
+
+		for _, r := range rekorV2ReadEndpoints {
+			if err := observeRequest(rekorV2URL, r); err != nil {
+				hasErr = true
+				Logger.Error("error running rekorV2 request %s: %v", r.Endpoint, err)
+			}
+		}
+
 		for _, r := range FulcioEndpoints {
 			if err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
@@ -277,6 +290,11 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}
+		}
+
+		if err := rekorV2AndTSA(ctx); err != nil {
+			hasErr = true
+			Logger.Errorf("error running rekorv2 and tsa read and write prober: %v", err)
 		}
 
 		if runOnce {

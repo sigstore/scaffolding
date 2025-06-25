@@ -48,7 +48,7 @@ import (
 
 const (
 	defaultRekorV2Origin = "log2025-alpha1.rekor.sigstage.dev"
-	rekorV2URL           = "https://" + defaultRekorV2Origin
+	rekorV2URLX          = "https://" + defaultRekorV2Origin
 	readURL              = "https://" + defaultRekorV2Origin + "/api/v2"
 )
 
@@ -148,7 +148,7 @@ func submitRekorV2Entry(ctx context.Context, digest []byte, sig []byte, cert *x5
 		},
 		Digest: digest[:],
 	}
-	writeClient, err := write.NewWriter(rekorV2URL)
+	writeClient, err := write.NewWriter(rekorV2URLX)
 	if err != nil {
 		return nil, err
 	}

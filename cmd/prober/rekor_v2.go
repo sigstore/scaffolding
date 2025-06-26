@@ -63,6 +63,7 @@ func checkRekorV2CompleteFirstTile(rekorURL string) (bool, error) {
 }
 
 // determineRekorV2ShardCoverage determines which endpoints to check for a given rekorV2 shard host.
+// See https://github.com/sigstore/rekor-tiles/blob/98cd4a77300f81eb79ca50f5b8d70ee2a00cbd50/api/proto/rekor/v2/rekor_service.proto#L74.
 func determineRekorV2ShardCoverage(rekorURL string) ([]*ReadProberCheck, error) {
 	hasCompleteFirtstTile, err := checkRekorV2CompleteFirstTile(rekorURL)
 	if err != nil {

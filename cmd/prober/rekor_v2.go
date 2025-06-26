@@ -57,7 +57,9 @@ func checkRekorV2CompleteFirstTile(rekorURL string) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("parsing log size: %w", err)
 	}
-	return logSize > layout.TileWidth, nil
+	hasCompleteFirstTile := logSize > layout.TileWidth
+	Logger.Debug(fmt.Sprintf("rekorv2 shard has complete first tile: %t, shard: %s, size: %d", hasCompleteFirstTile, rekorURL, logSize))
+	return hasCompleteFirstTile, nil
 }
 
 // determineRekorV2ShardCoverage determines which endpoints to check for a given rekorV2 shard host.

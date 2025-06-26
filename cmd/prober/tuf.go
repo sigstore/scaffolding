@@ -45,6 +45,6 @@ func rekorV2ServiceURLsFromTUF(tufMirror string) ([]string, error) {
 			uRLs = append(uRLs, s.URL)
 		}
 	}
-	Logger.Debug(fmt.Sprintf("fetch urls from TUF: %v", uRLs))
+	Logger.Debug(fmt.Sprintf("fetched rekorV2 urls from TUF: %v", uRLs))
 	return uRLs, nil
 }

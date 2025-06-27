@@ -34,7 +34,9 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.5.2
 	github.com/sigstore/fulcio v1.7.1
+	github.com/sigstore/protobuf-specs v0.4.3
 	github.com/sigstore/rekor v1.3.10
+	github.com/sigstore/rekor-tiles v0.1.5
 	github.com/sigstore/sigstore v1.9.5
 	github.com/sigstore/sigstore-go v1.0.0
 	github.com/sigstore/timestamp-authority v1.2.8
@@ -62,7 +64,7 @@ require (
 
 require (
 	bitbucket.org/creachadair/shell v0.0.8 // indirect
-	cel.dev/expr v0.23.0 // indirect
+	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.121.1 // indirect
 	cloud.google.com/go/auth v0.16.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
@@ -240,7 +242,6 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/protobuf-specs v0.4.3 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.9.5 // indirect

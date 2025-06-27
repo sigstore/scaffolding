@@ -16,12 +16,21 @@ package main
 
 import (
 	"bytes"
+	"context"
+	"crypto/ecdsa"
+	"crypto/rand"
+	"crypto/sha256"
+	"crypto/x509"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
 	"strconv"
+	"time"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
+	common_v1 "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
 	"github.com/transparency-dev/tessera/api/layout"
 )
 
@@ -85,4 +94,46 @@ func determineRekorV2ShardCoverage(rekorV2URL string) ([]*ReadProberCheck, error
 		},
 	}
 	return proberChecks, nil
+}
+
+// rekorV2WriteEndpoint creates and sends an entry to the rekorV2 instance.
+func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
+	artifact := []byte(time.Now().String())
+	digest := sha256.Sum256(artifact)
+	sig, err := ecdsa.SignASN1(rand.Reader, priv, digest[:])
+	if err != nil {
+		return err
+	}
+
+	createEntryRequest := &protobuf.CreateEntryRequest{
+		Spec: &protobuf.CreateEntryRequest_HashedRekordRequestV002{
+			HashedRekordRequestV002: &protobuf.HashedRekordRequestV002{
+				Signature: &protobuf.Signature{
+					Content: sig,
+					Verifier: &protobuf.Verifier{
+						Verifier: &protobuf.Verifier_X509Certificate{
+							X509Certificate: &common_v1.X509Certificate{
+								RawBytes: cert.Raw,
+							},
+						},
+						KeyDetails: common_v1.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256,
+					},
+				},
+				Digest: digest[:],
+			},
+		},
+	}
+	reqBytes, err := json.Marshal(createEntryRequest)
+	if err != nil {
+		return err
+	}
+	proberCheck := ReadProberCheck{
+		Endpoint: "/api/v2/log/entries",
+		Method:   POST,
+		Body:     reqBytes,
+	}
+	if err := observeRequest(rekorV2URL, proberCheck); err != nil {
+		return err
+	}
+	return nil
 }

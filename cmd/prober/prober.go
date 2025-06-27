@@ -314,6 +314,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}
+			if err := rekorV2WriteEndpoint(ctx, cert, priv); err != nil {
+				hasErr = true
+				Logger.Errorf("error running rekorV2 write prober: %v", err)
+			}
 		}
 
 		if runOnce {

@@ -52,32 +52,24 @@ OWNER_REPOS=(
   "$TIMESTAMP_AUTHORITY_REPO"
   "$REKOR_TILES_REPO"
 )
+procs=${#OWNER_REPOS[@]}
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
     if [[ ! -d $repo ]]; then
-        git clone https://github.com/"${owner_repo}".git
+        echo "'git clone https://github.com/${owner_repo}.git'"
     else
-        pushd "$repo" || return
-        git pull
-        popd || return
+        echo "'cd $repo && git pull'"
     fi
-done
+done | xargs -P "$procs" -l1 bash -c
 export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
 
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
-    pushd "$repo" || return
-    if [[ "$repo" == "fulcio" ]]; then
-      # create the fulcio_default network by running `compose up`.
-      docker compose up -d
-      # then quickly attach the fakeoidc container to the fulcio_default network.
-      docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc || return
-    fi
-    docker compose up --wait || return
-    popd || return
-done
+    echo "'cd $repo && docker compose up --wait'"
+done | xargs -P "$procs" -l1 bash -c
+docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc || return
 export TSA_URL="http://${HOST}:3004"
 popd || return
 

@@ -243,7 +243,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
 
 		for _, r := range rekorEndpointsUnderTest {
-			if err := observeRequest(rekorURL, r); err != nil {
+			if _, err := observeRequest(rekorURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
@@ -267,7 +267,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				Logger.Errorf("error determining rekorV2 shard coverage: %v", err)
 			}
 			for _, r := range rekorV2ShardEnpoints {
-				if err := observeRequest(url, *r); err != nil {
+				if _, err := observeRequest(url, *r); err != nil {
 					hasErr = true
 					Logger.Error("error running rekorV2 request %s: %v", r.Endpoint, err)
 				}
@@ -275,14 +275,14 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		}
 
 		for _, r := range FulcioEndpoints {
-			if err := observeRequest(fulcioURL, r); err != nil {
+			if _, err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
 		}
 
 		for _, r := range TSAEndpoints {
-			if err := observeRequest(tsaURL, r); err != nil {
+			if _, err := observeRequest(tsaURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
@@ -333,10 +333,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	}
 }
 
-func observeRequest(host string, r ReadProberCheck) error {
+func observeRequest(host string, r ReadProberCheck) ([]byte, error) {
 	req, err := httpRequest(host, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s := time.Now()
@@ -344,7 +344,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	latency := time.Since(s).Milliseconds()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -358,12 +358,14 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	exportDataToPrometheus(resp, host, sloEndpoint, r.Method, latency)
 
-	// right we're not doing anything with the body, but let's at least read it all from the server
-	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
-		return fmt.Errorf("error reading response: %w", err)
+	var respBuffer bytes.Buffer
+	if _, err := io.Copy(&respBuffer, resp.Body); err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
 	}
-
-	return nil
+	if resp.StatusCode >= 300 {
+		return respBuffer.Bytes(), fmt.Errorf("error response: status: %s, body: %s", resp.Status, respBuffer.String())
+	}
+	return respBuffer.Bytes(), nil
 }
 
 func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {

@@ -21,7 +21,6 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/x509"
-	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -30,8 +29,12 @@ import (
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	common_v1 "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	v1 "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
 	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/transparency-dev/tessera/api"
 	"github.com/transparency-dev/tessera/api/layout"
+	"google.golang.org/protobuf/encoding/protojson"
 )
 
 // getTreeSize returns the size of the rekorV2 log tree.
@@ -96,34 +99,73 @@ func determineRekorV2ShardCoverage(rekorV2URL string) ([]*ReadProberCheck, error
 	return proberChecks, nil
 }
 
+func retrieveRekorV2Entry(rekorV2URL string, logIndex, treeSize uint64) (*protobuf.Entry, error) {
+	entriesPath := layout.EntriesPathForLogIndex(logIndex, treeSize)
+	entryBundleBytes, err := observeRequest(rekorV2URL, ReadProberCheck{
+		Endpoint: fmt.Sprintf("/api/v2/%s", entriesPath),
+		Method:   GET,
+	})
+	if err != nil {
+		return nil, err
+	}
+	entryBundle := api.EntryBundle{}
+	err = entryBundle.UnmarshalText(entryBundleBytes)
+	if err != nil {
+		return nil, err
+	}
+	readEntry := &protobuf.Entry{}
+	// TODO: confirm
+	// after the fetching the bubdle at the particular partial, our target entry will always be the last.
+	err = protojson.Unmarshal(entryBundle.Entries[len(entryBundle.Entries)-1], readEntry)
+	if err != nil {
+		return nil, err
+	}
+	return readEntry, nil
+}
+
 // rekorV2WriteEndpoint creates and sends an entry to the rekorV2 instance.
 func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	artifact := []byte(time.Now().String())
 	digest := sha256.Sum256(artifact)
 	sig, err := ecdsa.SignASN1(rand.Reader, priv, digest[:])
 	if err != nil {
 		return err
 	}
-
+	verifier := &protobuf.Verifier{
+		KeyDetails: common_v1.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256,
+	}
+	if cert != nil {
+		verifier.Verifier = &protobuf.Verifier_X509Certificate{
+			X509Certificate: &common_v1.X509Certificate{
+				RawBytes: cert.Raw,
+			},
+		}
+	} else {
+		pubBytes, err := cryptoutils.MarshalPublicKeyToDER(priv.Public())
+		if err != nil {
+			return err
+		}
+		verifier.Verifier = &protobuf.Verifier_PublicKey{
+			PublicKey: &protobuf.PublicKey{
+				RawBytes: pubBytes,
+			},
+		}
+	}
 	createEntryRequest := &protobuf.CreateEntryRequest{
 		Spec: &protobuf.CreateEntryRequest_HashedRekordRequestV002{
 			HashedRekordRequestV002: &protobuf.HashedRekordRequestV002{
 				Signature: &protobuf.Signature{
-					Content: sig,
-					Verifier: &protobuf.Verifier{
-						Verifier: &protobuf.Verifier_X509Certificate{
-							X509Certificate: &common_v1.X509Certificate{
-								RawBytes: cert.Raw,
-							},
-						},
-						KeyDetails: common_v1.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256,
-					},
+					Content:  sig,
+					Verifier: verifier,
 				},
 				Digest: digest[:],
 			},
 		},
 	}
-	reqBytes, err := json.Marshal(createEntryRequest)
+	reqBytes, err := protojson.Marshal(createEntryRequest)
 	if err != nil {
 		return err
 	}
@@ -132,8 +174,39 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 		Method:   POST,
 		Body:     reqBytes,
 	}
-	if err := observeRequest(rekorV2URL, proberCheck); err != nil {
+	respBytes, err := observeRequest(rekorV2URL, proberCheck)
+	if err != nil {
 		return err
+	}
+	tle := v1.TransparencyLogEntry{}
+	if err := protojson.Unmarshal(respBytes, &tle); err != nil {
+		return err
+	}
+	tleBody := protobuf.Entry{}
+	if err := protojson.Unmarshal(tle.CanonicalizedBody, &tleBody); err != nil {
+		return err
+	}
+	// basic content matching, not necessarily any signature verification.
+	tleBodyDigest := tleBody.Spec.GetHashedRekordV002().Data.Digest
+	if !bytes.Equal(tleBodyDigest, digest[:]) {
+		return fmt.Errorf("tleEntry digest does not match: got: %s, want: %s", tleBodyDigest, digest)
+	}
+	tleEntrySig := tleBody.Spec.GetHashedRekordV002().Signature.Content
+	if !bytes.Equal(tleEntrySig, sig) {
+		return fmt.Errorf("tleEntry signature does not match: got: %s, want: %s", tleEntrySig, sig)
+	}
+	retrievedEntry, err := retrieveRekorV2Entry(rekorV2URL, uint64(tle.InclusionProof.LogIndex), uint64(tle.InclusionProof.TreeSize))
+	if err != nil {
+		return err
+	}
+	// basic content matching, not necessarily any signature verification.
+	receivedDigest := retrievedEntry.Spec.GetHashedRekordV002().Data.Digest
+	if !bytes.Equal(receivedDigest, digest[:]) {
+		return fmt.Errorf("retrieved entry digests do not match: got: %s, want: %s", receivedDigest, digest)
+	}
+	receivedSig := retrievedEntry.Spec.GetHashedRekordV002().Signature.Content
+	if !bytes.Equal(receivedSig, sig) {
+		return fmt.Errorf("retrieved entry signatures do not match: got: %s, want: %s", receivedSig, sig)
 	}
 	return nil
 }

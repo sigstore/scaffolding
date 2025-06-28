@@ -34,13 +34,16 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.5.2
 	github.com/sigstore/fulcio v1.7.1
+	github.com/sigstore/protobuf-specs v0.4.3
 	github.com/sigstore/rekor v1.3.10
+	github.com/sigstore/rekor-tiles v0.1.5
 	github.com/sigstore/sigstore v1.9.5
 	github.com/sigstore/sigstore-go v1.0.0
 	github.com/sigstore/timestamp-authority v1.2.8
 	github.com/stretchr/testify v1.10.0
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
+	github.com/transparency-dev/tessera v0.2.0
 	go.step.sm/crypto v0.67.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.39.0
@@ -61,7 +64,7 @@ require (
 
 require (
 	bitbucket.org/creachadair/shell v0.0.8 // indirect
-	cel.dev/expr v0.23.0 // indirect
+	cel.dev/expr v0.23.1 // indirect
 	cloud.google.com/go v0.121.1 // indirect
 	cloud.google.com/go/auth v0.16.2 // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.2.8 // indirect
@@ -70,7 +73,7 @@ require (
 	cloud.google.com/go/kms v1.22.0 // indirect
 	cloud.google.com/go/longrunning v0.6.7 // indirect
 	cloud.google.com/go/monitoring v1.24.2 // indirect
-	cloud.google.com/go/spanner v1.80.0 // indirect
+	cloud.google.com/go/spanner v1.82.0 // indirect
 	cloud.google.com/go/trace v1.11.6 // indirect
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14 // indirect
 	github.com/AliyunContainerService/ack-ram-tool/pkg/credentials/provider v0.14.0 // indirect
@@ -239,7 +242,6 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.0 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/protobuf-specs v0.4.3 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.9.5 // indirect
@@ -263,6 +265,7 @@ require (
 	github.com/tink-crypto/tink-go/v2 v2.4.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect
 	github.com/tomasen/realip v0.0.0-20180522021738-f0c99a92ddce // indirect
+	github.com/transparency-dev/formats v0.0.0-20250421220931-bb8ad4d07c26 // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
 	github.com/vbatts/tar-split v0.12.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -274,7 +277,7 @@ require (
 	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/contrib/detectors/gcp v1.35.0 // indirect
+	go.opentelemetry.io/contrib/detectors/gcp v1.36.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.61.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.61.0 // indirect
 	go.opentelemetry.io/otel v1.36.0 // indirect

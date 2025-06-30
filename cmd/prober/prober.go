@@ -250,7 +250,12 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		}
 
 		// collect rekorV2 shards.
-		rekorV2URLs, err := rekorV2ServiceURLsFromTUF(tufRepoURL)
+		tufClient, err := getTufClient(tufRepoURL, tufRootJSON)
+		if err != nil {
+			hasErr = true
+			Logger.Errorf("fetching rekorV2 URLs from TUF: %v", err)
+		}
+		rekorV2URLs, err := rekorV2ServiceURLsFromTUF(tufClient)
 		if err != nil {
 			hasErr = true
 			Logger.Errorf("fetching rekorV2 URLs from TUF: %v", err)
@@ -269,8 +274,12 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			for _, r := range rekorV2ShardEnpoints {
 				if _, err := observeRequest(url, *r); err != nil {
 					hasErr = true
-					Logger.Error("error running rekorV2 request %s: %v", r.Endpoint, err)
+					Logger.Errorf("running rekorV2 request %s: %v", r.Endpoint, err)
 				}
+			}
+			if tufClient != nil && checkRekorV2LogConsistency(tufClient, url) != nil {
+				hasErr = true
+				Logger.Errorf("checking log consistency for %s: %w", url, err)
 			}
 		}
 

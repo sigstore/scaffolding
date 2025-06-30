@@ -20,18 +20,19 @@ import (
 
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore-go/pkg/tuf"
+	"github.com/sigstore/sigstore/pkg/signature"
 )
+
+func getTufClient(tufMirror string, tufRootJSON string) (*tuf.Client, error) {
+	opts := tuf.DefaultOptions().WithRepositoryBaseURL(tufMirror).WithRoot([]byte(tufRootJSON))
+	return tuf.New(opts)
+}
 
 // rekorV2ServiceURLsFromTUF fetches the URLs for V2 from the signing-config.json.
 // Only services with a validityStart before now will be included.
-func rekorV2ServiceURLsFromTUF(tufMirror string) ([]string, error) {
-	opts := tuf.DefaultOptions().WithRepositoryBaseURL(tufMirror).WithRoot([]byte(tufRootJSON))
-	client, err := tuf.New(opts)
-	if err != nil {
-		return nil, err
-	}
+func rekorV2ServiceURLsFromTUF(tufClient *tuf.Client) ([]string, error) {
 	// TODO: use root.GetSigningConfig(client), when the TUF repo's signing_config.json starts using v0.2.
-	signingConfigBytes, err := client.GetTarget("signing_config.v0.2.json")
+	signingConfigBytes, err := tufClient.GetTarget("signing_config.v0.2.json")
 	if err != nil {
 		return nil, err
 	}
@@ -47,4 +48,25 @@ func rekorV2ServiceURLsFromTUF(tufMirror string) ([]string, error) {
 	}
 	Logger.Debug(fmt.Sprintf("fetched rekorV2 urls from TUF: %v", uRLs))
 	return uRLs, nil
+}
+
+func rekorV2VerifierFromTUF(tufClient *tuf.Client, rekorURL string) (*signature.Verifier, error) {
+	trustedRoot, err := root.GetTrustedRoot(tufClient)
+	if err != nil {
+		return nil, err
+	}
+	var transparencyLog *root.TransparencyLog
+	for _, log := range trustedRoot.RekorLogs() {
+		if log.BaseURL == rekorURL {
+			transparencyLog = log
+		}
+	}
+	if transparencyLog == nil {
+		return nil, fmt.Errorf("rekorV2 public key not found in TUF for rekorURL: %s", rekorURL)
+	}
+	verifier, err := signature.LoadVerifier(transparencyLog.PublicKey, transparencyLog.HashFunc)
+	if err != nil {
+		return nil, fmt.Errorf("loading verifier: %w", err)
+	}
+	return &verifier, nil
 }

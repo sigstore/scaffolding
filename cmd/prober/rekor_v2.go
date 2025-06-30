@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -31,9 +32,14 @@ import (
 	common_v1 "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	v1 "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
 	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
+	"github.com/sigstore/rekor-tiles/pkg/note"
+	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/transparency-dev/merkle/rfc6962"
 	"github.com/transparency-dev/tessera/api"
 	"github.com/transparency-dev/tessera/api/layout"
+	"github.com/transparency-dev/tessera/client"
+	"github.com/transparency-dev/tessera/fsck"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -99,6 +105,7 @@ func determineRekorV2ShardCoverage(rekorV2URL string) ([]*ReadProberCheck, error
 	return proberChecks, nil
 }
 
+// retrieveRekorV2Entry retrieves a specific rekor V2 Entry.
 func retrieveRekorV2Entry(rekorV2URL string, logIndex, treeSize uint64) (*protobuf.Entry, error) {
 	entriesPath := layout.EntriesPathForLogIndex(logIndex, treeSize)
 	entryBundleBytes, err := observeRequest(rekorV2URL, ReadProberCheck{
@@ -207,6 +214,45 @@ func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecd
 	receivedSig := retrievedEntry.Spec.GetHashedRekordV002().Signature.Content
 	if !bytes.Equal(receivedSig, sig) {
 		return fmt.Errorf("retrieved entry signatures do not match: got: %s, want: %s", receivedSig, sig)
+	}
+	return nil
+}
+
+// checkRekorV2LogConsistency checks the consistency of the rekoV2 log merkle tree.
+func checkRekorV2LogConsistency(tufClient *tuf.Client, rekorV2URL string) error {
+	parsedURL, err := url.Parse(rekorV2URL + "/api/v2")
+	if err != nil {
+		return err
+	}
+	origin := parsedURL.Hostname()
+	verifier, err := rekorV2VerifierFromTUF(tufClient, rekorV2URL)
+	if err != nil {
+		return err
+	}
+	noteVerifier, err := note.NewNoteVerifier(origin, *verifier)
+	if err != nil {
+		return fmt.Errorf("creating rekorv2 note verifier: %w", err)
+	}
+	fetcher, err := client.NewHTTPFetcher(parsedURL, nil)
+	if err != nil {
+		return fmt.Errorf("creating rekorv2 read client: %w", err)
+	}
+	// defaultMerkleLeafHasher parses a C2SP tlog-tile bundle and returns the Merkle leaf hashes of each entry it contains.
+	// See https://github.com/transparency-dev/tessera/blob/0760860b2a159c4386aa3de5da0b267dac55dd01/cmd/fsck/main.go#L66-L78.
+	defaultMerkleLeafHasher := func(bundle []byte) ([][]byte, error) {
+		eb := &api.EntryBundle{}
+		if err := eb.UnmarshalText(bundle); err != nil {
+			return nil, fmt.Errorf("unmarshal: %v", err)
+		}
+		r := make([][]byte, 0, len(eb.Entries))
+		for _, e := range eb.Entries {
+			h := rfc6962.DefaultHasher.HashLeaf(e)
+			r = append(r, h[:])
+		}
+		return r, nil
+	}
+	if err := fsck.Check(context.Background(), origin, noteVerifier, fetcher, 1, defaultMerkleLeafHasher); err != nil {
+		return fmt.Errorf("checking rekorv2 log consistency: %w", err)
 	}
 	return nil
 }

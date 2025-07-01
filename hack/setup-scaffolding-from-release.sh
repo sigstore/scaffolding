@@ -19,7 +19,7 @@ set -o pipefail
 set -o xtrace
 
 # Default
-RELEASE_VERSION="v0.7.17"
+RELEASE_VERSION="v0.7.24"
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"
@@ -45,17 +45,17 @@ TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}
 # MAJOR, MINOR, and PATCH
 # We don't use MAJOR yet, but add it here for future.
 # MAJOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 1 | sed -e 's/v//')
-MINOR=$(echo "$RELEASE_VERSION" | cut -d '.' -f 2)
-PATCH=$(echo "$RELEASE_VERSION" | cut -d '.' -f 3)
+MINOR=$(echo "${RELEASE_VERSION}" | cut -d '.' -f 2)
+PATCH=$(echo "${RELEASE_VERSION}" | cut -d '.' -f 3)
 
-if [ "${MINOR}" -lt 4 ]; then
+if [[ "${MINOR}" -lt 4 ]]; then
   echo Unsupported version, only support versions >= 0.4.0
   exit 1
 fi
 
 # We introduced TSA in release v0.5.0
 INSTALL_TSA="false"
-if [ "${MINOR}" -ge 5 ]; then
+if [[ "${MINOR}" -ge 5 ]]; then
   INSTALL_TSA="true"
 fi
 
@@ -64,7 +64,7 @@ fi
 NEED_TO_UPDATE_FULCIO_CONFIG="false"
 K8S_SERVER_VERSION=$(kubectl version -ojson | yq '.serverVersion.minor' -)
 
-if [ "${K8S_SERVER_VERSION}" == "21" ] || [ "${K8S_SERVER_VERSION}" == "22" ]; then
+if [[ "${K8S_SERVER_VERSION}" == "21" ]] || [[ "${K8S_SERVER_VERSION}" == "22" ]]; then
   echo "Running on k8s 1.${K8S_SERVER_VERSION}.x will update Fulcio accordingly"
   NEED_TO_UPDATE_FULCIO_CONFIG="true"
 fi
@@ -91,7 +91,7 @@ echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
 echo '::group:: Install Fulcio'
-if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
+if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
   curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
 else
@@ -104,7 +104,7 @@ echo '::group:: Wait for Fulcio ready'
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 # this checks if the requested version is > 0.4.12 (and therefore has fulcio-grpc in it)
-if [ "${PATCH}" -gt 12 ] || [ "${MINOR}" -ge 5 ]; then
+if [[ "${PATCH}" -gt 12 ]] || [[ "${MINOR}" -ge 5 ]]; then
   kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
 fi
 echo '::endgroup::'
@@ -120,7 +120,7 @@ kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 
 # If we're running release > 0.5.0 install TSA
-if [ "${INSTALL_TSA}" == "true" ]; then
+if [[ "${INSTALL_TSA}" == "true" ]]; then
 kubectl apply -f "${TSA}"
 kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n tsa-system --for=condition=Ready ksvc tsa
@@ -136,7 +136,7 @@ kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: 
 kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 
-if [ "${INSTALL_TSA}" == "true" ]; then
+if [[ "${INSTALL_TSA}" == "true" ]]; then
 kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 fi
 echo '::endgroup::'
@@ -163,7 +163,7 @@ export CTLOG_URL
 TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
 export TUF_MIRROR
 
-if [ "${INSTALL_TSA}" == "true" ]; then
+if [[ "${INSTALL_TSA}" == "true" ]]; then
   TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
   export TSA_URL
 fi

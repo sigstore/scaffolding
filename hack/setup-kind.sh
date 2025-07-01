@@ -19,7 +19,7 @@ set -o pipefail
 
 THIS_OS="$(uname -s)"
 echo "RUNNING ON ${THIS_OS}"
-if [ "${THIS_OS}" == "Darwin" ]; then
+if [[ "${THIS_OS}" == "Darwin" ]]; then
   echo "Running on Darwin"
   RUNNING_ON_MAC="true"
 else
@@ -29,11 +29,11 @@ fi
 # Check required utilities are on path
 for i in "yq" "kubectl"
 do
-  command -v $i >/dev/null 2>&1 || { echo >&2 "$i not found"; exit 1; }
+  command -v "${i}" >/dev/null 2>&1 || { echo >&2 "${i} not found"; exit 1; }
 done
 
 # Defaults
-K8S_VERSION="v1.29.x"
+K8S_VERSION="v1.30.x"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5001"
 CLUSTER_SUFFIX="cluster.local"
@@ -105,7 +105,7 @@ KNATIVE_VERSION=${KNATIVE_VERSION_ARG:=${KNATIVE_VERSION}}
 echo '::group:: Install KinD'
 
 # This does not work on mac, so skip.
-if [ ${RUNNING_ON_MAC} == "false" ]; then
+if [[ ${RUNNING_ON_MAC} == "false" ]]; then
   # Disable swap otherwise memory enforcement does not work
   # See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600009955324200
   sudo swapoff -a
@@ -144,7 +144,7 @@ nodes:
 - role: control-plane
   image: "${KIND_IMAGE}"
 EOF
-if [ ${RUNNING_ON_MAC} == "false" ]; then
+if [[ ${RUNNING_ON_MAC} == "false" ]]; then
   cat >> kind.yaml <<EOF_2
   extraMounts:
   - containerPath: /var/lib/etcd
@@ -246,11 +246,11 @@ do
     echo successfully applied metallb crds
     break
   fi
-  if [ "$i" == 10 ]; then
+  if [[ "${i}" == 10 ]]; then
     echo failed to apply metallb crds. exiting
     exit 1
   fi
-  echo failed to apply metallb crds. Attempt numer "$i", retrying
+  echo failed to apply metallb crds. Attempt numer "${i}", retrying
   sleep 2
 done
 
@@ -265,19 +265,19 @@ echo '::endgroup::'
 echo '::group:: Setup container registry'
 
 
-if [ "$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]; then
+if [[ "$(docker inspect -f '{{.State.Running}}' "${REGISTRY_NAME}" 2>/dev/null || true)" != 'true' ]]; then
   docker run \
     -d --restart=always -p "127.0.0.1:${REGISTRY_PORT}:${REGISTRY_PORT}" --name "${REGISTRY_NAME}" \
     -e REGISTRY_HTTP_ADDR="0.0.0.0:${REGISTRY_PORT}" registry:2
 fi
 
 # Connect the registry to the KinD network.
-docker network connect "kind" "$REGISTRY_NAME"
+docker network connect "kind" "${REGISTRY_NAME}"
 
-if ! grep -q "$REGISTRY_NAME" /etc/hosts; then
+if ! grep -q "${REGISTRY_NAME}" /etc/hosts; then
   # Make the $REGISTRY_NAME -> 127.0.0.1, to tell `ko` to publish to
   # local reigstry, even when pushing $REGISTRY_NAME:$REGISTRY_PORT/some/image
-  echo "127.0.0.1 $REGISTRY_NAME" | sudo tee -a /etc/hosts
+  echo "127.0.0.1 ${REGISTRY_NAME}" | sudo tee -a /etc/hosts
 fi
 
 echo '::endgroup::'
@@ -298,7 +298,7 @@ function resource_blaster() {
 
   # If latest specified, fetch that instead. Note that this can vary
   # between versions, so have to fetch for each component.
-  if [ "${KNATIVE_VERSION}" == "latest" ]; then
+  if [[ "${KNATIVE_VERSION}" == "latest" ]]; then
     REAL_KNATIVE_VERSION=$(curl -L -s "https://api.github.com/repos/knative/${REPO}/releases/latest" | jq -r '.tag_name')
   else
     REAL_KNATIVE_VERSION="knative-v${KNATIVE_VERSION}"

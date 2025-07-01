@@ -22,7 +22,7 @@ set -o pipefail
 NEED_TO_UPDATE_FULCIO_CONFIG="false"
 K8S_SERVER_VERSION=$(kubectl version -ojson | yq '.serverVersion.minor' -)
 
-if [ "${K8S_SERVER_VERSION}" == "21" ] || [ "${K8S_SERVER_VERSION}" == "22" ]; then
+if [[ "${K8S_SERVER_VERSION}" == "21" ]] || [[ "${K8S_SERVER_VERSION}" == "22" ]]; then
   echo "Running on k8s 1.${K8S_SERVER_VERSION}.x will update Fulcio accordingly"
   NEED_TO_UPDATE_FULCIO_CONFIG="true"
 fi
@@ -49,7 +49,7 @@ echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
 echo '::group:: Install Fulcio'
-if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
+if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Fixing Fulcio config"
   cp config/fulcio/fulcio/200-configmap.yaml ./200-configmap.yaml
   # The sed works differently in mac and other places, so just shuffle
@@ -60,7 +60,7 @@ fi
 make ko-apply-fulcio
 echo '::endgroup::'
 
-if [ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]; then
+if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Restoring Fulcio config"
   mv ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
 fi

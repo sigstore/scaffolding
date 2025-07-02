@@ -29,6 +29,7 @@ import (
 	mrand "math/rand/v2"
 	"net/http"
 	"os"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -37,6 +38,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
+	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
@@ -109,9 +111,12 @@ var (
 	retries        uint
 	addr           string
 	rekorURL       string
+	rekorV2URL     string
 	fulcioURL      string
 	fulcioGrpcURL  string
 	tsaURL         string
+	tufRepoURL     string
+	tufRootJSON    string
 	oneTime        bool
 	runWriteProber bool
 	versionInfo    version.Info
@@ -125,10 +130,16 @@ func init() {
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
 
 	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
+	// TODO: use the production instance
+	flag.StringVar(&rekorV2URL, "rekor-v2-url", "https://log2025-alpha1.rekor.sigstage.dev", "Set to the Rekor V2 URL to run probers against")
 	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
 	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
 
 	flag.StringVar(&tsaURL, "tsa-url", "https://timestamp.sigstore.dev", "Set to the TSA URL to run probers against")
+
+	// TODO: use the production mirror
+	flag.StringVar(&tufRepoURL, "tuf-repo-url", tuf.StagingMirror, "Set to the TUF repository URL to run probers against")
+	flag.StringVar(&tufRootJSON, "tuf-root-json", string(tuf.StagingRoot()), "Set the TUF root JSON to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
@@ -232,20 +243,46 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
 
 		for _, r := range rekorEndpointsUnderTest {
-			if err := observeRequest(rekorURL, r); err != nil {
+			if _, err := observeRequest(rekorURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
 		}
+
+		// collect rekorV2 shards.
+		rekorV2URLs, err := rekorV2ServiceURLsFromTUF(tufRepoURL)
+		if err != nil {
+			hasErr = true
+			Logger.Errorf("fetching rekorV2 URLs from TUF: %v", err)
+		}
+		if !slices.Contains(rekorV2URLs, rekorV2URL) { // avoid duplicating the URL
+			rekorV2URLs = append(rekorV2URLs, rekorV2URL)
+		}
+		// probe against the shards.
+		for _, url := range rekorV2URLs {
+			// which endpoints to check per shard.
+			rekorV2ShardEnpoints, err := determineRekorV2ShardCoverage(url)
+			if err != nil {
+				hasErr = true
+				Logger.Errorf("error determining rekorV2 shard coverage: %v", err)
+			}
+			for _, r := range rekorV2ShardEnpoints {
+				if _, err := observeRequest(url, *r); err != nil {
+					hasErr = true
+					Logger.Error("error running rekorV2 request %s: %v", r.Endpoint, err)
+				}
+			}
+		}
+
 		for _, r := range FulcioEndpoints {
-			if err := observeRequest(fulcioURL, r); err != nil {
+			if _, err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
 		}
 
 		for _, r := range TSAEndpoints {
-			if err := observeRequest(tsaURL, r); err != nil {
+			if _, err := observeRequest(tsaURL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
@@ -277,6 +314,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}
+			if err := rekorV2WriteEndpoint(ctx, cert, priv); err != nil {
+				hasErr = true
+				Logger.Errorf("error running rekorV2 write prober: %v", err)
+			}
 		}
 
 		if runOnce {
@@ -292,10 +333,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	}
 }
 
-func observeRequest(host string, r ReadProberCheck) error {
+func observeRequest(host string, r ReadProberCheck) ([]byte, error) {
 	req, err := httpRequest(host, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s := time.Now()
@@ -303,7 +344,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	latency := time.Since(s).Milliseconds()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -317,12 +358,14 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	exportDataToPrometheus(resp, host, sloEndpoint, r.Method, latency)
 
-	// right we're not doing anything with the body, but let's at least read it all from the server
-	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
-		return fmt.Errorf("error reading response: %w", err)
+	var respBuffer bytes.Buffer
+	if _, err := io.Copy(&respBuffer, resp.Body); err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
 	}
-
-	return nil
+	if resp.StatusCode >= 300 {
+		return respBuffer.Bytes(), fmt.Errorf("error response: status: %s, body: %s", resp.Status, respBuffer.String())
+	}
+	return respBuffer.Bytes(), nil
 }
 
 func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {

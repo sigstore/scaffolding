@@ -99,6 +99,7 @@ func determineRekorV2ShardCoverage(rekorV2URL string) ([]*ReadProberCheck, error
 	return proberChecks, nil
 }
 
+// retrieveRekorV2Entry retrieves an entry from RekorV2.
 func retrieveRekorV2Entry(rekorV2URL string, logIndex, treeSize uint64) (*protobuf.Entry, error) {
 	entriesPath := layout.EntriesPathForLogIndex(logIndex, treeSize)
 	entryBundleBytes, err := observeRequest(rekorV2URL, ReadProberCheck{

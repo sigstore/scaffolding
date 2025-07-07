@@ -49,7 +49,7 @@ func rekorV2WriteURLsFromTUF(tufMirror string) ([]string, error) {
 	}
 	uRLs := []string{}
 	for _, s := range rekorV2ServiceConfigs {
-		// write, only if witih the validity period.
+		// write, only if within the validity period.
 		if s.MajorAPIVersion == 2 && s.ValidityPeriodStart.Before(time.Now()) && s.ValidityPeriodEnd.After(time.Now()) {
 			uRLs = append(uRLs, s.URL)
 		}

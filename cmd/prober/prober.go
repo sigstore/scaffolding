@@ -249,7 +249,6 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
-		// collect rekorV2 read shards.
 		rekorV2ReadURLs, err := rekorV2ReadURLsFromTUF(tufRepoURL)
 		if err != nil {
 			hasErr = true
@@ -258,9 +257,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		if !slices.Contains(rekorV2ReadURLs, rekorV2URL) { // avoid duplicating the URL
 			rekorV2ReadURLs = append(rekorV2ReadURLs, rekorV2URL)
 		}
-		// probe against the shards.
 		for _, url := range rekorV2ReadURLs {
-			// which endpoints to check per shard.
 			rekorV2ShardEnpoints, err := determineRekorV2ShardCoverage(url)
 			if err != nil {
 				hasErr = true

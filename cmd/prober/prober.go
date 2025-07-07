@@ -249,17 +249,17 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
-		// collect rekorV2 shards.
-		rekorV2URLs, err := rekorV2ServiceURLsFromTUF(tufRepoURL)
+		// collect rekorV2 read shards.
+		rekorV2ReadURLs, err := rekorV2ReadURLsFromTUF(tufRepoURL)
 		if err != nil {
 			hasErr = true
 			Logger.Errorf("fetching rekorV2 URLs from TUF: %v", err)
 		}
-		if !slices.Contains(rekorV2URLs, rekorV2URL) { // avoid duplicating the URL
-			rekorV2URLs = append(rekorV2URLs, rekorV2URL)
+		if !slices.Contains(rekorV2ReadURLs, rekorV2URL) { // avoid duplicating the URL
+			rekorV2ReadURLs = append(rekorV2ReadURLs, rekorV2URL)
 		}
 		// probe against the shards.
-		for _, url := range rekorV2URLs {
+		for _, url := range rekorV2ReadURLs {
 			// which endpoints to check per shard.
 			rekorV2ShardEnpoints, err := determineRekorV2ShardCoverage(url)
 			if err != nil {
@@ -314,9 +314,20 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
 			}
-			if err := rekorV2WriteEndpoint(ctx, cert, priv); err != nil {
+
+			rekorV2WriteURLs, err := rekorV2WriteURLsFromTUF(tufRepoURL)
+			if err != nil {
 				hasErr = true
-				Logger.Errorf("error running rekorV2 write prober: %v", err)
+				Logger.Errorf("fetching rekorV2 URLs from TUF: %v", err)
+			}
+			if !slices.Contains(rekorV2WriteURLs, rekorV2URL) { // avoid duplicating the URL
+				rekorV2WriteURLs = append(rekorV2WriteURLs, rekorV2URL)
+			}
+			for _, url := range rekorV2WriteURLs {
+				if err := rekorV2WriteEndpoint(ctx, url, cert, priv); err != nil {
+					hasErr = true
+					Logger.Errorf("error running rekorV2 write prober: %v", err)
+				}
 			}
 		}
 

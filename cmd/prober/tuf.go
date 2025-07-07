@@ -22,9 +22,44 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/tuf"
 )
 
-// rekorV2ServiceURLsFromTUF fetches the URLs for V2 from the signing-config.json.
-// Only services with a validityStart before now will be included.
-func rekorV2ServiceURLsFromTUF(tufMirror string) ([]string, error) {
+// rekorV2ReadURLsFromTUF fetches the URLs for V2 from the signing-config.json.
+// Only services with a validity date end after now will be included.
+func rekorV2ReadURLsFromTUF(tufMirror string) ([]string, error) {
+	rekorV2ServiceConfigs, err := rekorV2ServiceConfigsFromTUF(tufMirror)
+	if err != nil {
+		return nil, err
+	}
+	uRLs := []string{}
+	for _, s := range rekorV2ServiceConfigs {
+		// Read, regardless of startDate, but respect the endDate.
+		if s.MajorAPIVersion == 2 && s.ValidityPeriodEnd.After(time.Now()) {
+			uRLs = append(uRLs, s.URL)
+		}
+	}
+	Logger.Debug(fmt.Sprintf("fetched rekorV2 read URLs from TUF: %v", uRLs))
+	return uRLs, nil
+}
+
+// rekorV2WriteURLsFromTUF fetches the write URLs for V2 from the signing-config.json.
+// Only services with where we are currently within the validity start and end dates will be included.
+func rekorV2WriteURLsFromTUF(tufMirror string) ([]string, error) {
+	rekorV2ServiceConfigs, err := rekorV2ServiceConfigsFromTUF(tufMirror)
+	if err != nil {
+		return nil, err
+	}
+	uRLs := []string{}
+	for _, s := range rekorV2ServiceConfigs {
+		// write, only if witih the validity period.
+		if s.MajorAPIVersion == 2 && s.ValidityPeriodStart.Before(time.Now()) && s.ValidityPeriodEnd.After(time.Now()) {
+			uRLs = append(uRLs, s.URL)
+		}
+	}
+	Logger.Debug(fmt.Sprintf("fetched rekorV2 write URLs from TUF: %v", uRLs))
+	return uRLs, nil
+}
+
+// rekorV2ServiceConfigsFromTUF fetches the Service configs for RekorV2 from the signing-config.json.
+func rekorV2ServiceConfigsFromTUF(tufMirror string) ([]*root.Service, error) {
 	opts := tuf.DefaultOptions().WithRepositoryBaseURL(tufMirror).WithRoot([]byte(tufRootJSON))
 	client, err := tuf.New(opts)
 	if err != nil {
@@ -39,12 +74,11 @@ func rekorV2ServiceURLsFromTUF(tufMirror string) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	uRLs := []string{}
+	rekorV2ServiceConfigs := []*root.Service{}
 	for _, s := range signingConfig.RekorLogURLs() {
-		if s.MajorAPIVersion == 2 && s.ValidityPeriodStart.Before(time.Now()) {
-			uRLs = append(uRLs, s.URL)
+		if s.MajorAPIVersion == 2 {
+			rekorV2ServiceConfigs = append(rekorV2ServiceConfigs, &s)
 		}
 	}
-	Logger.Debug(fmt.Sprintf("fetched rekorV2 urls from TUF: %v", uRLs))
-	return uRLs, nil
+	return rekorV2ServiceConfigs, nil
 }

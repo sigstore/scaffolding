@@ -124,7 +124,7 @@ func retrieveRekorV2Entry(rekorV2URL string, logIndex, treeSize uint64) (*protob
 }
 
 // rekorV2WriteEndpoint creates and sends an entry to the rekorV2 instance.
-func rekorV2WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
+func rekorV2WriteEndpoint(ctx context.Context, rekorV2URL string, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}

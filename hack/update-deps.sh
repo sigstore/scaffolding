@@ -29,4 +29,4 @@ source "$(dirname "$0")/../vendor/knative.dev/hack/library.sh"
 go_update_deps "$@"
 
 echo "=== Removing vendor/"
-rm -rf "$REPO_ROOT_DIR/vendor/"
+rm -rf "${REPO_ROOT_DIR}/vendor/"

@@ -18,7 +18,7 @@ set -o nounset
 set -o pipefail
 
 # Knative sets this to the root of the git repo otherwise and is unhappy
-REPO_ROOT_DIR=$PWD/$(dirname "$0")/..
+REPO_ROOT_DIR=${PWD}/$(dirname "$0")/..
 pushd "${REPO_ROOT_DIR}"
 # Removed by update-deps
 echo "=== Vendoring scripts"

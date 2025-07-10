@@ -123,13 +123,13 @@ var rootCmd = &cobra.Command{
 			slog.Error(err.Error())
 			os.Exit(1)
 		}
-		keyset, err := publicHandle.Primary()
+		keyEntry, err := publicHandle.Primary()
 		if err != nil {
 			slog.Error(err.Error())
 			os.Exit(1)
 		}
 		var pemPubKey []byte
-		switch publicKey := keyset.Key().(type) {
+		switch publicKey := keyEntry.Key().(type) {
 		case *tinked25519.PublicKey:
 			pemPubKey, err = cryptoutils.MarshalPublicKeyToPEM(ed25519.PublicKey(publicKey.KeyBytes()))
 			if err != nil {

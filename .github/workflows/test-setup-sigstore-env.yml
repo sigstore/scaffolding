@@ -9,6 +9,7 @@ on:
       - 'actions/setup-sigstore-env/**'
 jobs:
   test:
+  - name: Test Sigstore setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -24,24 +25,29 @@ jobs:
       - name: test-sign
         env:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
+          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}
+          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN: ${{ steps.setup-sigstore-env.outputs.oidc-token }}
         run: |
           echo token:
-          curl -f ${{ steps.setup-sigstore-env.outputs.oidc-url }}/token
+          curl -f ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL}/token
           cosign sign-blob \
             -y \
             --bundle=bundle.json \
             --new-bundle-format=true \
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
-            --oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
-            --identity-token ${{ steps.setup-sigstore-env.outputs.oidc-token }} \
+            --oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL} \
+            --identity-token ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN} \
             data.txt
       - name: test-verify-with-trusted-root
         run: |
           cosign verify-blob \
-            --trusted-root ${{ steps.setup-sigstore-env.outputs.trusted-root }} \
+            --trusted-root ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT} \
             --bundle bundle.json \
             --new-bundle-format=true \
             --certificate-identity foo@bar.com \
-            --certificate-oidc-issuer ${{ steps.setup-sigstore-env.outputs.oidc-url }} \
+            --certificate-oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL} \
             data.txt
+        env:
+          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT: ${{ steps.setup-sigstore-env.outputs.trusted-root }}
+          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}

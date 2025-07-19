@@ -43,7 +43,7 @@ jobs:
       KOCACHE: ~/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@main
+    - uses: chainguard-dev/actions/setup-mirror@86e8917a5f452c794e263fddae12d25a44b18f18 # v1.4.5
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
@@ -76,7 +76,7 @@ jobs:
     - uses: sigstore/cosign-installer@fb28c2b6339dcd94da6e4cbcbc5e888961f6f8c3 # v3.9.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@main
+      uses: chainguard-dev/actions/setup-kind@86e8917a5f452c794e263fddae12d25a44b18f18 # v1.4.5
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -85,7 +85,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@main
+      uses: chainguard-dev/actions/setup-knative@86e8917a5f452c794e263fddae12d25a44b18f18 # v1.4.5
       with:
         version: "1.16.x"
         serving-features: >
@@ -160,14 +160,22 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+      env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        DEMOIMAGE: ${{ env.demoimage }}
+        OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
-        --allow-insecure-registry "${{ env.demoimage }}" \
+        cosign verify --rekor-url "${REKOR_URL}" \
+        --allow-insecure-registry "${DEMOIMAGE}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
+      env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Spin up a new Fulcio with new keys
       run: |
@@ -189,15 +197,21 @@ jobs:
 
     - name: Dump the trusted certs
       run: |
-        curl ${{ env.CTLOG_URL }}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+        curl ${CTLOG_URL}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+      env:
+        CTLOG_URL: ${{ env.CTLOG_URL }}
 
     - name: Verify both Fulcio certs are there
       run: |
         go run ./cmd/ctlog/verifyfulcio/main.go \
-        --ctlog-url ${{ env.CTLOG_URL }} \
+        --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
-        --fulcio ${{ env.FULCIO_URL }} \
-        --fulcio ${{ env.NEW_FULCIO_URL }}
+        --fulcio ${FULCIO_URL} \
+        --fulcio ${NEW_FULCIO_URL}
+      env:
+        CTLOG_URL: ${{ env.CTLOG_URL }}
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        NEW_FULCIO_URL: ${{ env.NEW_FULCIO_URL }}
 
     - name: Remove old Fulcio from ctlog as trusted Fulcio
       run: |
@@ -212,18 +226,21 @@ jobs:
 
     - name: Dump the trusted certs
       run: |
-        curl ${{ env.CTLOG_URL }}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+        curl ${CTLOG_URL}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+      env:
+        CTLOG_URL: ${{ env.CTLOG_URL }}
 
     - name: Verify that only new Fulcio cert is there
       run: |
         go run ./cmd/ctlog/verifyfulcio/main.go \
-        --ctlog-url ${{ env.CTLOG_URL }} \
+        --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
-        --fulcio ${{ env.NEW_FULCIO_URL }}
-
-    # TODO: Add the new Fulcio to TUF root, sign & verify.
+        --fulcio ${NEW_FULCIO_URL}
+      env:
+        CTLOG_URL: ${{ env.CTLOG_URL }}
+        NEW_FULCIO_URL: ${{ env.NEW_FULCIO_URL }}
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@main
+      uses: chainguard-dev/actions/kind-diag@86e8917a5f452c794e263fddae12d25a44b18f18 # v1.4.5
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

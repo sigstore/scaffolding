@@ -37,6 +37,8 @@ jobs:
     steps:
     - name: Checkout the current action
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      with:
+        persist-credentials: false
     - name: Test running the action
       uses: ./actions/setup
       with:
@@ -72,24 +74,35 @@ jobs:
         popd
 
     - name: Initialize cosign with TUF root
-      run: cosign initialize --mirror ${{ env.TUF_MIRROR }} --root ./root.json
+      run: cosign initialize --mirror ${TUF_MIRROR} --root ./root.json
+      env:
+        TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${{ env.REKOR_URL }} --fulcio-url ${{ env.FULCIO_URL }} --allow-insecure-registry ${{ env.demoimage }} --identity-token ${{ env.OIDC_TOKEN }}
+        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+      env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        DEMOIMAGE: ${{ env.demoimage }}
+        OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${{ env.REKOR_URL }}" \
-        --allow-insecure-registry "${{ env.demoimage }}" \
+        cosign verify --rekor-url "${REKOR_URL}" \
+        --allow-insecure-registry "${DEMOIMAGE}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
+      env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
       uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       with:
         repository: sigstore/timestamp-authority
         path: ./src/github.com/sigstore/timestamp-authority
+        persist-credentials: false
     - name: Build timestamp-cli
       working-directory: ./src/github.com/sigstore/timestamp-authority
       run: |
@@ -97,9 +110,9 @@ jobs:
     - name: Exercise TSA
       working-directory: ./src/github.com/sigstore/timestamp-authority
       run: |
-        curl ${{ env.TSA_URL }}/api/v1/timestamp/certchain > ts_chain.pem
+        curl ${TSA_URL}/api/v1/timestamp/certchain > ts_chain.pem
         echo "myblob" > myblob
-        if ! ./timestamp-cli --timestamp_server ${{ env.TSA_URL }} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
+        if ! ./timestamp-cli --timestamp_server ${TSA_URL} timestamp --hash sha256 --artifact myblob --out response.tsr ; then
           echo "failed to timestamp artifact"
           exit -1
         fi
@@ -111,7 +124,9 @@ jobs:
           echo "failed to inspect the timestamp"
           exit -1
         fi
+      env:
+        TSA_URL: ${{ env.TSA_URL }}
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@main
+      uses: chainguard-dev/actions/kind-diag@86e8917a5f452c794e263fddae12d25a44b18f18 # v1.4.5

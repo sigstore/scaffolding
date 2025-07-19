@@ -58,12 +58,12 @@ runs:
       # Determine which version to install
       # - if version is "latest-release", look up latest release.
       # - otherwise, install the specified version.
-      case ${{ inputs.version }} in
+      case ${INPUTS_VERSION} in
       latest-release | main)
         tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/sigstore/scaffolding/releases/latest | jq -r '.tag_name')
         ;;
       *)
-        tag="${{ inputs.version }}"
+        tag="${INPUTS_VERSION}"
       esac
 
       # At release v0.5.0 we added support for TSA. Check if we're running
@@ -80,7 +80,7 @@ runs:
         exit 1
       fi
 
-      if [ ${{ inputs.sigstore-only }} == "false" ]; then
+      if [ ${INPUTS_SIGSTORE_ONLY} == "false" ]; then
         # Configure DockerHub mirror
         tmp=$(mktemp)
         if [ ! -f /etc/docker/daemon.json ]; then
@@ -92,7 +92,7 @@ runs:
 
         echo "Installing kind and knative using release"
 
-        if [ "${{ inputs.version }}" != "main" ]; then
+        if [ "${INPUTS_VERSION}" != "main" ]; then
           curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
         else
           cp ${{ github.action_path }}/../../hack/setup-kind.sh .
@@ -100,12 +100,12 @@ runs:
 
         chmod u+x ./setup-kind.sh
         ./setup-kind.sh \
-          --registry-url ${{ inputs.registry-name }}:${{ inputs.registry-port }} \
-          --cluster-suffix ${{ inputs.cluster-suffix }} \
-          --k8s-version ${{ inputs.k8s-version }} ${{ inputs.knative-version != '' && format('--knative-version {0}', inputs.knative-version) || '' }}
+          --registry-url ${INPUTS_REGISTRY_NAME}:${INPUTS_REGISTRY_PORT} \
+          --cluster-suffix ${INPUTS_CLUSTER_SUFFIX} \
+          --k8s-version ${INPUTS_K8S_VERSION} ${{ inputs.knative-version != '' && format('--knative-version {0}', inputs.knative-version) || '' }}
       fi
 
-      if [ "${{ inputs.version }}" != "main" ]; then
+      if [ "${INPUTS_VERSION}" != "main" ]; then
         echo "Installing sigstore scaffolding @ ${tag}"
         curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
       else
@@ -116,7 +116,7 @@ runs:
       sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
       chmod u+x /tmp/setup-scaffolding-from-release.sh
       cat /tmp/setup-scaffolding-from-release.sh
-      if [ "${{ inputs.version }}" != "main" ]; then
+      if [ "${INPUTS_VERSION}" != "main" ]; then
         /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
       else
         /tmp/setup-scaffolding-from-release.sh
@@ -125,7 +125,7 @@ runs:
       TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
       echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
       # Grab the trusted root
-      kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${{ inputs.working-directory }}/root.json
+      kubectl -n tuf-system get secrets tuf-root -ojsonpath='{.data.root}' | base64 -d > ${INPUTS_WORKING_DIRECTORY}/root.json
 
       # Make copy of the tuf root in the default namespace for tests
       kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
@@ -156,5 +156,11 @@ runs:
       echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
       echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
       echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
-
-
+    env:
+      INPUTS_VERSION: ${{ inputs.version }}
+      INPUTS_SIGSTORE_ONLY: ${{ inputs.sigstore-only }}
+      INPUTS_REGISTRY_NAME: ${{ inputs.registry-name }}
+      INPUTS_REGISTRY_PORT: ${{ inputs.registry-port }}
+      INPUTS_CLUSTER_SUFFIX: ${{ inputs.cluster-suffix }}
+      INPUTS_K8S_VERSION: ${{ inputs.k8s-version }}
+      INPUTS_WORKING_DIRECTORY: ${{ inputs.working-directory }}

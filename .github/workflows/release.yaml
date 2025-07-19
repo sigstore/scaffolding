@@ -7,6 +7,7 @@ on:
 
 jobs:
   release:
+  - name: Release
     runs-on: ubuntu-latest
 
     permissions:
@@ -25,6 +26,7 @@ jobs:
       with:
         fetch-depth: 1
         path: ./src/github.com/${{ github.repository }}
+        persist-credentials: false
 
     - uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
       with:

@@ -1,0 +1,31 @@
+name: Create Tink Keyset Test
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+    - 'cmd/create-tink-keyset/**'
+
+permissions:
+  contents: read
+
+jobs:
+  create-tink-keyset-test:
+    name: 'Build Create Tink Keyset'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: 'go.mod'
+          check-latest: true
+
+      - name: Create Tink Keyset build
+        id: create-tink-keyset-test
+        run: go build ./cmd/create-tink-keyset

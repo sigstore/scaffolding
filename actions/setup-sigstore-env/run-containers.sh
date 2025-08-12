@@ -14,7 +14,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-
 # <cmd> || return is so the script can exit early without quitting your shell.
 
 CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
@@ -22,16 +21,18 @@ CWD="$(pwd)"
 
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
-docker compose up --wait
-# the fakeoidc container's hostname must be the same, both from within fulcio and from this host machine.
-HOST="${HOST:-$(hostname)}"
-export OIDC_URL="http://${HOST}:8080"
+docker compose up --wait --build
+# Tokens will be created with this URL as the token issuer, so that Fulcio can make
+# requests to the fakeoidc container running in Fulcio's network,
+# which will be created later on.
+export ISSUER_URL="http://fakeoidc:8080"
+export OIDC_URL="http://localhost:8080"
 export FULCIO_CONFIG=$CLONE_DIR/fulcio-config.json
 cat <<EOF > "$FULCIO_CONFIG"
 {
   "OIDCIssuers": {
-    "$OIDC_URL": {
-      "IssuerURL": "$OIDC_URL",
+    "$ISSUER_URL": {
+      "IssuerURL": "$ISSUER_URL",
       "ClientID": "sigstore",
       "Type": "email"
     }
@@ -60,7 +61,7 @@ for owner_repo in "${OWNER_REPOS[@]}"; do
     else
         echo "'cd $repo && git pull'"
     fi
-done | xargs -P "$procs" -l1 bash -c
+done | xargs -P "$procs" -L1 bash -c
 export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
 
 echo "starting services"
@@ -68,15 +69,15 @@ export FULCIO_METRICS_PORT=2113
 for owner_repo in "${OWNER_REPOS[@]}"; do
     repo=$(basename "$owner_repo")
     echo "'cd $repo && docker compose up --wait'"
-done | xargs -P "$procs" -l1 bash -c
-# The OIDC service is not in the Fulcio docker compose project, so by default its networks are separate.
-# Connect the fakeoidc container to the Fulcio network to enable Fulcio to reach it for token verification.
-docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias "$HOST" fulcio_default fakeoidc || return
-export TSA_URL="http://${HOST}:3004"
+done | xargs -P "$procs" -L1 bash -c
+# The fakeoidc service is in a separate Docker network. Connect the fakeoidc container to the Fulcio
+# network to enable Fulcio to reach it for token verification.
+docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias fakeoidc fulcio_default fakeoidc || return
+export TSA_URL="http://localhost:3004"
 popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
-curl -o "$OIDC_TOKEN" "$OIDC_URL"/token || return
+curl -o "$OIDC_TOKEN" "$OIDC_URL/token" || return
 
 stop_services() {
   pushd ./fakeoidc || return

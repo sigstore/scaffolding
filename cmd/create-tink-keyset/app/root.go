@@ -17,13 +17,16 @@ package app
 import (
 	"bytes"
 	"context"
+	"crypto"
 	"crypto/ecdh"
 	"crypto/ed25519"
+	"crypto/x509"
+	"encoding/base64"
 	"log/slog"
 	"os"
 	"strings"
 
-	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/sigstore/rekor-tiles/pkg/note"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tink-crypto/tink-go-gcpkms/v2/integration/gcpkms"
@@ -39,9 +42,11 @@ Example command:
 
 go run ./cmd/create-tink-keyset \
   --key-template ED25519 \
+  --origin log2025-alpha1.rekor.sigstage.dev
   --out enc-keyset.cfg \
   --key-encryption-key-uri gcp-kms://projects/project/locations/us-west1/keyRings/keyring/cryptoKeys/keyname \
-  --public-key-out key.pem
+  --public-key-out pubkey.b64
+  --key-id-out logid.b64
 */
 
 var rootCmd = &cobra.Command{
@@ -51,6 +56,10 @@ var rootCmd = &cobra.Command{
 	Run: func(_ *cobra.Command, _ []string) {
 		if viper.GetString("key-template") == "" {
 			slog.Error("must provide --key-template for signing key algorithm")
+			os.Exit(1)
+		}
+		if viper.GetString("origin") == "" {
+			slog.Error("must provide --origin of log")
 			os.Exit(1)
 		}
 		kekURI := viper.GetString("key-encryption-key-uri")
@@ -70,20 +79,18 @@ var rootCmd = &cobra.Command{
 			slog.Error("must provide --public-key-out for output path of public key")
 			os.Exit(1)
 		}
+		if viper.GetString("key-id-out") == "" {
+			slog.Error("must provide --key-id-out for output path of checkpoint key ID")
+			os.Exit(1)
+		}
 
 		ctx := context.Background()
 
 		// Generate GCP KMS client
 		kmsClient, err := gcpkms.NewClientWithOptions(ctx, kekURI)
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 		kekAEAD, err := kmsClient.GetAEAD(kekURI)
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 
 		// Create keyset handle, which initializes the signing key based on the provided template
 		keyTemplate, ok := algToKeyTemplate[viper.GetString("key-template")]
@@ -92,74 +99,51 @@ var rootCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		newHandle, err := keyset.NewHandle(keyTemplate)
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 
 		// Encrypt signing key and generate keyset
 		buf := new(bytes.Buffer)
 		writer := keyset.NewJSONWriter(buf)
-		if err := newHandle.Write(writer, kekAEAD); err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		err = newHandle.Write(writer, kekAEAD)
+		must(err)
 
 		f, err := os.Create(viper.GetString("out"))
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 		defer f.Close()
 		_, err = f.Write(buf.Bytes())
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 
 		// Generate PEM-encoded public key
 		publicHandle, err := newHandle.Public()
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 		keyEntry, err := publicHandle.Primary()
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
-		var pemPubKey []byte
+		must(err)
+		var pubKey crypto.PublicKey
 		switch publicKey := keyEntry.Key().(type) {
 		case *tinked25519.PublicKey:
-			pemPubKey, err = cryptoutils.MarshalPublicKeyToPEM(ed25519.PublicKey(publicKey.KeyBytes()))
-			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-			}
+			pubKey = ed25519.PublicKey(publicKey.KeyBytes())
 		case *tinkecdsa.PublicKey:
 			curve := algToCurve[viper.GetString("key-template")]
-			pubKey, err := curve.NewPublicKey(publicKey.PublicPoint())
-			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-			}
-			pemPubKey, err = cryptoutils.MarshalPublicKeyToPEM(pubKey)
-			if err != nil {
-				slog.Error(err.Error())
-				os.Exit(1)
-			}
+			pubKey, err = curve.NewPublicKey(publicKey.PublicPoint())
+			must(err)
 		}
+		pkixPubKey, err := x509.MarshalPKIXPublicKey(pubKey)
+		must(err)
+		encodedPubKey := base64.StdEncoding.EncodeToString(pkixPubKey)
+
 		pubF, err := os.Create(viper.GetString("public-key-out"))
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		must(err)
 		defer pubF.Close()
-		_, err = pubF.Write(pemPubKey)
-		if err != nil {
-			slog.Error(err.Error())
-			os.Exit(1)
-		}
+		_, err = pubF.Write([]byte(encodedPubKey))
+		must(err)
+
+		_, logID, err := note.KeyHash(viper.GetString("origin"), pubKey)
+		must(err)
+		logIDF, err := os.Create(viper.GetString("key-id-out"))
+		must(err)
+		defer logIDF.Close()
+		_, err = logIDF.Write([]byte(base64.StdEncoding.EncodeToString(logID)))
+		must(err)
 
 		slog.Info("generated Tink keyset")
 	},
@@ -187,11 +171,20 @@ func Execute() {
 
 func init() {
 	rootCmd.Flags().String("key-template", "", "tink key template for the signing algorithm. Valid values are ED25519, ECDSA_P256, ECDSA_P384_SHA384, and ECDSA_P521")
+	rootCmd.Flags().String("origin", "", "origin of the log. Used to generate the checkpoint key ID")
 	rootCmd.Flags().String("key-encryption-key-uri", "", "Resource URI for the KMS key that encrypts the keyset. Only GCP is supported, and the URI must match gcp-kms://projects/*/locations/*/keyRings/*/cryptoKeys/*")
 	rootCmd.Flags().String("out", "", "output path for the encrypted keyset")
-	rootCmd.Flags().String("public-key-out", "", "output path for the PEM-encoded public key")
+	rootCmd.Flags().String("public-key-out", "", "output path for the encoded public key")
+	rootCmd.Flags().String("key-id-out", "", "output path for the checkpoint key ID")
 
 	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
+		slog.Error(err.Error())
+		os.Exit(1)
+	}
+}
+
+func must(err error) {
+	if err != nil {
 		slog.Error(err.Error())
 		os.Exit(1)
 	}

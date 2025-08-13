@@ -9,7 +9,7 @@ on:
       - 'actions/setup-sigstore-env/**'
 jobs:
   test:
-  - name: Test Sigstore setup
+    name: Test Sigstore setup
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
@@ -20,9 +20,9 @@ jobs:
       - uses: sigstore/cosign-installer@fb28c2b6339dcd94da6e4cbcbc5e888961f6f8c3 # v3.9.0
         with:
           cosign-release: main
-      - name: make test data
-        run: echo "gundam" > data.txt
-      - name: test-sign
+      - name: Create artifact to sign
+        run: head -c 128 < /dev/urandom > artifact
+      - name: Run cosign sign-blob
         env:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
           STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}
@@ -36,18 +36,17 @@ jobs:
             --new-bundle-format=true \
             --rekor-url http://localhost:3000 \
             --fulcio-url http://localhost:5555 \
-            --oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL} \
             --identity-token ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN} \
-            data.txt
-      - name: test-verify-with-trusted-root
+            artifact
+      - name: Run cosign verify-blob with trusted root
         run: |
           cosign verify-blob \
             --trusted-root ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT} \
             --bundle bundle.json \
             --new-bundle-format=true \
             --certificate-identity foo@bar.com \
-            --certificate-oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL} \
-            data.txt
+            --certificate-oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_ISSUER_URL} \
+            artifact
         env:
           STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT: ${{ steps.setup-sigstore-env.outputs.trusted-root }}
-          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}
+          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_ISSUER_URL: ${{ steps.setup-sigstore-env.outputs.issuer-url }}

@@ -63,9 +63,15 @@ func init() {
 }
 
 func token(w http.ResponseWriter, r *http.Request) {
-	log.Print("handling token")
+	log.Print("handling /token")
+	// Hardcode the issuer unless a different issuer is requested.
+	// This is a workaround for supporting this environment on macOS.
+	issuer := r.URL.Query().Get("issuer")
+	if issuer == "" {
+		issuer = "http://fakeoidc:8080"
+	}
 	token, err := jwt.Signed(signer).Claims(jwt.Claims{
-		Issuer:   fmt.Sprintf("http://%s", r.Host),
+		Issuer:   issuer,
 		IssuedAt: jwt.NewNumericDate(time.Now()),
 		Expiry:   jwt.NewNumericDate(time.Now().Add(30 * time.Minute)),
 		Subject:  "foo@bar.com",
@@ -81,7 +87,7 @@ func token(w http.ResponseWriter, r *http.Request) {
 }
 
 func keys(w http.ResponseWriter, r *http.Request) {
-	log.Print("handling keys")
+	log.Print("handling /keys")
 	keys, err := json.Marshal(jose.JSONWebKeySet{
 		Keys: []jose.JSONWebKey{
 			jwk.Public(),
@@ -95,7 +101,7 @@ func keys(w http.ResponseWriter, r *http.Request) {
 }
 
 func wellKnown(w http.ResponseWriter, r *http.Request) {
-	log.Print("handling discovery")
+	log.Print("handling /.well-known/openid-configuration")
 	issuer := fmt.Sprintf("http://%s", r.Host)
 	cfg, err := json.Marshal(config{
 		Issuer:  issuer,

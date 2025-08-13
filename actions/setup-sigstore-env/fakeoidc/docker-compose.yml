@@ -14,15 +14,15 @@
 
 services:
   fakeoidc:
-    container_name: fakeoidc # hardcode the container name
+    container_name: fakeoidc
     build:
       context: .
-    restart: always # keep the server running
+    restart: always
     ports:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "wget", "-O", "/dev/null", "http://localhost:8080/.well-known/openid-configuration"]
-      interval: 10s
+      interval: 5s
       timeout: 3s
       retries: 3
       start_period: 5s

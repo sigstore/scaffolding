@@ -20,6 +20,9 @@ outputs:
   oidc-url:
     description: The url of the OIDC provider.
     value: ${{ steps.run-containers.outputs.oidc-url }}
+  issuer-url:
+    description: The url of the OIDC issuer, e.g. the fake OIDC container name.
+    value: ${{ steps.run-containers.outputs.issuer-url }}
   tsa-url:
     description: The url of the Timestamp Authority (TSA).
     value: ${{ steps.run-containers.outputs.tsa-url }}
@@ -55,6 +58,9 @@ runs:
 
         echo "OIDC_URL=$OIDC_URL" >> "$GITHUB_ENV"
         echo "oidc-url=$OIDC_URL" >> "$GITHUB_OUTPUT"
+
+        echo "ISSUER_URL=$ISSUER_URL" >> "$GITHUB_ENV"
+        echo "issuer-url=$ISSUER_URL" >> "$GITHUB_OUTPUT"
 
         echo "TSA_URL=$TSA_URL" >> "$GITHUB_ENV"
         echo "tsa-url=$TSA_URL" >> "$GITHUB_OUTPUT"

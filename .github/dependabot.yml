@@ -4,6 +4,7 @@ updates:
   directories:
     - "/"
     - "/config/**/*"
+    - "/actions/setup-sigstore-env"
   schedule:
     interval: weekly
   ignore:

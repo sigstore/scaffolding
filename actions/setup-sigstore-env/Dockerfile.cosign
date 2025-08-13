@@ -12,8 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# We use this dockerfile for cosign so that Github's dependabot can autoupdate.
-
-FROM ghcr.io/sigstore/cosign/cosign:v2.5.2@sha256:23d07b53d59a1233e1ab5e7d082cf4182fc90067d2f86a662ba3003215cb0c95
+# Use Cosign from a container so that Dependabot will keep the dependency up to date
+FROM ghcr.io/sigstore/cosign/cosign:v2.5.3@sha256:f1946d0f30fc8e3777b02f2201e02efdba9fe38f4918162f937052fac98e083f
 
 ENTRYPOINT [ "cosign" ]

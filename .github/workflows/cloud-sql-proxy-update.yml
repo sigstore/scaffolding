@@ -8,7 +8,7 @@ permissions: {}
 
 jobs:
   update:
-  - name: Update cloud-sql-proxy
+    name: Update cloud-sql-proxy
     runs-on: ubuntu-latest
     if: github.event.label.name == 'cloud-sql-proxy'
     permissions:

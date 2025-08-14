@@ -39,11 +39,15 @@ import (
 	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"sigs.k8s.io/release-utils/version"
 
 	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
 	_ "github.com/sigstore/cosign/v2/pkg/providers/all"
+	prototrustroot "github.com/sigstore/protobuf-specs/gen/pb-go/trustroot/v1"
+	"github.com/sigstore/sigstore-go/pkg/root"
+	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
@@ -104,31 +108,34 @@ func encodeLevel() zapcore.LevelEncoder {
 }
 
 var (
-	logStyle       string
-	frequency      int
-	retries        uint
-	addr           string
-	rekorURL       string
-	fulcioURL      string
-	fulcioGrpcURL  string
-	tsaURL         string
-	oneTime        bool
-	runWriteProber bool
-	versionInfo    version.Info
+	sc              *root.SigningConfig
+	err             error
+	env             string
+	scPath          string
+	logStyle        string
+	frequency       int
+	retries         uint
+	addr            string
+	rekorV1URLs     []string
+	fulcioService   root.Service
+	rekorV1Services []root.Service
+	fulcioURL       string
+	fulcioGrpcURL   string
+	tsaServices     []root.Service
+	tsaURLs         []string
+	oneTime         bool
+	runWriteProber  bool
+	versionInfo     version.Info
 )
 
 type attemptCtxKey string
 
 func init() {
+	flag.StringVar(&scPath, "signing-config", "", "Path to the signing config")
+	flag.StringVar(&env, "env", "staging", "Environment to run in (prod or staging)")
 	flag.IntVar(&frequency, "frequency", 10, "How often to run probers (in seconds)")
 	flag.StringVar(&logStyle, "logStyle", "prod", "log style to use (dev or prod)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
-
-	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
-	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
-	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
-
-	flag.StringVar(&tsaURL, "tsa-url", "https://timestamp.sigstore.dev", "Set to the TSA URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
@@ -142,6 +149,55 @@ func init() {
 	flag.UintVar(&retries, "retry", 4, "maximum number of retries before marking HTTP request as failed")
 
 	flag.Parse()
+
+	if scPath != "" {
+		sc, err = root.NewSigningConfigFromPath(scPath)
+	} else {
+		switch env {
+		case "prod":
+			sc, err = root.FetchSigningConfig()
+		case "staging":
+			opts := tuf.DefaultOptions()
+			opts.Root = tuf.StagingRoot()
+			opts.RepositoryBaseURL = tuf.StagingMirror
+			sc, err = root.FetchSigningConfigWithOptions(opts)
+		default:
+			log.Fatalf("invalid env %q, must be 'prod' or 'staging'", env)
+		}
+	}
+
+	if err != nil {
+		log.Fatal("Failed to fetch signing config: ", err)
+	}
+
+	rekorV1Services, err = root.SelectServices(sc.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL, Count: 0}, []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select Rekor services: ", err)
+	}
+	rekorV1URLs = mapServicesToURLs(rekorV1Services)
+
+	fulcioService, err = root.SelectService(sc.FulcioCertificateAuthorityURLs(), []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select Fulcio service: ", err)
+	}
+	fulcioURL = fulcioService.URL
+
+	fulcioGrpcURL = fulcioURL
+	if strings.HasPrefix(fulcioGrpcURL, "https://") {
+		fulcioGrpcURL = strings.TrimPrefix(fulcioGrpcURL, "https://")
+	} else if strings.HasPrefix(fulcioGrpcURL, "http://") {
+		fulcioGrpcURL = strings.TrimPrefix(fulcioGrpcURL, "http://")
+	}
+	// Change port for local testing
+	if fulcioGrpcURL == "localhost:5555" {
+		fulcioGrpcURL = "localhost:5554"
+	}
+
+	tsaServices, err = root.SelectServices(sc.TimestampAuthorityURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL, Count: 0}, []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select TSA services: ", err)
+	}
+	tsaURLs = mapServicesToURLs(tsaServices)
 
 	ConfigureLogger(logStyle)
 	retryableClient = retryablehttp.NewClient()
@@ -209,8 +265,15 @@ func NewFulcioGrpcClient() (fulciopb.CAClient, error) {
 		grpcHostname = fulcioGrpcURL[:idx]
 	}
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
-	transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
-	opts = append(opts, grpc.WithTransportCredentials(transportCreds))
+
+	// Use insecure transport for local testing
+	if strings.HasPrefix(grpcHostname, "localhost") {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
+		opts = append(opts, grpc.WithTransportCredentials(transportCreds))
+	}
+
 	conn, err := grpc.NewClient(fulcioGrpcURL, opts...)
 	if err != nil {
 		return nil, err
@@ -222,21 +285,24 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	for {
 		hasErr := false
 
-		// populate shard-specific reads from Rekor endpoint
-		rekorEndpointsUnderTest, err := determineRekorShardCoverage(rekorURL)
-		if err != nil {
-			hasErr = true
-			Logger.Errorf("error determining shard coverage: %v", err)
-		}
-
-		rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
-
-		for _, r := range rekorEndpointsUnderTest {
-			if err := observeRequest(rekorURL, r); err != nil {
+		for _, u := range rekorV1URLs {
+			// populate shard-specific reads from Rekor endpoint
+			rekorEndpointsUnderTest, err := determineRekorShardCoverage(u)
+			if err != nil {
 				hasErr = true
-				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				Logger.Errorf("error determining shard coverage: %v", err)
+			}
+
+			rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
+
+			for _, r := range rekorEndpointsUnderTest {
+				if err := observeRequest(u, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
 			}
 		}
+
 		for _, r := range FulcioEndpoints {
 			if err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
@@ -244,15 +310,17 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
-		for _, r := range TSAEndpoints {
-			if err := observeRequest(tsaURL, r); err != nil {
-				hasErr = true
-				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+		for _, u := range tsaURLs {
+			for _, r := range TSAEndpoints {
+				if err := observeRequest(u, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
 			}
 		}
 
 		// Performing requests for GetTrustBundle against Fulcio gRPC API
-		if err := observeGrcpGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
+		if err := observeGrpcGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
 			hasErr = true
 			Logger.Errorf("error running request %s: %v", "GetTrustBundle", err)
 		}
@@ -325,7 +393,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	return nil
 }
 
-func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
+func observeGrpcGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
 	s := time.Now()
 	_, err := fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{})
 
@@ -347,6 +415,14 @@ func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error)
 	}
 	req.URL.RawQuery = q.Encode()
 	return req, nil
+}
+
+func mapServicesToURLs(services []root.Service) []string {
+	urls := make([]string, len(services))
+	for i, s := range services {
+		urls[i] = s.URL
+	}
+	return urls
 }
 
 // determineRekorShardCoverage adds shard-specific reads to ensure we have coverage across all backing logs

@@ -243,52 +243,64 @@ func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath s
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
 func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
-	verified := "false"
-	endpoint := rekorEndpoint
-	hostPath := rekorURL + endpoint
-	defer func() {
-		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
-	}()
-	var resp *http.Response
-	var latency int64
-	var err error
-	// A new body should be created when it is conflicted
-	for i := 1; i < 10; i++ {
-		resp, latency, err = makeRekorRequest(cert, priv, hostPath)
-		if err != nil {
-			return fmt.Errorf("error adding entry: %w", err)
+	var lastErr error
+	for _, baseURL := range rekorV1URLs {
+		verified := "false"
+		endpoint := rekorEndpoint
+		hostPath := baseURL + endpoint
+		defer func() {
+			verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+		}()
+		var resp *http.Response
+		var latency int64
+		var err error
+		// A new body should be created when it is conflicted
+		for i := 1; i < 10; i++ {
+			resp, latency, err = makeRekorRequest(cert, priv, hostPath)
+			if err != nil {
+				lastErr = fmt.Errorf("error adding entry: %w", err)
+				break
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusConflict {
+				break
+			}
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusConflict {
+		if err != nil {
+			continue
+		}
+		exportDataToPrometheus(resp, baseURL, endpoint, POST, latency)
+
+		if resp.StatusCode != http.StatusCreated {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
+			continue
+		}
+		// If entry was added successfully, we should verify it
+		var logEntry models.LogEntry
+		err = json.NewDecoder(resp.Body).Decode(&logEntry)
+		if err != nil {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
+			continue
+		}
+		var logEntryAnon models.LogEntryAnon
+		for _, e := range logEntry {
+			logEntryAnon = e
 			break
 		}
+		rekorPubKeys, err := cosign.GetRekorPubs(ctx)
+		if err != nil {
+			lastErr = fmt.Errorf("getting rekor public keys: %w", err)
+			continue
+		}
+		if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
+			verified = "true"
+			return nil
+		}
+		lastErr = err
 	}
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
-	if resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
-	}
-	// If entry was added successfully, we should verify it
-	var logEntry models.LogEntry
-	err = json.NewDecoder(resp.Body).Decode(&logEntry)
-	if err != nil {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
-	}
-	var logEntryAnon models.LogEntryAnon
-	for _, e := range logEntry {
-		logEntryAnon = e
-		break
-	}
-	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
-	if err != nil {
-		return fmt.Errorf("getting rekor public keys: %w", err)
-	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
-		verified = "true"
-	}
-	return err
+	return lastErr
 }
 
 func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {

@@ -78,6 +78,7 @@ popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
 curl -o "$OIDC_TOKEN" "$OIDC_URL/token" || return
+export SIGSTORE_ID_TOKEN="$(cat "$OIDC_TOKEN")"
 
 stop_services() {
   pushd ./fakeoidc || return

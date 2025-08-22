@@ -28,6 +28,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
+	"strings"
 	"time"
 
 	"github.com/go-openapi/strfmt"
@@ -85,13 +87,23 @@ func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
 
 // fulcioWriteLegacyEndpoint tests the /api/v1/signingCert write endpoint for Fulcio.
 func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
-	if !all.Enabled(ctx) {
-		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
+	if local {
+		tokPath := os.Getenv("OIDC_TOKEN")
+		tokBytes, err := os.ReadFile(tokPath)
+		if err != nil {
+			Logger.Fatalf("failed to read OIDC token from file: %v", err)
+		}
+		tok = strings.TrimSpace(string(tokBytes))
+	} else {
+		if !all.Enabled(ctx) {
+			return nil, fmt.Errorf("no auth provider for fulcio is enabled")
+		}
+		tok, err = providers.Provide(ctx, "sigstore")
+		if err != nil {
+			return nil, fmt.Errorf("getting provider: %w", err)
+		}
 	}
-	tok, err := providers.Provide(ctx, "sigstore")
-	if err != nil {
-		return nil, fmt.Errorf("getting provider: %w", err)
-	}
+
 	b, err := legacyCertificateRequest(ctx, tok, priv)
 	if err != nil {
 		return nil, fmt.Errorf("certificate response: %w", err)
@@ -153,13 +165,23 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 
 // fulcioWriteEndpoint tests the /api/v2/signingCert write endpoint for Fulcio.
 func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
-	if !all.Enabled(ctx) {
-		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
+	if local {
+		tokPath := os.Getenv("OIDC_TOKEN")
+		tokBytes, err := os.ReadFile(tokPath)
+		if err != nil {
+			Logger.Fatalf("failed to read OIDC token from file: %v", err)
+		}
+		tok = strings.TrimSpace(string(tokBytes))
+	} else {
+		if !all.Enabled(ctx) {
+			return nil, fmt.Errorf("no auth provider for fulcio is enabled")
+		}
+		tok, err = providers.Provide(ctx, "sigstore")
+		if err != nil {
+			return nil, fmt.Errorf("getting provider: %w", err)
+		}
 	}
-	tok, err := providers.Provide(ctx, "sigstore")
-	if err != nil {
-		return nil, fmt.Errorf("getting provider: %w", err)
-	}
+
 	b, err := certificateRequest(ctx, tok, priv)
 	if err != nil {
 		return nil, fmt.Errorf("certificate response: %w", err)
@@ -243,52 +265,64 @@ func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath s
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
 func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
-	verified := "false"
-	endpoint := rekorEndpoint
-	hostPath := rekorURL + endpoint
-	defer func() {
-		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
-	}()
-	var resp *http.Response
-	var latency int64
-	var err error
-	// A new body should be created when it is conflicted
-	for i := 1; i < 10; i++ {
-		resp, latency, err = makeRekorRequest(cert, priv, hostPath)
-		if err != nil {
-			return fmt.Errorf("error adding entry: %w", err)
+	var lastErr error
+	for _, baseURL := range rekorV1URLs {
+		verified := "false"
+		endpoint := rekorEndpoint
+		hostPath := baseURL + endpoint
+		defer func() {
+			verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+		}()
+		var resp *http.Response
+		var latency int64
+		var err error
+		// A new body should be created when it is conflicted
+		for i := 1; i < 10; i++ {
+			resp, latency, err = makeRekorRequest(cert, priv, hostPath)
+			if err != nil {
+				lastErr = fmt.Errorf("error adding entry: %w", err)
+				break
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusConflict {
+				break
+			}
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusConflict {
+		if err != nil {
+			continue
+		}
+		exportDataToPrometheus(resp, baseURL, endpoint, POST, latency)
+
+		if resp.StatusCode != http.StatusCreated {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
+			continue
+		}
+		// If entry was added successfully, we should verify it
+		var logEntry models.LogEntry
+		err = json.NewDecoder(resp.Body).Decode(&logEntry)
+		if err != nil {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
+			continue
+		}
+		var logEntryAnon models.LogEntryAnon
+		for _, e := range logEntry {
+			logEntryAnon = e
 			break
 		}
+		rekorPubKeys, err := cosign.GetRekorPubs(ctx)
+		if err != nil {
+			lastErr = fmt.Errorf("getting rekor public keys: %w", err)
+			continue
+		}
+		if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
+			verified = "true"
+			return nil
+		}
+		lastErr = err
 	}
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
-	if resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
-	}
-	// If entry was added successfully, we should verify it
-	var logEntry models.LogEntry
-	err = json.NewDecoder(resp.Body).Decode(&logEntry)
-	if err != nil {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
-	}
-	var logEntryAnon models.LogEntryAnon
-	for _, e := range logEntry {
-		logEntryAnon = e
-		break
-	}
-	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
-	if err != nil {
-		return fmt.Errorf("getting rekor public keys: %w", err)
-	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
-		verified = "true"
-	}
-	return err
+	return lastErr
 }
 
 func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {
@@ -348,13 +382,18 @@ func certificateRequest(_ context.Context, idToken string, priv *ecdsa.PrivateKe
 		return nil, err
 	}
 
-	tok, err := oauthflow.OIDConnect(defaultOIDCIssuer, defaultOIDCClientID, "", "", &oauthflow.StaticTokenGetter{RawToken: idToken})
-	if err != nil {
-		return nil, err
+	var h [32]byte
+	if !local {
+		tok, err := oauthflow.OIDConnect(defaultOIDCIssuer, defaultOIDCClientID, "", "", &oauthflow.StaticTokenGetter{RawToken: idToken})
+		if err != nil {
+			return nil, err
+		}
+		// Sign the email address as part of the request
+		h = sha256.Sum256([]byte(tok.Subject))
+	} else {
+		// Sign the email address as part of the request
+		h = sha256.Sum256([]byte("foo@bar.com"))
 	}
-
-	// Sign the email address as part of the request
-	h := sha256.Sum256([]byte(tok.Subject))
 	proof, err := ecdsa.SignASN1(rand.Reader, priv, h[:])
 	if err != nil {
 		return nil, err
@@ -378,13 +417,18 @@ func legacyCertificateRequest(_ context.Context, idToken string, priv *ecdsa.Pri
 		return nil, err
 	}
 
-	tok, err := oauthflow.OIDConnect(defaultOIDCIssuer, defaultOIDCClientID, "", "", &oauthflow.StaticTokenGetter{RawToken: idToken})
-	if err != nil {
-		return nil, err
+	var h [32]byte
+	if !local {
+		tok, err := oauthflow.OIDConnect(defaultOIDCIssuer, defaultOIDCClientID, "", "", &oauthflow.StaticTokenGetter{RawToken: idToken})
+		if err != nil {
+			return nil, err
+		}
+		// Sign the email address as part of the request
+		h = sha256.Sum256([]byte(tok.Subject))
+	} else {
+		// Sign the email address as part of the request
+		h = sha256.Sum256([]byte("foo@bar.com"))
 	}
-
-	// Sign the email address as part of the request
-	h := sha256.Sum256([]byte(tok.Subject))
 	proof, err := ecdsa.SignASN1(rand.Reader, priv, h[:])
 	if err != nil {
 		return nil, err

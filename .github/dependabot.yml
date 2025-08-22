@@ -11,7 +11,7 @@ updates:
     - dependency-name: "cloud-sql-connectors/cloud-sql-proxy*"
 - package-ecosystem: docker
   directories:
-    - "/"
+    - "/deps"
   schedule:
     interval: weekly
   allow:

@@ -41,6 +41,7 @@ import (
 	"github.com/sigstore/cosign/v2/pkg/providers"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
+	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -84,7 +85,7 @@ func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
 }
 
 // fulcioWriteLegacyEndpoint tests the /api/v1/signingCert write endpoint for Fulcio.
-func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
@@ -99,7 +100,7 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 
 	// Construct the API endpoint for this handler
 	endpoint := fulcioLegacyEndpoint
-	hostPath := fulcioURL + endpoint
+	hostPath := fulcioService.URL + endpoint
 
 	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
@@ -147,12 +148,12 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
+	exportDataToPrometheus(resp, fulcioService.URL, endpoint, POST, latency)
 	return cert[0], nil
 }
 
 // fulcioWriteEndpoint tests the /api/v2/signingCert write endpoint for Fulcio.
-func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
@@ -167,7 +168,7 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 
 	// Construct the API endpoint for this handler
 	endpoint := fulcioEndpoint
-	hostPath := fulcioURL + endpoint
+	hostPath := fulcioService.URL + endpoint
 
 	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
@@ -217,7 +218,7 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
+	exportDataToPrometheus(resp, fulcioService.URL, endpoint, POST, latency)
 	return cert[0], nil
 }
 
@@ -242,53 +243,60 @@ func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath s
 // /api/v1/log/entries and adds an entry to the log
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
-func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
-	verified := "false"
-	endpoint := rekorEndpoint
-	hostPath := rekorURL + endpoint
-	defer func() {
-		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
-	}()
-	var resp *http.Response
-	var latency int64
-	var err error
-	// A new body should be created when it is conflicted
-	for i := 1; i < 10; i++ {
-		resp, latency, err = makeRekorRequest(cert, priv, hostPath)
-		if err != nil {
-			return fmt.Errorf("error adding entry: %w", err)
+func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey, rekorV1Services []root.Service, trustedRoot *root.TrustedRoot) error {
+	var lastErr error
+	for _, s := range rekorV1Services {
+		verified := "false"
+		endpoint := rekorEndpoint
+		hostPath := s.URL + endpoint
+		defer func() {
+			verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+		}()
+		var resp *http.Response
+		var latency int64
+		var err error
+		// A new body should be created when it is conflicted
+		for i := 1; i < 10; i++ {
+			resp, latency, err = makeRekorRequest(cert, priv, hostPath)
+			if err != nil {
+				lastErr = fmt.Errorf("error adding entry: %w", err)
+				break
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusConflict {
+				break
+			}
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusConflict {
+		if err != nil || resp == nil {
+			continue
+		}
+		exportDataToPrometheus(resp, s.URL, endpoint, POST, latency)
+
+		if resp.StatusCode != http.StatusCreated {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("invalid status code '%s' when creating entry in rekor: '%s'", resp.Status, string(body))
+			continue
+		}
+		// If entry was added successfully, we should verify it
+		var logEntry models.LogEntry
+		err = json.NewDecoder(resp.Body).Decode(&logEntry)
+		if err != nil {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
+			continue
+		}
+		var logEntryAnon models.LogEntryAnon
+		for _, e := range logEntry {
+			logEntryAnon = e
 			break
 		}
+		if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, nil, trustedRoot); err == nil {
+			verified = "true"
+			return nil
+		}
+		lastErr = err
 	}
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
-	if resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
-	}
-	// If entry was added successfully, we should verify it
-	var logEntry models.LogEntry
-	err = json.NewDecoder(resp.Body).Decode(&logEntry)
-	if err != nil {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
-	}
-	var logEntryAnon models.LogEntryAnon
-	for _, e := range logEntry {
-		logEntryAnon = e
-		break
-	}
-	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
-	if err != nil {
-		return fmt.Errorf("getting rekor public keys: %w", err)
-	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
-		verified = "true"
-	}
-	return err
+	return lastErr
 }
 
 func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {

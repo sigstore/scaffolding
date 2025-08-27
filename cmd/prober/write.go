@@ -160,7 +160,7 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulc
 }
 
 // fulcioWriteEndpoint tests the /api/v2/signingCert write endpoint for Fulcio.
-func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service) (*x509.Certificate, error) {
+func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service, trustedRoot *root.TrustedRoot) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
@@ -208,9 +208,26 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioServ
 		Logger.Errorf("error parsing response from Fulcio: %v", err)
 		return nil, err
 	}
-	if len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates) != 3 {
-		Logger.Errorf("unexpected number of certificates, got %d, expected 3",
-			len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates))
+
+	var activeCA *root.FulcioCertificateAuthority
+	now := time.Now()
+	for _, ca := range trustedRoot.FulcioCertificateAuthorities() {
+		if fulcioCA, ok := ca.(*root.FulcioCertificateAuthority); ok {
+			isActive := now.After(fulcioCA.ValidityPeriodStart) && (fulcioCA.ValidityPeriodEnd.IsZero() || now.Before(fulcioCA.ValidityPeriodEnd))
+			if fulcioCA.URI == fulcioService.URL && isActive {
+				activeCA = fulcioCA
+				break
+			}
+		}
+	}
+	if activeCA == nil {
+		return nil, fmt.Errorf("could not find an active Fulcio CA for URI %s in trusted root", fulcioService.URL)
+	}
+
+	fulcioExpectedCertCount := len(activeCA.Intermediates) + 2 // leaf + intermediates + root
+	fulcioRespCertCount := len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates)
+	if fulcioRespCertCount != fulcioExpectedCertCount {
+		err := fmt.Errorf("unexpected number of certificates, got %d, expected %d", fulcioRespCertCount, fulcioExpectedCertCount)
 		return nil, err
 	}
 

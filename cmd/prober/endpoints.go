@@ -41,10 +41,6 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 		Endpoint: "/api/v1/log",
 		Method:   GET,
 	}, {
-		Endpoint: "/api/v1/log/proof",
-		Method:   GET,
-		Queries:  map[string]string{"firstSize": "10", "lastSize": "20"},
-	}, {
 		Endpoint: "/api/v1/log/entries/retrieve",
 		Method:   POST,
 		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),

@@ -201,9 +201,10 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioServ
 		Logger.Errorf("error parsing response from Fulcio: %v", err)
 		return nil, err
 	}
-	if len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates) != 3 {
-		Logger.Errorf("unexpected number of certificates, got %d, expected 3",
-			len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates))
+	if len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates) != fulcioCertCount {
+		err := fmt.Errorf("unexpected number of certificates, got %d, expected %d",
+			len(fulcioResp.CertificatesWithSct.CertificateChain.Certificates), fulcioCertCount)
+		Logger.Error(err)
 		return nil, err
 	}
 

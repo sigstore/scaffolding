@@ -36,19 +36,33 @@ import (
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/status"
-	"sigs.k8s.io/release-utils/version"
-
 	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
 	_ "github.com/sigstore/cosign/v2/pkg/providers/all"
+	fulciopb "github.com/sigstore/fulcio/pkg/generated/protobuf"
+	prototrustroot "github.com/sigstore/protobuf-specs/gen/pb-go/trustroot/v1"
+	"github.com/sigstore/sigstore-go/pkg/root"
+	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
+	"sigs.k8s.io/release-utils/version"
 )
 
 var retryableClient *retryablehttp.Client
+
+// this is copied from sigstore/rekor/openapi.yaml here without imports to keep this light
+type InactiveShards struct {
+	TreeID   string `json:"treeID"`
+	TreeSize int    `json:"treeSize"`
+}
+
+type LogInfo struct {
+	TreeSize       int              `json:"treeSize"`
+	InactiveShards []InactiveShards `json:"inactiveShards"`
+}
 
 type proberLogger struct {
 	*zap.SugaredLogger
@@ -104,31 +118,38 @@ func encodeLevel() zapcore.LevelEncoder {
 }
 
 var (
-	logStyle       string
-	frequency      int
-	retries        uint
-	addr           string
-	rekorURL       string
-	fulcioURL      string
-	fulcioGrpcURL  string
-	tsaURL         string
-	oneTime        bool
-	runWriteProber bool
-	versionInfo    version.Info
+	sc              *root.SigningConfig
+	tr              *root.TrustedRoot
+	err             error
+	env             string
+	scPath          string
+	trPath          string
+	logStyle        string
+	frequency       int
+	retries         uint
+	addr            string
+	rekorV1URLs     []string
+	fulcioService   root.Service
+	rekorV1Services []root.Service
+	fulcioURL       string
+	fulcioGrpcURL   string
+	tsaServices     []root.Service
+	tsaURLs         []string
+	oneTime         bool
+	runWriteProber  bool
+	versionInfo     version.Info
+	local           bool
 )
 
 type attemptCtxKey string
 
 func init() {
+	flag.StringVar(&scPath, "signing-config", "", "Path to the signing config")
+	flag.StringVar(&trPath, "trusted-root", "", "Path to the trusted root")
+	flag.StringVar(&env, "env", "prod", "Environment to run in (prod or staging)")
 	flag.IntVar(&frequency, "frequency", 10, "How often to run probers (in seconds)")
 	flag.StringVar(&logStyle, "logStyle", "prod", "log style to use (dev or prod)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
-
-	flag.StringVar(&rekorURL, "rekor-url", "https://rekor.sigstore.dev", "Set to the Rekor URL to run probers against")
-	flag.StringVar(&fulcioURL, "fulcio-url", "https://fulcio.sigstore.dev", "Set to the Fulcio URL to run probers against")
-	flag.StringVar(&fulcioGrpcURL, "fulcio-grpc-url", "fulcio.sigstore.dev", "Set to the Fulcio GRPC URL to run probers against")
-
-	flag.StringVar(&tsaURL, "tsa-url", "https://timestamp.sigstore.dev", "Set to the TSA URL to run probers against")
 
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit.")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints.")
@@ -141,7 +162,78 @@ func init() {
 
 	flag.UintVar(&retries, "retry", 4, "maximum number of retries before marking HTTP request as failed")
 
+	flag.BoolVar(&local, "local", false, "whether running in local mode")
+
 	flag.Parse()
+
+	if scPath != "" {
+		sc, err = root.NewSigningConfigFromPath(scPath)
+	} else {
+		switch env {
+		case "prod":
+			sc, err = root.FetchSigningConfig()
+		case "staging":
+			opts := tuf.DefaultOptions()
+			opts.Root = tuf.StagingRoot()
+			opts.RepositoryBaseURL = tuf.StagingMirror
+			sc, err = root.FetchSigningConfigWithOptions(opts)
+		default:
+			log.Fatalf("invalid env %q, must be 'prod' or 'staging'", env)
+		}
+	}
+
+	if trPath != "" {
+		tr, err = root.NewTrustedRootFromPath(trPath)
+		if err != nil {
+			log.Fatal("Failed to load trusted root: ", err)
+		}
+	} else {
+		switch env {
+		case "prod":
+			tr, err = root.FetchTrustedRoot()
+		case "staging":
+			opts := tuf.DefaultOptions()
+			opts.Root = tuf.StagingRoot()
+			opts.RepositoryBaseURL = tuf.StagingMirror
+			tr, err = root.FetchTrustedRootWithOptions(opts)
+		default:
+			log.Fatalf("invalid env %q, must be 'prod' or 'staging'", env)
+		}
+	}
+
+	if err != nil {
+		log.Fatal("Failed to fetch signing config: ", err)
+	}
+
+	rekorV1Services, err = root.SelectServices(sc.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL, Count: 0}, []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select Rekor services: ", err)
+	}
+	rekorV1URLs = mapServicesToURLs(rekorV1Services)
+
+	fulcioService, err = root.SelectService(sc.FulcioCertificateAuthorityURLs(), []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select Fulcio service: ", err)
+	}
+	fulcioURL = fulcioService.URL
+
+	fulcioGrpcURL = fulcioURL
+	if strings.HasPrefix(fulcioGrpcURL, "https://") {
+		fulcioGrpcURL = strings.TrimPrefix(fulcioGrpcURL, "https://")
+	} else if strings.HasPrefix(fulcioGrpcURL, "http://") {
+		fulcioGrpcURL = strings.TrimPrefix(fulcioGrpcURL, "http://")
+	}
+	// Change port for local testing
+	// TODO: Take GRPC port as flag (default is no change)
+	if fulcioGrpcURL == "localhost:5555" {
+		fulcioGrpcURL = "localhost:5554"
+	}
+
+	tsaServices, err = root.SelectServices(sc.TimestampAuthorityURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL, Count: 0}, []uint32{1}, time.Now())
+	if err != nil {
+		log.Fatal("Failed to select TSA services: ", err)
+	}
+	tsaURLs = mapServicesToURLs(tsaServices)
 
 	ConfigureLogger(logStyle)
 	retryableClient = retryablehttp.NewClient()
@@ -209,8 +301,15 @@ func NewFulcioGrpcClient() (fulciopb.CAClient, error) {
 		grpcHostname = fulcioGrpcURL[:idx]
 	}
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
-	transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
-	opts = append(opts, grpc.WithTransportCredentials(transportCreds))
+
+	// Use insecure transport for local testing
+	if strings.HasPrefix(grpcHostname, "localhost") {
+		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	} else {
+		transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
+		opts = append(opts, grpc.WithTransportCredentials(transportCreds))
+	}
+
 	conn, err := grpc.NewClient(fulcioGrpcURL, opts...)
 	if err != nil {
 		return nil, err
@@ -222,21 +321,32 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	for {
 		hasErr := false
 
-		// populate shard-specific reads from Rekor endpoint
-		rekorEndpointsUnderTest, err := determineRekorShardCoverage(rekorURL)
-		if err != nil {
-			hasErr = true
-			Logger.Errorf("error determining shard coverage: %v", err)
-		}
-
-		rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
-
-		for _, r := range rekorEndpointsUnderTest {
-			if err := observeRequest(rekorURL, r); err != nil {
+		for _, u := range rekorV1URLs {
+			// populate shard-specific reads from Rekor endpoint
+			rekorEndpointsUnderTest, logInfo, err := determineRekorShardCoverage(u)
+			if err != nil {
 				hasErr = true
-				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				Logger.Errorf("error determining shard coverage: %v", err)
+			}
+
+			if logInfo != nil && logInfo.TreeSize >= 2 {
+				rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ReadProberCheck{
+					Endpoint: "/api/v1/log/proof",
+					Method:   "GET",
+					Queries:  map[string]string{"firstSize": "1", "lastSize": strconv.Itoa(logInfo.TreeSize)},
+				})
+			}
+
+			rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
+
+			for _, r := range rekorEndpointsUnderTest {
+				if err := observeRequest(u, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
 			}
 		}
+
 		for _, r := range FulcioEndpoints {
 			if err := observeRequest(fulcioURL, r); err != nil {
 				hasErr = true
@@ -244,15 +354,17 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			}
 		}
 
-		for _, r := range TSAEndpoints {
-			if err := observeRequest(tsaURL, r); err != nil {
-				hasErr = true
-				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+		for _, u := range tsaURLs {
+			for _, r := range TSAEndpoints {
+				if err := observeRequest(u, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
 			}
 		}
 
 		// Performing requests for GetTrustBundle against Fulcio gRPC API
-		if err := observeGrcpGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
+		if err := observeGrpcGetTrustBundleRequest(ctx, fulcioGrpcClient); err != nil {
 			hasErr = true
 			Logger.Errorf("error running request %s: %v", "GetTrustBundle", err)
 		}
@@ -325,7 +437,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	return nil
 }
 
-func observeGrcpGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
+func observeGrpcGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient) error {
 	s := time.Now()
 	_, err := fulcioGrpcClient.GetTrustBundle(ctx, &fulciopb.GetTrustBundleRequest{})
 
@@ -349,72 +461,73 @@ func httpRequest(host string, r ReadProberCheck) (*retryablehttp.Request, error)
 	return req, nil
 }
 
+func mapServicesToURLs(services []root.Service) []string {
+	urls := make([]string, len(services))
+	for i, s := range services {
+		urls[i] = s.URL
+	}
+	return urls
+}
+
 // determineRekorShardCoverage adds shard-specific reads to ensure we have coverage across all backing logs
-func determineRekorShardCoverage(rekorURL string) ([]ReadProberCheck, error) {
+func determineRekorShardCoverage(rekorURL string) ([]ReadProberCheck, *LogInfo, error) {
 	req, err := retryablehttp.NewRequest("GET", rekorURL+"/api/v1/log", nil)
 	if err != nil {
-		return nil, fmt.Errorf("invalid request for loginfo: %w", err)
+		return nil, nil, fmt.Errorf("invalid request for loginfo: %w", err)
 	}
 
 	setHeaders(req, "", ReadProberCheck{})
 	resp, err := retryableClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)
+		return nil, nil, fmt.Errorf("unexpected error getting loginfo endpoint: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected response code received from loginfo endpoint: %w", err)
-	}
-
-	// this is copied from sigstore/rekor/openapi.yaml here without imports to keep this light
-	type InactiveShards struct {
-		TreeID   string `json:"treeID"`
-		TreeSize int    `json:"treeSize"`
-	}
-
-	type LogInfo struct {
-		TreeSize       int              `json:"treeSize"`
-		InactiveShards []InactiveShards `json:"inactiveShards"`
+		return nil, nil, fmt.Errorf("unexpected response code received from loginfo endpoint: %w", err)
 	}
 
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, fmt.Errorf("reading loginfo body: %w", err)
+		return nil, nil, fmt.Errorf("reading loginfo body: %w", err)
 	}
 
 	var logInfo LogInfo
 	if err := json.Unmarshal(bodyBytes, &logInfo); err != nil {
-		return nil, fmt.Errorf("parsing loginfo: %w", err)
+		return nil, nil, fmt.Errorf("parsing loginfo: %w", err)
 	}
 
 	// if there's no entries, then we're done
 	if logInfo.TreeSize == 0 {
-		return nil, nil
+		return nil, &logInfo, nil
 	}
 
 	// extract relevant endpoints based on index math
-	indicesToFetch := make([]int, len(logInfo.InactiveShards)+1)
+	indicesToFetch := make([]int, 0, len(logInfo.InactiveShards)+1)
 	offset := 0
 
 	// inactive shards should come first in computation; choose random index within shard
-	for i, shard := range logInfo.InactiveShards {
-		indicesToFetch[i] = offset + mrand.IntN(shard.TreeSize-offset) // #nosec G404
+	for _, shard := range logInfo.InactiveShards {
+		if shard.TreeSize > 0 {
+			indicesToFetch = append(indicesToFetch, offset+mrand.IntN(shard.TreeSize)) // #nosec G404
+		}
 		offset += shard.TreeSize
 	}
 
 	// one final index chosen from active shard
-	indicesToFetch[len(indicesToFetch)-1] = offset + mrand.IntN(logInfo.TreeSize) // #nosec G404
+	if activeSize := logInfo.TreeSize - offset; activeSize > 0 {
+		indicesToFetch = append(indicesToFetch, offset+mrand.IntN(activeSize)) // #nosec G404
+	}
 
 	shardSpecificEndpoints := make([]ReadProberCheck, len(indicesToFetch))
 	// convert indices into ReadProberChecks
-	for _, index := range indicesToFetch {
-		shardSpecificEndpoints = append(shardSpecificEndpoints, ReadProberCheck{
+	for i, index := range indicesToFetch {
+		shardSpecificEndpoints[i] = ReadProberCheck{
 			Method:   "GET",
 			Endpoint: "/api/v1/log/entries",
 			Queries:  map[string]string{"logIndex": strconv.Itoa(index)},
-		})
+		}
 	}
 
-	return shardSpecificEndpoints, nil
+	return shardSpecificEndpoints, &logInfo, nil
 }

@@ -1,8 +1,6 @@
 module github.com/sigstore/scaffolding
 
-go 1.24.0
-
-toolchain go1.24.2
+go 1.24.3
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -32,7 +30,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
 	github.com/prometheus/client_golang v1.23.0
 	github.com/ryanuber/go-glob v1.0.0
-	github.com/sigstore/cosign/v2 v2.5.2
+	github.com/sigstore/cosign/v2 v2.5.3
 	github.com/sigstore/fulcio v1.7.1
 	github.com/sigstore/rekor v1.4.1
 	github.com/sigstore/rekor-tiles v0.1.9
@@ -134,8 +132,8 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/blang/semver v3.5.1+incompatible // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
-	github.com/buildkite/agent/v3 v3.98.2 // indirect
-	github.com/buildkite/go-pipeline v0.13.3 // indirect
+	github.com/buildkite/agent/v3 v3.102.1 // indirect
+	github.com/buildkite/go-pipeline v0.14.0 // indirect
 	github.com/buildkite/interpolate v0.1.5 // indirect
 	github.com/buildkite/roko v1.3.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
@@ -187,7 +185,7 @@ require (
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/gnostic-models v0.6.9 // indirect
 	github.com/google/go-containerregistry v0.20.6 // indirect
-	github.com/google/go-github/v72 v72.0.0 // indirect
+	github.com/google/go-github/v73 v73.0.0 // indirect
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.6 // indirect
@@ -273,7 +271,7 @@ require (
 	github.com/vbatts/tar-split v0.12.1 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/zeebo/errs v1.4.0 // indirect
-	gitlab.com/gitlab-org/api/client-go v0.130.1 // indirect
+	gitlab.com/gitlab-org/api/client-go v0.134.0 // indirect
 	go.etcd.io/etcd/api/v3 v3.6.0 // indirect
 	go.etcd.io/etcd/client/pkg/v3 v3.6.0 // indirect
 	go.etcd.io/etcd/client/v3 v3.6.0 // indirect

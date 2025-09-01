@@ -21,14 +21,14 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.30.x
           - v1.31.x
           - v1.32.x
           - v1.33.x
+          - v1.34.x
         leg:
           - fulcio rekor ctlog e2e
         go-version:
-          - 1.23.x
+          - 1.25.x
 
     env:
       RELEASE_VERSION: "v0.7.22"
@@ -60,7 +60,7 @@ jobs:
     - name: Setup Knative
       uses: chainguard-dev/actions/setup-knative@3caedd3784c809ba873cbb8c6a12e2bc6bf6ab09 # v1.4.13
       with:
-        version: "1.16.x"
+        version: "1.18.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"

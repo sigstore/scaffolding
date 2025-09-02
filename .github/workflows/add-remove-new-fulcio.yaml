@@ -24,16 +24,16 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.30.x
           - v1.31.x
           - v1.32.x
           - v1.33.x
+          - v1.34.x
 
         leg:
           - fulcio-key-rotation
 
         go-version:
-          - 1.23.x
+          - 1.25.x
 
     env:
       GOPATH: ${{ github.workspace }}
@@ -43,7 +43,7 @@ jobs:
       KOCACHE: ~/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
+    - uses: chainguard-dev/actions/setup-mirror@3caedd3784c809ba873cbb8c6a12e2bc6bf6ab09 # v1.4.13
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
@@ -58,7 +58,7 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: actions/cache@v4
+    - uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809 # v4.2.4
       with:
         # In order:
         # * Module download cache
@@ -76,7 +76,7 @@ jobs:
     - uses: sigstore/cosign-installer@fb28c2b6339dcd94da6e4cbcbc5e888961f6f8c3 # v3.9.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
+      uses: chainguard-dev/actions/setup-kind@3caedd3784c809ba873cbb8c6a12e2bc6bf6ab09 # v1.4.13
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -85,9 +85,9 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
+      uses: chainguard-dev/actions/setup-knative@3caedd3784c809ba873cbb8c6a12e2bc6bf6ab09 # v1.4.13
       with:
-        version: "1.16.x"
+        version: "1.18.x"
         serving-features: >
           {
             "kubernetes.podspec-fieldref": "enabled"
@@ -241,6 +241,6 @@ jobs:
         NEW_FULCIO_URL: ${{ env.NEW_FULCIO_URL }}
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@be7b31a01af8ce7228fe901326f1d223fb788e14 # v1.4.12
+      uses: chainguard-dev/actions/kind-diag@3caedd3784c809ba873cbb8c6a12e2bc6bf6ab09 # v1.4.13
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

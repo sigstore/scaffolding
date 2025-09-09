@@ -79,6 +79,7 @@ func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
 		}
 	}
 	req.Header.Set("User-Agent", fmt.Sprintf("Sigstore_Scaffolding_Prober/%s", versionInfo.GitVersion))
+
 	// Set this value (even though it is not coming through an GCP LB) to correlate prober req/response
 	req.Header.Set("X-Cloud-Trace-Context", uuid.Must(uuid.NewV7()).String())
 }

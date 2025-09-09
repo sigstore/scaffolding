@@ -51,6 +51,7 @@ import (
 
 const (
 	defaultOIDCIssuer   = "https://oauth2.sigstore.dev/auth"
+
 	defaultOIDCClientID = "sigstore"
 
 	fulcioEndpoint       = "/api/v2/signingCert"

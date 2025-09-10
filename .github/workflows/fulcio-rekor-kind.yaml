@@ -188,6 +188,9 @@ jobs:
 
     - name: Verify blob with signature bundle format using trusted_root.json
       run: |
+        # remove scheme from TUF_MIRROR if present
+        TUF_MIRROR="${TUF_MIRROR#http://}"
+        TUF_MIRROR="${TUF_MIRROR#https://}"
         # the trusted_root.json is in the TUF target cache: Use --trusted-root while cosign does not
         # use it by default
         cosign verify-blob \
@@ -195,8 +198,10 @@ jobs:
             --certificate-oidc-issuer-regexp="https://kubernetes.default.svc.cluster.local" \
             --bundle=bundle.json  --new-bundle-format \
             --rekor-url $REKOR_URL \
-            --trusted-root=$HOME/.sigstore/root/targets/trusted_root.json \
+            --trusted-root=$HOME/.sigstore/root/$TUF_MIRROR/targets/trusted_root.json \
             README.md
+      env:
+        TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
     # Test with cosign in 'airgapped mode'
     # Uncomment these once modified cosign goes in.

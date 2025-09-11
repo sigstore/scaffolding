@@ -31,7 +31,7 @@ import (
 	"time"
 
 	"github.com/go-openapi/strfmt"
-	"github.com/go-openapi/swag"
+	"github.com/go-openapi/swag/conv"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
 
@@ -323,8 +323,8 @@ func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, 
 		HashedRekordObj: models.HashedrekordV001Schema{
 			Data: &models.HashedrekordV001SchemaData{
 				Hash: &models.HashedrekordV001SchemaDataHash{
-					Algorithm: swag.String(models.HashedrekordV001SchemaDataHashAlgorithmSha256),
-					Value:     swag.String(hex.EncodeToString(h[:])),
+					Algorithm: conv.Pointer(models.HashedrekordV001SchemaDataHashAlgorithmSha256),
+					Value:     conv.Pointer(hex.EncodeToString(h[:])),
 				},
 			},
 			Signature: &models.HashedrekordV001SchemaSignature{
@@ -336,7 +336,7 @@ func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, 
 		},
 	}
 	pe := &models.Hashedrekord{
-		APIVersion: swag.String(e.APIVersion()),
+		APIVersion: conv.Pointer(e.APIVersion()),
 		Spec:       e.HashedRekordObj,
 	}
 	return json.Marshal(pe)

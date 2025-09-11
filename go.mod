@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding
 
-go 1.24.3
+go 1.25.0
 
 require (
 	chainguard.dev/exitdir v0.0.1
@@ -25,7 +25,7 @@ require (
 	github.com/hashicorp/go-sockaddr v1.0.7
 	github.com/hashicorp/hcl v1.0.1-vault-7
 	github.com/kelseyhightower/envconfig v1.4.0
-	github.com/letsencrypt/boulder v0.20250819.0
+	github.com/letsencrypt/boulder v0.20250908.0
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.5.1-0.20231216201459-8508981c8b6c
 	github.com/prometheus/client_golang v1.23.2

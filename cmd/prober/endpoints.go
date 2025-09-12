@@ -41,10 +41,6 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 		Endpoint: "/api/v1/log",
 		Method:   GET,
 	}, {
-		Endpoint: "/api/v1/log/proof",
-		Method:   GET,
-		Queries:  map[string]string{"firstSize": "10", "lastSize": "20"},
-	}, {
 		Endpoint: "/api/v1/log/entries/retrieve",
 		Method:   POST,
 		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),
@@ -52,6 +48,13 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 		Endpoint: "/api/v1/index/retrieve",
 		Method:   POST,
 		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),
+	},
+}
+
+var RekorV2ReadEndpoints = []ReadProberCheck{
+	{
+		Endpoint: "/healthz",
+		Method:   GET,
 	},
 }
 
@@ -72,12 +75,7 @@ var FulcioEndpoints = []ReadProberCheck{
 var tsReq, _ = base64.StdEncoding.DecodeString("ME8CAQEwMTANBglghkgBZQMEAgEFAAQg6lDWJ0V9nVEPspa3bDKpG71ef/PswFWOcCjDxLBpe0cCFHsLm2h6a5KYc06qrKCtCIDhwZdmAQH/")
 var TSAEndpoints = []ReadProberCheck{
 	{
-		Endpoint: "/api/v1/timestamp/certchain",
-		Method:   GET,
-		Accept:   "application/pem-certificate-chain",
-	},
-	{
-		Endpoint:    "/api/v1/timestamp",
+		Endpoint:    "",
 		Method:      POST,
 		Accept:      "application/timestamp-reply",
 		ContentType: "application/timestamp-query",

@@ -6,9 +6,10 @@ require (
 	chainguard.dev/exitdir v0.0.1
 	filippo.io/edwards25519 v1.1.0
 	github.com/cenkalti/backoff/v3 v3.2.2
+	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7
 	github.com/go-jose/go-jose/v4 v4.1.2
 	github.com/go-openapi/strfmt v0.23.0
-	github.com/go-openapi/swag v0.24.1
+	github.com/go-openapi/swag/conv v0.24.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/glog v1.2.5
 	github.com/google/certificate-transparency-go v1.3.2
@@ -32,6 +33,7 @@ require (
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/sigstore/cosign/v2 v2.5.3
 	github.com/sigstore/fulcio v1.7.1
+	github.com/sigstore/protobuf-specs v0.5.0
 	github.com/sigstore/rekor v1.4.2
 	github.com/sigstore/rekor-tiles v0.1.10
 	github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3
@@ -49,7 +51,7 @@ require (
 	golang.org/x/crypto v0.41.0
 	golang.org/x/net v0.43.0
 	golang.org/x/time v0.13.0
-	google.golang.org/genproto v0.0.0-20250603155806-513f23925822
+	google.golang.org/genproto v0.0.0-20250811230008-5f3141c8851a
 	google.golang.org/grpc v1.75.0
 	google.golang.org/protobuf v1.36.8
 	gopkg.in/yaml.v3 v3.0.1
@@ -152,7 +154,6 @@ require (
 	github.com/cyberphone/json-canonicalization v0.0.0-20241213102144-19d51d7fe467 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/digitorus/pkcs7 v0.0.0-20230818184609-3a137a874352 // indirect
-	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7 // indirect
 	github.com/dimchansky/utfbom v1.1.1 // indirect
 	github.com/docker/cli v28.2.2+incompatible // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -174,8 +175,8 @@ require (
 	github.com/go-openapi/loads v0.22.0 // indirect
 	github.com/go-openapi/runtime v0.28.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect
+	github.com/go-openapi/swag v0.24.1 // indirect
 	github.com/go-openapi/swag/cmdutils v0.24.0 // indirect
-	github.com/go-openapi/swag/conv v0.24.0 // indirect
 	github.com/go-openapi/swag/fileutils v0.24.0 // indirect
 	github.com/go-openapi/swag/jsonname v0.24.0 // indirect
 	github.com/go-openapi/swag/jsonutils v0.24.0 // indirect
@@ -256,7 +257,6 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.9.1 // indirect
 	github.com/segmentio/ksuid v1.0.4 // indirect
 	github.com/shibumi/go-pathspec v1.3.0 // indirect
-	github.com/sigstore/protobuf-specs v0.5.0 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.9.5 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.9.6-0.20250729224751-181c5d3339b3 // indirect

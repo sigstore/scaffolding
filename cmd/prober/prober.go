@@ -121,6 +121,8 @@ var (
 	oneTime        bool
 	runWriteProber bool
 
+	rekorV2URL string
+
 	versionInfo version.Info
 )
 
@@ -140,6 +142,8 @@ func init() {
 	flag.UintVar(&retries, "retry", 4, "Maximum number of retries before marking HTTP request as failed")
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit")
 	flag.BoolVar(&runWriteProber, "write-prober", false, " [Kubernetes only] run the probers for the write endpoints")
+
+	flag.StringVar(&rekorV2URL, "rekor-v2-url", "", "Set to the Rekor v2 URL to run probers against (will take precedence over any instances listed in the signing config)")
 
 	var rekorV1RequestsJSON string
 	flag.StringVar(&rekorV1RequestsJSON, "rekor-requests", "[]", "Additional rekor requests (JSON array)")
@@ -234,7 +238,17 @@ func main() {
 
 	rekorV1Services, err := root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{1}, time.Now())
 	if err != nil {
-		log.Fatal("Failed to select Rekor services: ", err)
+		log.Fatal("Failed to select Rekor v1 services: ", err)
+	}
+
+	var rekorV2Services []root.Service
+	if rekorV2URL != "" {
+		rekorV2Services = []root.Service{{URL: rekorV2URL, MajorAPIVersion: 2}}
+	} else {
+		rekorV2Services, err = root.SelectServices(signingConfig.RekorLogURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, []uint32{2}, time.Now())
+		if err != nil {
+			rekorV2Services = nil
+		}
 	}
 
 	fulcioService, err := root.SelectService(signingConfig.FulcioCertificateAuthorityURLs(), sign.FulcioAPIVersions, time.Now())
@@ -260,7 +274,7 @@ func main() {
 	if fulcioClient, err := NewFulcioGrpcClient(fulcioGrpcURL); err != nil {
 		Logger.Fatalf("error creating fulcio grpc client %v", err)
 	} else {
-		go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot)
+		go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, rekorV2Services, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot)
 	}
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
@@ -290,7 +304,7 @@ func NewFulcioGrpcClient(fulcioGrpcURL string) (fulciopb.CAClient, error) {
 	return fulciopb.NewCAClient(conn), nil
 }
 
-func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fulciopb.CAClient, rekorV1Services []root.Service, fulcioService root.Service, fulcioGrpcURL string, tsaServices []root.Service, trustedRoot *root.TrustedRoot) {
+func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fulciopb.CAClient, rekorV1Services []root.Service, rekorV2Services []root.Service, fulcioService root.Service, fulcioGrpcURL string, tsaServices []root.Service, trustedRoot *root.TrustedRoot) {
 	for {
 		hasErr := false
 
@@ -305,7 +319,16 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 			rekorEndpointsUnderTest = append(rekorEndpointsUnderTest, ShardlessRekorEndpoints...)
 
 			for _, r := range rekorEndpointsUnderTest {
-				if err := observeRequest(s.URL, r); err != nil {
+				if _, err := observeRequest(s.URL, r); err != nil {
+					hasErr = true
+					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
+				}
+			}
+		}
+
+		for _, s := range rekorV2Services {
+			for _, r := range RekorV2ReadEndpoints {
+				if _, err := observeRequest(s.URL, r); err != nil {
 					hasErr = true
 					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 				}
@@ -313,7 +336,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		}
 
 		for _, r := range FulcioEndpoints {
-			if err := observeRequest(fulcioService.URL, r); err != nil {
+			if _, err := observeRequest(fulcioService.URL, r); err != nil {
 				hasErr = true
 				Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 			}
@@ -321,7 +344,7 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 
 		for _, s := range tsaServices {
 			for _, r := range TSAEndpoints {
-				if err := observeRequest(s.URL, r); err != nil {
+				if _, err := observeRequest(s.URL, r); err != nil {
 					hasErr = true
 					Logger.Errorf("error running request %s: %v", r.Endpoint, err)
 				}
@@ -350,9 +373,19 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 				hasErr = true
 				Logger.Errorf("error running fulcio v1 write prober: %v", err)
 			}
-			if err := rekorWriteEndpoint(ctx, cert, priv, rekorV1Services, trustedRoot); err != nil {
+			if err := rekorV1WriteEndpoint(ctx, cert, priv, rekorV1Services, trustedRoot); err != nil {
 				hasErr = true
 				Logger.Errorf("error running rekor write prober: %v", err)
+			}
+			if err := tsaWriteEndpoint(ctx, priv, tsaServices, trustedRoot); err != nil {
+				hasErr = true
+				Logger.Errorf("error running tsa write prober: %v", err)
+			}
+			if len(rekorV2Services) > 0 {
+				if err := rekorV2WriteEndpoint(ctx, cert, priv, rekorV2Services); err != nil {
+					hasErr = true
+					Logger.Errorf("error running rekor v2 write prober: %v", err)
+				}
 			}
 		}
 
@@ -369,10 +402,10 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 	}
 }
 
-func observeRequest(host string, r ReadProberCheck) error {
+func observeRequest(host string, r ReadProberCheck) ([]byte, error) {
 	req, err := httpRequest(host, r)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	s := time.Now()
@@ -380,7 +413,7 @@ func observeRequest(host string, r ReadProberCheck) error {
 	latency := time.Since(s).Milliseconds()
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -394,12 +427,14 @@ func observeRequest(host string, r ReadProberCheck) error {
 	}
 	exportDataToPrometheus(resp, host, sloEndpoint, r.Method, latency)
 
-	// right we're not doing anything with the body, but let's at least read it all from the server
-	if _, err := io.Copy(io.Discard, resp.Body); err != nil {
-		return fmt.Errorf("error reading response: %w", err)
+	var respBuffer bytes.Buffer
+	if _, err := io.Copy(&respBuffer, resp.Body); err != nil {
+		return nil, fmt.Errorf("error reading response: %w", err)
 	}
-
-	return nil
+	if resp.StatusCode >= 300 {
+		return respBuffer.Bytes(), fmt.Errorf("error response: status: %s, body: %s", resp.Status, respBuffer.String())
+	}
+	return respBuffer.Bytes(), nil
 }
 
 func observeGrpcGetTrustBundleRequest(ctx context.Context, fulcioGrpcClient fulciopb.CAClient, fulcioGrpcURL string) error {

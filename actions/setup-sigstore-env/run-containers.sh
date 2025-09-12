@@ -74,10 +74,13 @@ done | xargs -P "$procs" -L1 bash -c
 # network to enable Fulcio to reach it for token verification.
 docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias fakeoidc fulcio_default fakeoidc || return
 export TSA_URL="http://localhost:3004"
+export FULCIO_CERT_COUNT=2
 popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
 curl -o "$OIDC_TOKEN" "$OIDC_URL/token" || return
+SIGSTORE_ID_TOKEN="$(cat "$OIDC_TOKEN")"
+export SIGSTORE_ID_TOKEN
 
 stop_services() {
   pushd ./fakeoidc || return

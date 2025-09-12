@@ -55,6 +55,13 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 	},
 }
 
+var RekorV2ReadEndpoints = []ReadProberCheck{
+	{
+		Endpoint: "/healthz",
+		Method:   GET,
+	},
+}
+
 var FulcioEndpoints = []ReadProberCheck{
 	{
 		Endpoint: "/api/v1/rootCert",

@@ -8,7 +8,7 @@ require (
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/go-jose/go-jose/v4 v4.1.2
 	github.com/go-openapi/strfmt v0.23.0
-	github.com/go-openapi/swag v0.24.1
+	github.com/go-openapi/swag/conv v0.24.0
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/glog v1.2.5
 	github.com/google/certificate-transparency-go v1.3.2
@@ -36,7 +36,7 @@ require (
 	github.com/sigstore/rekor-tiles v0.1.10
 	github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3
 	github.com/sigstore/sigstore-go v1.1.2-0.20250811211025-bac873564adb
-	github.com/sigstore/timestamp-authority v1.2.8
+	github.com/sigstore/timestamp-authority v1.2.9
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
@@ -174,8 +174,8 @@ require (
 	github.com/go-openapi/loads v0.22.0 // indirect
 	github.com/go-openapi/runtime v0.28.0 // indirect
 	github.com/go-openapi/spec v0.21.0 // indirect
+	github.com/go-openapi/swag v0.24.1 // indirect
 	github.com/go-openapi/swag/cmdutils v0.24.0 // indirect
-	github.com/go-openapi/swag/conv v0.24.0 // indirect
 	github.com/go-openapi/swag/fileutils v0.24.0 // indirect
 	github.com/go-openapi/swag/jsonname v0.24.0 // indirect
 	github.com/go-openapi/swag/jsonutils v0.24.0 // indirect
@@ -266,7 +266,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.12.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/spf13/pflag v1.0.9 // indirect
+	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.5.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect

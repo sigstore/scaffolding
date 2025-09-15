@@ -35,7 +35,7 @@ require (
 	github.com/sigstore/rekor v1.4.2
 	github.com/sigstore/rekor-tiles v0.1.11
 	github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3
-	github.com/sigstore/sigstore-go v1.1.2-0.20250811211025-bac873564adb
+	github.com/sigstore/sigstore-go v1.1.2
 	github.com/sigstore/timestamp-authority v1.2.9
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.20.1

@@ -25,22 +25,29 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/digitorus/timestamp"
 	"github.com/go-openapi/strfmt"
 	"github.com/go-openapi/swag/conv"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
 	"github.com/sigstore/cosign/v2/pkg/cosign"
 	"github.com/sigstore/cosign/v2/pkg/providers"
+	common "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
+	rekor "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
+	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
+	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/oauthflow"
 	"github.com/sigstore/sigstore/pkg/signature"
@@ -56,6 +63,7 @@ const (
 	fulcioEndpoint       = "/api/v2/signingCert"
 	fulcioLegacyEndpoint = "/api/v1/signingCert"
 	rekorEndpoint        = "/api/v1/log/entries"
+	rekorV2Endpoint      = "/api/v2/log/entries"
 )
 
 func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
@@ -84,7 +92,7 @@ func setHeaders(req *retryablehttp.Request, token string, rpc ReadProberCheck) {
 }
 
 // fulcioWriteLegacyEndpoint tests the /api/v1/signingCert write endpoint for Fulcio.
-func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
@@ -99,7 +107,7 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 
 	// Construct the API endpoint for this handler
 	endpoint := fulcioLegacyEndpoint
-	hostPath := fulcioURL + endpoint
+	hostPath := fulcioService.URL + endpoint
 
 	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
@@ -147,12 +155,12 @@ func fulcioWriteLegacyEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x5
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
+	exportDataToPrometheus(resp, fulcioService.URL, endpoint, POST, latency)
 	return cert[0], nil
 }
 
 // fulcioWriteEndpoint tests the /api/v2/signingCert write endpoint for Fulcio.
-func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Certificate, error) {
+func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey, fulcioService root.Service) (*x509.Certificate, error) {
 	if !all.Enabled(ctx) {
 		return nil, fmt.Errorf("no auth provider for fulcio is enabled")
 	}
@@ -167,7 +175,7 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 
 	// Construct the API endpoint for this handler
 	endpoint := fulcioEndpoint
-	hostPath := fulcioURL + endpoint
+	hostPath := fulcioService.URL + endpoint
 
 	req, err := retryablehttp.NewRequest(http.MethodPost, hostPath, bytes.NewBuffer(b))
 	if err != nil {
@@ -217,12 +225,12 @@ func fulcioWriteEndpoint(ctx context.Context, priv *ecdsa.PrivateKey) (*x509.Cer
 	}
 
 	// Export data to prometheus
-	exportDataToPrometheus(resp, fulcioURL, endpoint, POST, latency)
+	exportDataToPrometheus(resp, fulcioService.URL, endpoint, POST, latency)
 	return cert[0], nil
 }
 
-func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath string) (*http.Response, int64, error) {
-	body, err := rekorEntryRequest(cert, priv)
+func makeRekorV1Request(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath string) (*http.Response, int64, error) {
+	body, err := rekorV1EntryRequest(cert, priv)
 	if err != nil {
 		return nil, -1, fmt.Errorf("rekor entry: %w", err)
 	}
@@ -238,60 +246,67 @@ func makeRekorRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey, hostPath s
 	return resp, latency, err
 }
 
-// rekorWriteEndpoint tests the write endpoint for rekor, which is
+// rekorV1WriteEndpoint tests the write endpoint for rekor v1, which is
 // /api/v1/log/entries and adds an entry to the log
 // if a certificate is provided, the Rekor entry will contain that certificate,
 // otherwise the provided key is used
-func rekorWriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey) error {
-	verified := "false"
-	endpoint := rekorEndpoint
-	hostPath := rekorURL + endpoint
-	defer func() {
-		verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
-	}()
-	var resp *http.Response
-	var latency int64
-	var err error
-	// A new body should be created when it is conflicted
-	for i := 1; i < 10; i++ {
-		resp, latency, err = makeRekorRequest(cert, priv, hostPath)
-		if err != nil {
-			return fmt.Errorf("error adding entry: %w", err)
+func rekorV1WriteEndpoint(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey, rekorV1Services []root.Service, trustedRoot *root.TrustedRoot) error {
+	var lastErr error
+	for _, s := range rekorV1Services {
+		verified := "false"
+		endpoint := rekorEndpoint
+		hostPath := s.URL + endpoint
+		defer func() {
+			verificationCounter.With(prometheus.Labels{verifiedLabel: verified}).Inc()
+		}()
+		var resp *http.Response
+		var latency int64
+		var err error
+		// A new body should be created when it is conflicted
+		for i := 1; i < 10; i++ {
+			resp, latency, err = makeRekorV1Request(cert, priv, hostPath)
+			if err != nil {
+				lastErr = fmt.Errorf("error adding entry: %w", err)
+				break
+			}
+			defer resp.Body.Close()
+			if resp.StatusCode != http.StatusConflict {
+				break
+			}
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusConflict {
+		if err != nil || resp == nil {
+			continue
+		}
+		exportDataToPrometheus(resp, s.URL, endpoint, POST, latency)
+
+		if resp.StatusCode != http.StatusCreated {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("invalid status code '%s' when creating entry in rekor: '%s'", resp.Status, string(body))
+			continue
+		}
+		// If entry was added successfully, we should verify it
+		var logEntry models.LogEntry
+		err = json.NewDecoder(resp.Body).Decode(&logEntry)
+		if err != nil {
+			body, _ := io.ReadAll(resp.Body)
+			lastErr = fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
+			continue
+		}
+		var logEntryAnon models.LogEntryAnon
+		for _, e := range logEntry {
+			logEntryAnon = e
 			break
 		}
+		if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, nil, trustedRoot); err == nil {
+			verified = "true"
+			return nil
+		}
+		lastErr = err
 	}
-	exportDataToPrometheus(resp, rekorURL, endpoint, POST, latency)
-
-	if resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("invalid status code '%s' when checking an entry in rekor with body '%s'", resp.Status, string(body))
-	}
-	// If entry was added successfully, we should verify it
-	var logEntry models.LogEntry
-	err = json.NewDecoder(resp.Body).Decode(&logEntry)
-	if err != nil {
-		body, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("error decoding the log entry with body '%s' and error: %w", string(body), err)
-	}
-	var logEntryAnon models.LogEntryAnon
-	for _, e := range logEntry {
-		logEntryAnon = e
-		break
-	}
-	rekorPubKeys, err := cosign.GetRekorPubs(ctx)
-	if err != nil {
-		return fmt.Errorf("getting rekor public keys: %w", err)
-	}
-	if err = cosign.VerifyTLogEntryOffline(ctx, &logEntryAnon, rekorPubKeys, nil); err == nil {
-		verified = "true"
-	}
-	return err
+	return lastErr
 }
 
-func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {
+func rekorV1EntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, error) {
 	// sign payload
 	payload := []byte(time.Now().String())
 	signer, err := signature.LoadECDSASignerVerifier(priv, crypto.SHA256)
@@ -340,6 +355,149 @@ func rekorEntryRequest(cert *x509.Certificate, priv *ecdsa.PrivateKey) ([]byte, 
 		Spec:       e.HashedRekordObj,
 	}
 	return json.Marshal(pe)
+}
+
+// rekorV2Workflow emulates the typical signing workflow with Rekor v2,
+// which involves fetching and verifying a timestamp before adding an
+// entry to the transparency log
+func rekorV2Workflow(ctx context.Context, cert *x509.Certificate, priv *ecdsa.PrivateKey, rekorV2Services []root.Service, tsaServices []root.Service) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+
+	artifact := []byte(time.Now().String())
+	digest := sha256.Sum256(artifact)
+	sig, err := ecdsa.SignASN1(rand.Reader, priv, digest[:])
+	if err != nil {
+		return err
+	}
+
+	if err := fetchAndVerifyTimestamp(sig, tsaServices); err != nil {
+		return fmt.Errorf("fetching and verifying timestamp: %w", err)
+	}
+
+	if err := rekorV2WriteEndpoint(cert, priv, sig, digest, rekorV2Services); err != nil {
+		return fmt.Errorf("writing rekor v2 entry: %w", err)
+	}
+
+	return nil
+}
+
+func fetchAndVerifyTimestamp(signature []byte, tsaServices []root.Service) error {
+	signatureHash := sha256.Sum256(signature)
+
+	getTSReq := &timestamp.Request{
+		HashAlgorithm: crypto.SHA256,
+		HashedMessage: signatureHash[:],
+	}
+
+	getTSReqBytes, err := getTSReq.Marshal()
+	if err != nil {
+		return fmt.Errorf("marshalling the timestamp request: %w", err)
+	}
+
+	proberCheck := TSAEndpoints[0]
+	proberCheck.Body = getTSReqBytes
+
+	var lastErr error
+	for _, tsaService := range tsaServices {
+		getTSRespBytes, err := observeRequest(tsaService.URL, proberCheck)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		for _, tsa := range trustedRoot.TimestampingAuthorities() {
+			if _, err := tsa.Verify(getTSRespBytes, signature); err == nil {
+				return nil
+			}
+			lastErr = err
+		}
+	}
+	if lastErr != nil {
+		return fmt.Errorf("verifying the timestamp: %w", lastErr)
+	}
+
+	return errors.New("no trusted timestamp authority was able to verify the timestamp")
+}
+
+// rekorV2WriteEndpoint tests the write endpoint for rekor v2, which is
+// /api/v2/log/entries and adds an entry to the log
+// if a certificate is provided, the Rekor entry will contain that certificate,
+// otherwise the provided key is used
+func rekorV2WriteEndpoint(cert *x509.Certificate, priv *ecdsa.PrivateKey, sig []byte, digest [32]byte, rekorV2Services []root.Service) error {
+	verifier := &protobuf.Verifier{
+		KeyDetails: common.PublicKeyDetails_PKIX_ECDSA_P256_SHA_256,
+	}
+	if cert != nil {
+		verifier.Verifier = &protobuf.Verifier_X509Certificate{
+			X509Certificate: &common.X509Certificate{
+				RawBytes: cert.Raw,
+			},
+		}
+	} else {
+		pubBytes, err := cryptoutils.MarshalPublicKeyToDER(priv.Public())
+		if err != nil {
+			return err
+		}
+		verifier.Verifier = &protobuf.Verifier_PublicKey{
+			PublicKey: &protobuf.PublicKey{
+				RawBytes: pubBytes,
+			},
+		}
+	}
+
+	createEntryRequest := &protobuf.CreateEntryRequest{
+		Spec: &protobuf.CreateEntryRequest_HashedRekordRequestV002{
+			HashedRekordRequestV002: &protobuf.HashedRekordRequestV002{
+				Signature: &protobuf.Signature{
+					Content:  sig,
+					Verifier: verifier,
+				},
+				Digest: digest[:],
+			},
+		},
+	}
+	reqBytes, err := protojson.Marshal(createEntryRequest)
+	if err != nil {
+		return err
+	}
+
+	proberCheck := ReadProberCheck{
+		Endpoint: rekorV2Endpoint,
+		Method:   POST,
+		Body:     reqBytes,
+	}
+	var lastErr error
+	for _, rekorV2Service := range rekorV2Services {
+		respBytes, err := observeRequest(rekorV2Service.URL, proberCheck)
+		if err != nil {
+			lastErr = err
+			continue
+		}
+		tle := rekor.TransparencyLogEntry{}
+		if err := protojson.Unmarshal(respBytes, &tle); err != nil {
+			lastErr = err
+			continue
+		}
+		tleBody := protobuf.Entry{}
+		if err := protojson.Unmarshal(tle.CanonicalizedBody, &tleBody); err != nil {
+			lastErr = err
+			continue
+		}
+		// basic content matching, not necessarily any signature verification.
+		tleBodyDigest := tleBody.Spec.GetHashedRekordV002().Data.Digest
+		if !bytes.Equal(tleBodyDigest, digest[:]) {
+			lastErr = fmt.Errorf("tleEntry digest does not match: got: %s, want: %s", tleBodyDigest, digest)
+			continue
+		}
+		tleEntrySig := tleBody.Spec.GetHashedRekordV002().Signature.Content
+		if !bytes.Equal(tleEntrySig, sig) {
+			lastErr = fmt.Errorf("tleEntry signature does not match: got: %s, want: %s", tleEntrySig, sig)
+			continue
+		}
+		return nil
+	}
+	return lastErr
 }
 
 func certificateRequest(_ context.Context, idToken string, priv *ecdsa.PrivateKey) ([]byte, error) {

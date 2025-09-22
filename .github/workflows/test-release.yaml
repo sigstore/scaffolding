@@ -36,7 +36,7 @@ jobs:
       KOCACHE: ~/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
+    - uses: chainguard-dev/actions/setup-mirror@de56c2728beb0a0f371bff2ce2ee4b8afee4b5e8 # v1.5.1
 
     - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
 
@@ -49,7 +49,7 @@ jobs:
     - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
+      uses: chainguard-dev/actions/setup-kind@de56c2728beb0a0f371bff2ce2ee4b8afee4b5e8 # v1.5.1
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -58,7 +58,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
+      uses: chainguard-dev/actions/setup-knative@de56c2728beb0a0f371bff2ce2ee4b8afee4b5e8 # v1.5.1
       with:
         version: "1.18.x"
         serving-features: >
@@ -181,4 +181,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@cd899cc96227b82170571cad1c3d6378d8cba678 # v1.4.15
+      uses: chainguard-dev/actions/kind-diag@de56c2728beb0a0f371bff2ce2ee4b8afee4b5e8 # v1.5.1

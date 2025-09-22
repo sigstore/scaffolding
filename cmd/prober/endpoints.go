@@ -72,12 +72,7 @@ var FulcioEndpoints = []ReadProberCheck{
 var tsReq, _ = base64.StdEncoding.DecodeString("ME8CAQEwMTANBglghkgBZQMEAgEFAAQg6lDWJ0V9nVEPspa3bDKpG71ef/PswFWOcCjDxLBpe0cCFHsLm2h6a5KYc06qrKCtCIDhwZdmAQH/")
 var TSAEndpoints = []ReadProberCheck{
 	{
-		Endpoint: "/api/v1/timestamp/certchain",
-		Method:   GET,
-		Accept:   "application/pem-certificate-chain",
-	},
-	{
-		Endpoint:    "/api/v1/timestamp",
+		Endpoint:    "", // TSA endpoints are non-standard and come from the signing config
 		Method:      POST,
 		Accept:      "application/timestamp-reply",
 		ContentType: "application/timestamp-query",

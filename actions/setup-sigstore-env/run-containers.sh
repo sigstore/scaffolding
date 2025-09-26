@@ -78,6 +78,9 @@ popd || return
 
 export OIDC_TOKEN="$CLONE_DIR"/token
 curl -o "$OIDC_TOKEN" "$OIDC_URL/token" || return
+# Cosign's OIDC provider will use this environment variable to get the OIDC token.
+SIGSTORE_ID_TOKEN="$(cat "$OIDC_TOKEN")"
+export SIGSTORE_ID_TOKEN
 
 stop_services() {
   pushd ./fakeoidc || return

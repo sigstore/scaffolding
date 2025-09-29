@@ -37,7 +37,7 @@ require (
 	github.com/sigstore/rekor v1.4.2
 	github.com/sigstore/rekor-tiles v0.1.11
 	github.com/sigstore/sigstore v1.9.6-0.20250729224751-181c5d3339b3
-	github.com/sigstore/sigstore-go v1.1.2
+	github.com/sigstore/sigstore-go v1.1.3
 	github.com/sigstore/timestamp-authority v1.2.9
 	github.com/spf13/cobra v1.10.1
 	github.com/spf13/viper v1.21.0
@@ -273,7 +273,7 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
-	github.com/theupdateframework/go-tuf/v2 v2.1.1 // indirect
+	github.com/theupdateframework/go-tuf/v2 v2.2.0 // indirect
 	github.com/tink-crypto/tink-go-awskms/v2 v2.1.0 // indirect
 	github.com/tink-crypto/tink-go-hcvault/v2 v2.3.0 // indirect
 	github.com/tjfoc/gmsm v1.4.1 // indirect

@@ -9,7 +9,7 @@ require (
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7
 	github.com/go-jose/go-jose/v4 v4.1.2
 	github.com/go-openapi/strfmt v0.24.0
-	github.com/go-openapi/swag/conv v0.24.0
+	github.com/go-openapi/swag/conv v0.25.1
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/golang/glog v1.2.5
 	github.com/google/certificate-transparency-go v1.3.2
@@ -185,7 +185,7 @@ require (
 	github.com/go-openapi/swag/mangling v0.24.0 // indirect
 	github.com/go-openapi/swag/netutils v0.24.0 // indirect
 	github.com/go-openapi/swag/stringutils v0.24.0 // indirect
-	github.com/go-openapi/swag/typeutils v0.24.0 // indirect
+	github.com/go-openapi/swag/typeutils v0.25.1 // indirect
 	github.com/go-openapi/swag/yamlutils v0.24.0 // indirect
 	github.com/go-openapi/validate v0.24.0 // indirect
 	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect

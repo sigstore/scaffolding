@@ -1482,8 +1482,8 @@ github.com/shopspring/decimal v0.0.0-20180709203117-cd690d0c9e24/go.mod h1:M+9Nz
 github.com/shopspring/decimal v1.2.0/go.mod h1:DKyhrW/HYNuLGql+MJL6WCR6knT2jwCFRcu2hWCYk4o=
 github.com/shopspring/decimal v1.4.0 h1:bxl37RwXBklmTi0C79JfXCEBD1cqqHt0bbgBAGFp81k=
 github.com/shopspring/decimal v1.4.0/go.mod h1:gawqmDU56v4yIKSwfBSFip1HdCCXN8/+DMd9qYNcwME=
-github.com/sigstore/cosign/v2 v2.6.0 h1:7DYqkc8RUnoteFhbeYMWu1qkvTDgCYU2MT/2xQPvDks=
-github.com/sigstore/cosign/v2 v2.6.0/go.mod h1:/6AgUhKRfkn3aWRxdrUGyu/vBK4hGrvtZHFQoSx15D4=
+github.com/sigstore/cosign/v2 v2.6.1 h1:7Wf67ENNCjg+1fLqHRPgKUNaCCnCavnEfCe1LApOoIo=
+github.com/sigstore/cosign/v2 v2.6.1/go.mod h1:L37doL+7s6IeCXFODV2J7kds5Po/srlVzA//++YqAJ8=
 github.com/sigstore/fulcio v1.7.1 h1:RcoW20Nz49IGeZyu3y9QYhyyV3ZKQ85T+FXPKkvE+aQ=
 github.com/sigstore/fulcio v1.7.1/go.mod h1:7lYY+hsd8Dt+IvKQRC+KEhWpCZ/GlmNvwIa5JhypMS8=
 github.com/sigstore/protobuf-specs v0.5.0 h1:F8YTI65xOHw70NrvPwJ5PhAzsvTnuJMGLkA4FIkofAY=

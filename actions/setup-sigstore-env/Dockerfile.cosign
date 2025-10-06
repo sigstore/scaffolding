@@ -13,6 +13,6 @@
 # limitations under the License.
 
 # Use Cosign from a container so that Dependabot will keep the dependency up to date
-FROM ghcr.io/sigstore/cosign/cosign:v2.6.0@sha256:71b96f6405dd3c3f081ebf73099f18edac7a716699398660890a86c42bf5edfd
+FROM ghcr.io/sigstore/cosign/cosign:v2.6.1@sha256:68839b7f13dac5a6744a5d8818e984dd39183374e37855c19e14d623d9bc9037
 
 ENTRYPOINT [ "cosign" ]

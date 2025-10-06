@@ -7,7 +7,7 @@ require (
 	filippo.io/edwards25519 v1.1.0
 	github.com/cenkalti/backoff/v3 v3.2.2
 	github.com/digitorus/timestamp v0.0.0-20231217203849-220c5c2851b7
-	github.com/go-jose/go-jose/v4 v4.1.2
+	github.com/go-jose/go-jose/v4 v4.1.3
 	github.com/go-openapi/strfmt v0.24.0
 	github.com/go-openapi/swag/conv v0.25.1
 	github.com/go-sql-driver/mysql v1.9.3

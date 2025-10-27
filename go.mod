@@ -44,7 +44,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/theupdateframework/go-tuf v0.7.0
 	github.com/tink-crypto/tink-go-gcpkms/v2 v2.2.0
-	github.com/tink-crypto/tink-go/v2 v2.4.0
+	github.com/tink-crypto/tink-go/v2 v2.5.0
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399
 	go.step.sm/crypto v0.72.0
 	go.uber.org/zap v1.27.0

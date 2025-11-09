@@ -7,6 +7,8 @@ KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
 TRILLIAN_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/google/trillian)
 
+OMNIWITNESS_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
+
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := trillian ctlog fulcio rekor tsa tuf prober
 
@@ -26,6 +28,9 @@ ko-resolve:
 	# "Building trillian_log_signer"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_signer github.com/google/trillian/cmd/trillian_log_signer
+	# Building omniwitness
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=all --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/gcp/omniwitness
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
@@ -44,6 +49,7 @@ sign-release-images: sign-test-images
 		echo "Signing $(artifact)"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$(artifact); ./scripts/sign-release-images.sh \
 	)
 	echo "Signing cloudsqlproxy"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-cloudsqlproxy; ./scripts/sign-release-images.sh \
+	echo "Signing omniwitness"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-gcp_omniwitness; ./scripts/sign-release-images.sh \
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata

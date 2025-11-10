@@ -27,6 +27,7 @@ import (
 	"io"
 	"log"
 	mrand "math/rand/v2"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
@@ -149,7 +150,7 @@ func init() {
 	flag.IntVar(&frequency, "frequency", 10, "How often to run probers (in seconds)")
 	flag.StringVar(&logStyle, "logStyle", "prod", "Log style to use (dev or prod)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
-	flag.IntVar(&grpcPort, "grpc-port", 5554, "Port for Fulcio gRPC endpoint (only if configured)")
+	flag.IntVar(&grpcPort, "grpc-port", 0, "Port for Fulcio gRPC endpoint")
 
 	flag.UintVar(&retries, "retry", 4, "Maximum number of retries before marking HTTP request as failed")
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit")
@@ -274,8 +275,12 @@ func main() {
 	} else if strings.HasPrefix(fulcioGrpcURL, "http://") {
 		fulcioGrpcURL = strings.TrimPrefix(fulcioGrpcURL, "http://")
 	}
-	if idx := strings.LastIndex(fulcioGrpcURL, ":"); idx != -1 {
-		fulcioGrpcURL = fulcioGrpcURL[:idx+1] + strconv.Itoa(grpcPort)
+	if grpcPort != 0 {
+		host, _, err := net.SplitHostPort(fulcioGrpcURL)
+		if err != nil {
+			host = fulcioGrpcURL
+		}
+		fulcioGrpcURL = net.JoinHostPort(host, strconv.Itoa(grpcPort))
 	}
 
 	tsaServices, err := root.SelectServices(signingConfig.TimestampAuthorityURLs(), root.ServiceConfiguration{Selector: prototrustroot.ServiceSelector_ALL}, sign.TimestampAuthorityAPIVersions, time.Now())

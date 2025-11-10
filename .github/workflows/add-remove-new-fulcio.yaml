@@ -43,7 +43,7 @@ jobs:
       KOCACHE: ~/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@1b32103f5aa389c31ab0be75a8edc38d7e4750d8 # v1.5.7
+    - uses: chainguard-dev/actions/setup-mirror@abcc11e1cf9073eff6c69e91c49756c1430b094c # v1.5.8
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
@@ -76,7 +76,7 @@ jobs:
     - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@1b32103f5aa389c31ab0be75a8edc38d7e4750d8 # v1.5.7
+      uses: chainguard-dev/actions/setup-kind@abcc11e1cf9073eff6c69e91c49756c1430b094c # v1.5.8
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -85,7 +85,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@1b32103f5aa389c31ab0be75a8edc38d7e4750d8 # v1.5.7
+      uses: chainguard-dev/actions/setup-knative@abcc11e1cf9073eff6c69e91c49756c1430b094c # v1.5.8
       with:
         version: "1.18.x"
         serving-features: >
@@ -241,6 +241,6 @@ jobs:
         NEW_FULCIO_URL: ${{ env.NEW_FULCIO_URL }}
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@1b32103f5aa389c31ab0be75a8edc38d7e4750d8 # v1.5.7
+      uses: chainguard-dev/actions/kind-diag@abcc11e1cf9073eff6c69e91c49756c1430b094c # v1.5.8
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

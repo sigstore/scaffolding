@@ -23,7 +23,7 @@ jobs:
 
       - name: Update .ko.yaml with latest release version
         run: |
-          export CLOUD_SQL_PROXY_VERSION="$(awk -F'[:@]' '/FROM gcr.io\/cloud-sql-connectors\/cloud-sql-proxy/{print $2; exit}' Dockerfile.deps)"
+          export CLOUD_SQL_PROXY_VERSION="$(awk -F'[:@]' '/FROM gcr.io\/cloud-sql-connectors\/cloud-sql-proxy/{print $2; exit}' deps/Dockerfile.deps)"
           echo "Detected cloud-sql-proxy ${CLOUD_SQL_PROXY_VERSION}..."
 
           sed -i 's/\(cloud-sql-proxy:\).*/\1'${CLOUD_SQL_PROXY_VERSION}'/' .ko.yaml

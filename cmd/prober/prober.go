@@ -125,11 +125,11 @@ var (
 	trPath  string
 	staging bool
 
-	frequency int
-	logStyle  string
-	addr      string
-	grpcPort  int
-	insecure  bool
+	frequency   int
+	logStyle    string
+	addr        string
+	grpcPort    int
+	disableGrpc bool
 
 	retries        uint
 	oneTime        bool
@@ -152,7 +152,7 @@ func init() {
 	flag.StringVar(&logStyle, "logStyle", "prod", "Log style to use (dev or prod)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
 	flag.IntVar(&grpcPort, "grpc-port", 0, "Port for Fulcio gRPC endpoint")
-	flag.BoolVar(&insecure, "insecure", false, "Whether to skip TLS verification for gRPC requests")
+	flag.BoolVar(&disableGrpc, "disable-grpc", false, "Whether to disable Fulcio gRPC testing (overrides grpc-port)")
 
 	flag.UintVar(&retries, "retry", 4, "Maximum number of retries before marking HTTP request as failed")
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit")
@@ -290,11 +290,15 @@ func main() {
 		log.Fatal("Failed to select TSA services: ", err)
 	}
 
-	if fulcioClient, err := NewFulcioGrpcClient(fulcioGrpcURL); err != nil {
-		Logger.Fatalf("error creating fulcio grpc client %v", err)
-	} else {
-		go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, rekorV2Services, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot)
+	var fulcioClient fulciopb.CAClient
+	if !disableGrpc {
+		var err error
+		fulcioClient, err = NewFulcioGrpcClient(fulcioGrpcURL)
+		if err != nil {
+			Logger.Fatalf("error creating fulcio grpc client %v", err)
+		}
 	}
+	go runProbers(ctx, frequency, oneTime, fulcioClient, rekorV1Services, rekorV2Services, fulcioService, fulcioGrpcURL, tsaServices, trustedRoot)
 	// Expose the registered metrics via HTTP.
 	http.Handle("/metrics", promhttp.HandlerFor(
 		reg,
@@ -315,7 +319,8 @@ func NewFulcioGrpcClient(fulcioGrpcURL string) (fulciopb.CAClient, error) {
 	}
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
 
-	if insecure || strings.HasPrefix(grpcHostname, "localhost") {
+	// Use insecure transport for local testing
+	if strings.HasPrefix(grpcHostname, "localhost") {
 		opts = append(opts, grpc.WithTransportCredentials(insec.NewCredentials()))
 	} else {
 		transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
@@ -385,9 +390,11 @@ func runProbers(ctx context.Context, freq int, runOnce bool, fulcioGrpcClient fu
 		}
 
 		// Performing requests for GetTrustBundle against Fulcio gRPC API
-		if err := observeGrpcGetTrustBundleRequest(ctx, fulcioGrpcClient, fulcioGrpcURL); err != nil {
-			hasErr = true
-			Logger.Errorf("error running request %s: %v", "GetTrustBundle", err)
+		if fulcioGrpcClient != nil {
+			if err := observeGrpcGetTrustBundleRequest(ctx, fulcioGrpcClient, fulcioGrpcURL); err != nil {
+				hasErr = true
+				Logger.Errorf("error running request %s: %v", "GetTrustBundle", err)
+			}
 		}
 
 		if runWriteProber {

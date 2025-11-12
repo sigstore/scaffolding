@@ -44,7 +44,7 @@ import (
 	"github.com/sigstore/sigstore-go/pkg/tuf"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
-	"google.golang.org/grpc/credentials/insecure"
+	insec "google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"sigs.k8s.io/release-utils/version"
 
@@ -129,6 +129,7 @@ var (
 	logStyle  string
 	addr      string
 	grpcPort  int
+	insecure  bool
 
 	retries        uint
 	oneTime        bool
@@ -151,6 +152,7 @@ func init() {
 	flag.StringVar(&logStyle, "logStyle", "prod", "Log style to use (dev or prod)")
 	flag.StringVar(&addr, "addr", ":8080", "Port to expose prometheus to")
 	flag.IntVar(&grpcPort, "grpc-port", 0, "Port for Fulcio gRPC endpoint")
+	flag.BoolVar(&insecure, "insecure", false, "Whether to skip TLS verification for gRPC requests")
 
 	flag.UintVar(&retries, "retry", 4, "Maximum number of retries before marking HTTP request as failed")
 	flag.BoolVar(&oneTime, "one-time", false, "Whether to run only one time and exit")
@@ -313,9 +315,8 @@ func NewFulcioGrpcClient(fulcioGrpcURL string) (fulciopb.CAClient, error) {
 	}
 	opts := []grpc.DialOption{grpc.WithUserAgent(options.UserAgent())}
 
-	// Use insecure transport for local testing
-	if strings.HasPrefix(grpcHostname, "localhost") {
-		opts = append(opts, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if insecure || strings.HasPrefix(grpcHostname, "localhost") {
+		opts = append(opts, grpc.WithTransportCredentials(insec.NewCredentials()))
 	} else {
 		transportCreds := credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS12, ServerName: grpcHostname})
 		opts = append(opts, grpc.WithTransportCredentials(transportCreds))

@@ -25,28 +25,30 @@ jobs:
       - name: Run cosign sign-blob
         env:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
-          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}
-          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN: ${{ steps.setup-sigstore-env.outputs.oidc-token }}
+          OIDC_URL: ${{ steps.setup-sigstore-env.outputs.oidc-url }}
+          OIDC_TOKEN: ${{ steps.setup-sigstore-env.outputs.oidc-token }}
+          TRUSTED_ROOT: ${{ steps.setup-sigstore-env.outputs.trusted-root }}
+          SIGNING_CONFIG: ${{ steps.setup-sigstore-env.outputs.signing-config }}
         run: |
           echo token:
-          curl -f ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_URL}/token
+          curl -f ${OIDC_URL}/token
           cosign sign-blob \
             -y \
             --bundle=bundle.json \
             --new-bundle-format=true \
-            --rekor-url http://localhost:3000 \
-            --fulcio-url http://localhost:5555 \
-            --identity-token ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN} \
+            --trusted-root ${TRUSTED_ROOT} \
+            --signing-config ${SIGNING_CONFIG} \
+            --identity-token ${OIDC_TOKEN} \
             artifact
       - name: Run cosign verify-blob with trusted root
         run: |
           cosign verify-blob \
-            --trusted-root ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT} \
+            --trusted-root ${TRUSTED_ROOT} \
             --bundle bundle.json \
             --new-bundle-format=true \
             --certificate-identity foo@bar.com \
-            --certificate-oidc-issuer ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_ISSUER_URL} \
+            --certificate-oidc-issuer ${ISSUER_URL} \
             artifact
         env:
-          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_TRUSTED_ROOT: ${{ steps.setup-sigstore-env.outputs.trusted-root }}
-          STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_ISSUER_URL: ${{ steps.setup-sigstore-env.outputs.issuer-url }}
+          TRUSTED_ROOT: ${{ steps.setup-sigstore-env.outputs.trusted-root }}
+          ISSUER_URL: ${{ steps.setup-sigstore-env.outputs.issuer-url }}

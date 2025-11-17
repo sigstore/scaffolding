@@ -34,10 +34,10 @@ ko-resolve:
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/gcp/omniwitness
 	# Building gcp_tesseract
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO="$(KO_DOCKER_REPO)/tesseract" \
 	ko build --base-import-paths --platform=all --tags $(TESSERACT_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_tesseract github.com/transparency-dev/tesseract/cmd/tesseract/gcp
 	# Building posix_tesseract
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO="$(KO_DOCKER_REPO)/tesseract" \
 	ko build --base-import-paths --platform=all --tags $(TESSERACT_VERSION),$(GIT_TAG),latest --image-refs imagerefs-posix_tesseract github.com/transparency-dev/tesseract/cmd/tesseract/posix
 
 .PHONY: ko-resolve-testdata

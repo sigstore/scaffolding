@@ -21,7 +21,6 @@ spec:
       - name: createctconfig
         image: ko://github.com/sigstore/scaffolding/cmd/ctlog/createctconfig
         args: [
-          "--configmap=ctlog-config",
           "--secret=ctlog-secret"
         ]
         env:

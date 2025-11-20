@@ -33,7 +33,7 @@ jobs:
     env:
       RELEASE_VERSION: "v0.7.22"
       KO_DOCKER_REPO: registry.local:5000/knative
-      KOCACHE: ~/ko
+      KOCACHE: /home/runner/ko
 
     steps:
     - uses: chainguard-dev/actions/setup-mirror@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10

@@ -37,13 +37,15 @@ jobs:
     steps:
     - name: Checkout the current action
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      path: ./src/github.com/sigstore/scaffolding
       with:
         persist-credentials: false
     - name: Test running the action
-      uses: ./actions/setup
+      uses: ./src/github.com/sigstore/scaffolding/actions/setup
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
+        working-directory: ./src/github.com/sigstore/scaffolding
 
     # Install cosign
     - name: Install cosign

@@ -128,7 +128,7 @@ have the following (some stuff omitted for readability) in our Rekor Deployment
 to ensure that Rekor will not start prior to TreeID having been properly
 provisioned.
 Rekor also needs a Signing Key that it will use, and we create one with
-[CreateSecret](./cmd/rekor/rekor-createsecret/main.go). It will create two secrets,
+[CreateSecret](./tools/rekor/cmd/rekor/rekor-createsecret/main.go). It will create two secrets,
 one holding the Private Signing key as well as the password used to encrypt it
 with. By default the secret is named `rekor-signing-secret` and contains two
 keys:
@@ -349,7 +349,7 @@ the SCT returned by the Fulcio to ensure it actually was properly signed.
 TimeStamp Authority (TSA) is a service for issuing
 [RFC 3161](https://datatracker.ietf.org/doc/html/rfc3161) timestamps.
 
-We first create a [createcertchain](./cmd/tsa/createcertchain/main.go) job which
+We first create a [createcertchain](./tools/tsa/cmd/tsa/createcertchain/main.go) job which
 will create a Certificate Chain suitable for TSA. For example, the certificate
 must have usage set to `Time Stamping`. The jobs creates a secret called
 `tsa-cert-chain` in the `tsa-system` namespace, and as you may have guessed

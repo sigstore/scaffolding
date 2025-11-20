@@ -10,7 +10,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: cosign
-        image: ko://github.com/sigstore/scaffolding/cmd/trillian/updatetree
+        image: ko://github.com/sigstore/scaffolding/tools/trillian/cmd/trillian/updatetree
         args: [
           "--tree_id=0",
         ]

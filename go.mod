@@ -49,7 +49,7 @@ require (
 	github.com/transparency-dev/tesseract v0.1.1-0.20251112113307-52b154e44576
 	github.com/transparency-dev/witness v0.0.0-20251104150718-e67a6f187163
 	go.step.sm/crypto v0.74.0
-	go.uber.org/zap v1.27.0
+	go.uber.org/zap v1.27.1
 	golang.org/x/crypto v0.45.0
 	golang.org/x/net v0.47.0
 	golang.org/x/time v0.14.0

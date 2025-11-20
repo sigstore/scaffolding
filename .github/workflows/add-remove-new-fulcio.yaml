@@ -203,7 +203,7 @@ jobs:
 
     - name: Verify both Fulcio certs are there
       run: |
-        go run ./cmd/ctlog/verifyfulcio/main.go \
+        go run ./tools/ctlog/cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
         --fulcio ${FULCIO_URL} \
@@ -232,7 +232,7 @@ jobs:
 
     - name: Verify that only new Fulcio cert is there
       run: |
-        go run ./cmd/ctlog/verifyfulcio/main.go \
+        go run ./tools/ctlog/cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
         --fulcio ${NEW_FULCIO_URL}

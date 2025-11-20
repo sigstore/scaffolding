@@ -36,7 +36,7 @@ spec:
           "verify",
           "--rekor-url", "http://rekor.rekor-system.svc",
           "--allow-insecure-registry",
-          "ko://github.com/sigstore/scaffolding/cmd/getoidctoken",
+          "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
         ]
         env:
         - name: HOME

@@ -1,0 +1,16 @@
+go 1.25.0
+
+use (
+	./hack
+	./tools/cloudsqlproxy
+	./tools/create-tink-keyset
+	./tools/ctlog
+	./tools/fulcio
+	./tools/getoidctoken
+	./tools/prober
+	./tools/rekor
+	./tools/secret
+	./tools/trillian
+	./tools/tsa
+	./tools/tuf
+)

@@ -11,7 +11,7 @@ spec:
     spec:
       containers:
       - name: gettoken
-        image: ko://github.com/sigstore/scaffolding/cmd/getoidctoken
+        image: ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken
         env:
         - name: OIDC_FILE
           value: "/var/run/sigstore/cosign/oidc-token"

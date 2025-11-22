@@ -6,12 +6,12 @@ on:
     branches:
       - main
     paths:
-    - 'cmd/prober/**'
+    - 'tools/prober/cmd/prober/**'
   pull_request:
     branches:
       - main
     paths:
-    - 'cmd/prober/**'
+    - 'tools/prober/cmd/prober/**'
 
 permissions:
   contents: read
@@ -40,11 +40,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: './tools/prober/go.mod'
           check-latest: true
 
       - name: Build prober test
-        run: go build ./cmd/prober
+        run: go build ./tools/prober/cmd/prober
 
       - name: Get test OIDC token
         uses: sigstore-conformance/extremely-dangerous-public-oidc-beacon@main

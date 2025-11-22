@@ -19,4 +19,4 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: createtree
-        image: ko://github.com/sigstore/scaffolding/cmd/trillian/createtree
+        image: ko://github.com/sigstore/scaffolding/tools/trillian/cmd/trillian/createtree

@@ -9,6 +9,10 @@ updates:
     interval: weekly
   ignore:
     - dependency-name: "cloud-sql-connectors/cloud-sql-proxy*"
+  groups:
+    docker-deps:
+      patterns:
+        - "*"
 - package-ecosystem: docker
   directories:
     - "/deps"
@@ -26,9 +30,17 @@ updates:
   schedule:
     interval: weekly
   open-pull-requests-limit: 10
+  groups:
+    go-deps:
+      patterns:
+        - "*"
 
 - package-ecosystem: "github-actions"
   directory: "/"
   schedule:
     interval: weekly
+  groups:
+    action-deps:
+      patterns:
+        - "*"
 

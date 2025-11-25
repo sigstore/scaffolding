@@ -29,7 +29,7 @@ import (
 	"github.com/sigstore/scaffolding/pkg/secret"
 	"github.com/sigstore/sigstore/pkg/cryptoutils"
 	"github.com/sigstore/sigstore/pkg/signature"
-	"github.com/sigstore/timestamp-authority/pkg/signer"
+	"github.com/sigstore/timestamp-authority/v2/pkg/signer"
 	apierrs "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-    - 'cmd/create-tink-keyset/**'
+    - 'tools/create-tink-keyset/cmd/create-tink-keyset/**'
 
 permissions:
   contents: read
@@ -23,9 +23,9 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'go.work'
           check-latest: true
 
       - name: Create Tink Keyset build
         id: create-tink-keyset-test
-        run: go build ./cmd/create-tink-keyset
+        run: go build ./tools/create-tink-keyset/cmd/create-tink-keyset

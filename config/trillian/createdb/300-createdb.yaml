@@ -17,7 +17,7 @@ spec:
       restartPolicy: Never
       containers:
       - name: createdb
-        image: ko://github.com/sigstore/scaffolding/cmd/trillian/createdb
+        image: ko://github.com/sigstore/scaffolding/tools/trillian/cmd/trillian/createdb
         args: [
         "--mysql_uri=$(MYSQL_USER):$(MYSQL_PASSWORD)@tcp($(DATABASE_HOSTNAME):3306)/",
         "--db_name=trillian"

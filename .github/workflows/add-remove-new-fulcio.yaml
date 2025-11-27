@@ -197,7 +197,7 @@ jobs:
 
     - name: Dump the trusted certs
       run: |
-        curl ${CTLOG_URL}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+        curl ${CTLOG_URL}/ct/v1/get-roots | jq .certificates
       env:
         CTLOG_URL: ${{ env.CTLOG_URL }}
 
@@ -205,7 +205,6 @@ jobs:
       run: |
         go run ./cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
-        --log-prefix sigstorescaffolding \
         --fulcio ${FULCIO_URL} \
         --fulcio ${NEW_FULCIO_URL}
       env:
@@ -226,7 +225,7 @@ jobs:
 
     - name: Dump the trusted certs
       run: |
-        curl ${CTLOG_URL}/sigstorescaffolding/ct/v1/get-roots | jq .certificates
+        curl ${CTLOG_URL}/ct/v1/get-roots | jq .certificates
       env:
         CTLOG_URL: ${{ env.CTLOG_URL }}
 
@@ -234,7 +233,6 @@ jobs:
       run: |
         go run ./cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
-        --log-prefix sigstorescaffolding \
         --fulcio ${NEW_FULCIO_URL}
       env:
         CTLOG_URL: ${{ env.CTLOG_URL }}

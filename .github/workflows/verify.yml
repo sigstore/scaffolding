@@ -19,7 +19,7 @@ jobs:
 
       - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'go.work'
           check-latest: true
           cache: true
 
@@ -42,9 +42,28 @@ jobs:
       - name: Run ShellCheck
         uses: ludeeus/action-shellcheck@00cae500b08a931fb5698e11e79bfbd38e612a38 # v2.0.0
 
+  detect-modules:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.set-modules.outputs.modules }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@44694675825211faa026b3c33043df3e48a5fa00 # v6.0.0
+        with:
+          go-version-file: 'go.work'
+          check-latest: true
+      - id: set-modules
+        run: echo "modules=$(go list -m -json | jq -s 'del(.[] | select(.Path == "github.com/sigstore/scaffolding/hack"))' | jq -c '[.[].Dir]')" >> $GITHUB_OUTPUT
+
   golangci:
     name: lint
+    needs: detect-modules
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        modules: ${{ fromJSON(needs.detect-modules.outputs.modules) }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -52,17 +71,22 @@ jobs:
 
       - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'go.work'
           check-latest: true
 
       - name: golangci-lint
         uses: golangci/golangci-lint-action@e7fa5ac41e1cf5b7d48e45e42232ce7ada589601 # v9.1.0
         with:
           version: v2.4
+          working-directory: ${{ matrix.modules }}
 
   unit-test:
     name: run unit tests
+    needs: detect-modules
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        modules: ${{ fromJSON(needs.detect-modules.outputs.modules) }}
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
@@ -70,9 +94,10 @@ jobs:
 
       - uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
-          go-version-file: 'go.mod'
+          go-version-file: 'go.work'
           check-latest: true
 
       - name: run unit tests
         run: |
-          go test $(go list ./... | grep -v third_party/)
+          cd ${{ matrix.modules }}
+          go test ./...

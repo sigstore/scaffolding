@@ -37,7 +37,7 @@ spec:
           "--fulcio-url", "http://fulcio.fulcio-system.svc",
           "--rekor-url", "http://rekor.rekor-system.svc",
           "--force",
-          "ko://github.com/sigstore/scaffolding/cmd/getoidctoken",
+          "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
         ]
         env:
         - name: HOME

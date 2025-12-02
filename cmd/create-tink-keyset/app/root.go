@@ -26,7 +26,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/sigstore/rekor-tiles/pkg/note"
+	"github.com/sigstore/rekor-tiles/v2/pkg/note"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tink-crypto/tink-go-gcpkms/v2/integration/gcpkms"

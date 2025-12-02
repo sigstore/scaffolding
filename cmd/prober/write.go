@@ -40,11 +40,11 @@ import (
 
 	retryablehttp "github.com/hashicorp/go-retryablehttp"
 
-	"github.com/sigstore/cosign/v2/pkg/cosign"
-	"github.com/sigstore/cosign/v2/pkg/providers"
+	"github.com/sigstore/cosign/v3/pkg/cosign"
+	"github.com/sigstore/cosign/v3/pkg/providers"
 	common "github.com/sigstore/protobuf-specs/gen/pb-go/common/v1"
 	rekor "github.com/sigstore/protobuf-specs/gen/pb-go/rekor/v1"
-	"github.com/sigstore/rekor-tiles/pkg/generated/protobuf"
+	"github.com/sigstore/rekor-tiles/v2/pkg/generated/protobuf"
 	"github.com/sigstore/rekor/pkg/generated/models"
 	hashedrekord "github.com/sigstore/rekor/pkg/types/hashedrekord/v0.0.1"
 	"github.com/sigstore/sigstore-go/pkg/root"
@@ -53,7 +53,7 @@ import (
 	"github.com/sigstore/sigstore/pkg/signature"
 
 	// Loads OIDC providers
-	"github.com/sigstore/cosign/v2/pkg/providers/all"
+	"github.com/sigstore/cosign/v3/pkg/providers/all"
 )
 
 const (

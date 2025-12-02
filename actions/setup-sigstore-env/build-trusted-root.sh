@@ -33,6 +33,21 @@ docker build ./ -f "$SCRIPT_DIR"/Dockerfile.cosign -t cosign
 COSIGN_CMD="docker run --user=$(id -u):$(id -g) --rm -v $WORKDIR/:$WORKDIR/ cosign"
 CMD="$COSIGN_CMD trusted-root create"
 
+FULCIO_SIGNING_CONFIGS=""
+
+add_fulcio_to_signing_config () {
+  if [ -n "$FULCIO_SIGNING_CONFIGS" ]; then
+    FULCIO_SIGNING_CONFIGS="$FULCIO_SIGNING_CONFIGS,
+    "
+  fi
+  FULCIO_SIGNING_CONFIGS="$FULCIO_SIGNING_CONFIGS{
+      \"url\": \"$1\",
+      \"majorApiVersion\": 1,
+      \"validFor\": { \"start\": \"2025-05-25T00:00:00Z\" },
+      \"operator\": \"scaffolding-setup-sigstore-env\"
+    }"
+}
+
 REKOR_SIGNING_CONFIGS=""
 
 add_rekor_to_signing_config () {
@@ -64,73 +79,75 @@ add_tsa_to_signing_config () {
 }
 
 while [[ "$#" -gt 0 ]]; do
-    case $1 in
-        --fulcio)
-            FULCIO_URL="$2"
-            KEYFILE="$3"
-            shift
-            shift
+  case $1 in
+    --fulcio)
+      FULCIO_URL="$2"
+      KEYFILE="$3"
+      shift
+      shift
 
-            # copy to our WORKDIR to be mounted in our cosign container.
-            cp "$KEYFILE" "$WORKDIR"/
-            KEYFILE=$WORKDIR/$(basename "$KEYFILE")
+      add_fulcio_to_signing_config "$FULCIO_URL"
 
-            FNAME=$(mktemp --tmpdir="$WORKDIR" fulcio_cert.XXXX.pem)
-            curl --fail -o "$FNAME" "$FULCIO_URL"/api/v1/rootCert
-            CMD="$CMD --certificate-chain $FNAME --fulcio-uri $FULCIO_URL"
+      # copy to our WORKDIR to be mounted in our cosign container.
+      cp "$KEYFILE" "$WORKDIR"/
+      KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 
-            CMD="$CMD --ctfe-key $KEYFILE"
-            ;;
+      FNAME=$(mktemp --tmpdir="$WORKDIR" fulcio_cert.XXXX.pem)
+      curl --fail -o "$FNAME" "$FULCIO_URL"/api/v1/rootCert
+      CMD="$CMD --certificate-chain $FNAME --fulcio-uri $FULCIO_URL"
 
-        --rekor-v1-url)
-            URL="$2"
-            shift
+      CMD="$CMD --ctfe-key $KEYFILE"
+      ;;
 
-            add_rekor_to_signing_config "$URL" 1
+    --rekor-v1-url)
+      URL="$2"
+      shift
 
-            FNAME=$(mktemp --tmpdir="$WORKDIR" rekorv1_pub.XXXX.pem)
-            curl --fail -o "$FNAME" "$URL"/api/v1/log/publicKey
-            CMD="$CMD --rekor-key $FNAME --rekor-url $URL"
-            ;;
+      add_rekor_to_signing_config "$URL" 1
 
-        --rekor-v2)
-            URL="$2"
-            KEYFILE="$3"
-            HOST="$4"
-            shift
-            shift
-            shift
+      FNAME=$(mktemp --tmpdir="$WORKDIR" rekorv1_pub.XXXX.pem)
+      curl --fail -o "$FNAME" "$URL"/api/v1/log/publicKey
+      CMD="$CMD --rekor-key $FNAME --rekor-url $URL"
+      ;;
 
-            add_rekor_to_signing_config "$URL" 2
+    --rekor-v2)
+      URL="$2"
+      KEYFILE="$3"
+      HOST="$4"
+      shift
+      shift
+      shift
 
-            # copy to our WORKDIR to be mounted in our cosign container.
-            cp "$KEYFILE" "$WORKDIR"/
-            KEYFILE=$WORKDIR/$(basename "$KEYFILE")
+      add_rekor_to_signing_config "$URL" 2
 
-            CMD="$CMD --rekor-key $KEYFILE,$HOST --rekor-url http://$HOST"
-            ;;
+      # copy to our WORKDIR to be mounted in our cosign container.
+      cp "$KEYFILE" "$WORKDIR"/
+      KEYFILE=$WORKDIR/$(basename "$KEYFILE")
 
-        --timestamp-url)
-            URL="$2"
-            shift
+      CMD="$CMD --rekor-key $KEYFILE,$HOST --rekor-url http://$HOST"
+      ;;
 
-            add_tsa_to_signing_config "$URL"
+    --timestamp-url)
+      URL="$2"
+      shift
 
-            FNAME=$(mktemp --tmpdir="$WORKDIR" timestamp_certs.XXXX.pem)
-            curl --fail -o "$FNAME" "$URL"/api/v1/timestamp/certchain
-            CMD="$CMD --timestamp-certificate-chain $FNAME --timestamp-uri $URL"
-            ;;
+      add_tsa_to_signing_config "$URL"
 
-        --oidc-url)
-            OIDC_URL="$2"
-            shift
-            ;;
+      FNAME=$(mktemp --tmpdir="$WORKDIR" timestamp_certs.XXXX.pem)
+      curl --fail -o "$FNAME" "$URL"/api/v1/timestamp/certchain
+      CMD="$CMD --timestamp-certificate-chain $FNAME --timestamp-uri $URL"
+      ;;
 
-        *) echo "Unknown parameter passed: $1"; 
-            exit 1
-            ;;
-    esac
-    shift
+    --oidc-url)
+      OIDC_URL="$2"
+      shift
+      ;;
+
+    *) echo "Unknown parameter passed: $1"; 
+      exit 1
+      ;;
+  esac
+  shift
 done
 
 $CMD > trusted_root.json
@@ -140,12 +157,7 @@ cat << EOF > signing_config.json
 {
   "mediaType": "application/vnd.dev.sigstore.signingconfig.v0.2+json",
   "caUrls": [
-    {
-      "url": "$FULCIO_URL",
-      "majorApiVersion": 1,
-      "validFor": { "start": "2025-05-25T00:00:00Z" },
-      "operator": "scaffolding-setup-sigstore-env"
-    }
+    $FULCIO_SIGNING_CONFIGS
   ],
   "oidcUrls": [
     {

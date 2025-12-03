@@ -48,8 +48,8 @@ import (
 	"google.golang.org/grpc/status"
 	"sigs.k8s.io/release-utils/version"
 
-	"github.com/sigstore/cosign/v2/cmd/cosign/cli/options"
-	_ "github.com/sigstore/cosign/v2/pkg/providers/all"
+	"github.com/sigstore/cosign/v3/cmd/cosign/cli/options"
+	_ "github.com/sigstore/cosign/v3/pkg/providers/all"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )

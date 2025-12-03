@@ -16,6 +16,22 @@
 
 # <cmd> || return is so the script can exit early without quitting your shell.
 
+START_FULCIO=true
+START_REKOR=true
+START_TSA=true
+START_REKOR_TILES=true
+
+while [[ "$#" -gt 0 ]]; do
+  case $1 in
+    --no-fulcio) START_FULCIO=false; ;;
+    --no-rekor) START_REKOR=false; ;;
+    --no-tsa) START_TSA=false; ;;
+    --no-rekor-tiles) START_REKOR_TILES=false; ;;
+    *) echo "Unknown parameter passed: $1"; exit 1 ;;
+  esac
+  shift
+done
+
 CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 CWD="$(pwd)"
 
@@ -43,36 +59,41 @@ popd || return
 
 echo "downloading service repos"
 pushd "$CLONE_DIR" || return
-FULCIO_REPO="${FULCIO_REPO:-sigstore/fulcio}"
-REKOR_REPO="${REKOR_REPO:-sigstore/rekor}"
-TIMESTAMP_AUTHORITY_REPO="${TIMESTAMP_AUTHORITY_REPO:-sigstore/timestamp-authority}"
-REKOR_TILES_REPO="${REKOR_TILES_REPO:-sigstore/rekor-tiles}"
-OWNER_REPOS=(
-  "$FULCIO_REPO"
-  "$REKOR_REPO"
-  "$TIMESTAMP_AUTHORITY_REPO"
-  "$REKOR_TILES_REPO"
-)
+OWNER_REPOS=()
+if [ "$START_FULCIO" = true ]; then
+  OWNER_REPOS+=("${FULCIO_REPO:-sigstore/fulcio}")
+fi
+if [ "$START_REKOR" = true ]; then
+  OWNER_REPOS+=("${REKOR_REPO:-sigstore/rekor}")
+fi
+if [ "$START_TSA" = true ]; then
+  OWNER_REPOS+=("${TIMESTAMP_AUTHORITY_REPO:-sigstore/timestamp-authority}")
+fi
+if [ "$START_REKOR_TILES" = true ]; then
+  OWNER_REPOS+=("${REKOR_TILES_REPO:-sigstore/rekor-tiles}")
+fi
 procs=${#OWNER_REPOS[@]}
 for owner_repo in "${OWNER_REPOS[@]}"; do
-    repo=$(basename "$owner_repo")
-    if [[ ! -d $repo ]]; then
-        echo "'git clone https://github.com/${owner_repo}.git'"
-    else
-        echo "'cd $repo && git pull'"
-    fi
+  repo=$(basename "$owner_repo")
+  if [[ ! -d $repo ]]; then
+    echo "'git clone https://github.com/${owner_repo}.git'"
+  else
+    echo "'cd $repo && git pull'"
+  fi
 done | xargs -P "$procs" -L1 bash -c
 export CT_LOG_KEY="$CLONE_DIR/fulcio/config/ctfe/pubkey.pem"
 
 echo "starting services"
 export FULCIO_METRICS_PORT=2113
 for owner_repo in "${OWNER_REPOS[@]}"; do
-    repo=$(basename "$owner_repo")
-    echo "'cd $repo && docker compose up --wait'"
+  repo=$(basename "$owner_repo")
+  echo "'cd $repo && docker compose up --wait'"
 done | xargs -P "$procs" -L1 bash -c
 # The fakeoidc service is in a separate Docker network. Connect the fakeoidc container to the Fulcio
 # network to enable Fulcio to reach it for token verification.
-docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias fakeoidc fulcio_default fakeoidc || return
+if [ "$START_FULCIO" = true ]; then
+  docker network inspect fulcio_default | grep fakeoidc || docker network connect --alias fakeoidc fulcio_default fakeoidc || return
+fi
 export TSA_URL="http://localhost:3004"
 popd || return
 
@@ -98,13 +119,20 @@ stop_services() {
 
 echo "building trusted root"
 pushd "$CLONE_DIR" || return
-"$CWD"/build-trusted-root.sh \
-  --fulcio http://localhost:5555 "$CLONE_DIR/fulcio/config/ctfe/pubkey.pem" \
-  --timestamp-url http://localhost:3004 \
-  --oidc-url http://localhost:8080 \
-  --rekor-v1-url http://localhost:3000 \
-  --rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem" "rekor-local" \
-  || return
+BUILD_CMD=("$CWD/build-trusted-root.sh" --oidc-url http://localhost:8080)
+if [ "$START_FULCIO" = true ]; then
+  BUILD_CMD+=(--fulcio http://localhost:5555 "$CLONE_DIR/fulcio/config/ctfe/pubkey.pem")
+fi
+if [ "$START_TSA" = true ]; then
+  BUILD_CMD+=(--timestamp-url http://localhost:3004)
+fi
+if [ "$START_REKOR" = true ]; then
+  BUILD_CMD+=(--rekor-v1-url http://localhost:3000)
+fi
+if [ "$START_REKOR_TILES" = true ]; then
+  BUILD_CMD+=(--rekor-v2 http://localhost:3003 "$CLONE_DIR/rekor-tiles/tests/testdata/pki/ed25519-pub-key.pem" "rekor-local")
+fi
+"${BUILD_CMD[@]}" || return
 export TRUSTED_ROOT="$CLONE_DIR/trusted_root.json"
 export SIGNING_CONFIG="$CLONE_DIR/signing_config.json"
 export TRUST_CONFIG="$CLONE_DIR/trust_config.json"

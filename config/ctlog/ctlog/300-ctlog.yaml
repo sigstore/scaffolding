@@ -19,19 +19,27 @@ spec:
       serviceAccountName: ctlog
       containers:
         - name: ctfe
-          image: ko://github.com/google/certificate-transparency-go/trillian/ctfe/ct_server
+          image: ko://github.com/transparency-dev/tesseract/cmd/tesseract/posix
           args: [
             "--http_endpoint=0.0.0.0:6962",
-            "--log_config=/ctfe-keys/config",
-            "--alsologtostderr"
+            "--storage_dir=/ctfe",
+            "--origin=ctlog.ctlog-system.svc",
+            "--ext_key_usages=CodeSigning",
+            "--v=1",
+            "--private_key=/ctfe-keys/private",
+            "--roots_pem_file=/ctfe-keys/fulcio",
           ]
           volumeMounts:
           - name: keys
             mountPath: "/ctfe-keys"
             readOnly: true
+          - name: storage
+            mountPath: "/ctfe"
           ports:
           - containerPort: 6962
       volumes:
         - name: keys
           secret:
             secretName: ctlog-secret
+        - name: storage
+          emptyDir: {}

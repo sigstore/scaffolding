@@ -24,10 +24,8 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"log"
 	"net/url"
 	"os"
-	"strconv"
 
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/scaffolding/pkg/ctlog"
@@ -44,26 +42,18 @@ import (
 )
 
 const (
-	// Key in the configmap holding the value of the tree.
-	treeKey    = "treeID"
-	configKey  = "config"
 	privateKey = "private"
 	publicKey  = "public"
 	bitSize    = 4096
 )
 
 var (
-	cmname             = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives")
-	privateKeySecret   = flag.String("private-secret", "", "If there's an existing private key that should be used, read it from this secret, decrypt with the key-password and use it instead of creating a new one.")
-	secretName         = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
-	pubKeySecretName   = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
-	ctlogPrefix        = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the url. This is basically the name of the log.")
-	fulcioURL          = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
-	trillianServerAddr = flag.String("trillian-server", "log-server.trillian-system.svc:80", "Address of the gRPC Trillian Admin Server (host:port)")
-	// TODO: Support ed25519
-	keyType     = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
-	curveType   = flag.String("curvetype", "p256", "Curve type to use [p256, p384,p521]")
-	keyPassword = flag.String("key-password", "test", "Password for encrypting the PEM key")
+	privateKeySecret = flag.String("private-secret", "", "If there's an existing private key that should be used, read it from this secret.")
+	secretName       = flag.String("secret", "ctlog-secrets", "Name of the secret to create for the keyfiles")
+	pubKeySecretName = flag.String("pubkeysecret", "ctlog-public-key", "Name of the secret to create containing only the public key")
+	fulcioURL        = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from")
+	keyType          = flag.String("keytype", "ecdsa", "Which private key to generate [rsa,ecdsa]")
+	curveType        = flag.String("curvetype", "p256", "Curve type to use [p256, p384,p521]")
 
 	// Supported elliptic curve functions.
 	supportedCurves = map[string]elliptic.Curve{
@@ -100,25 +90,6 @@ func main() {
 	if err != nil {
 		logging.FromContext(ctx).Panicf("Failed to get clientset: %v", err)
 	}
-	cm, err := clientset.CoreV1().ConfigMaps(ns).Get(ctx, *cmname, metav1.GetOptions{})
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Failed to get the configmap %s/%s: %v", ns, *cmname, err)
-	}
-
-	if cm.Data == nil {
-		cm.Data = make(map[string]string)
-	}
-	treeID, ok := cm.Data[treeKey]
-	if !ok {
-		logging.FromContext(ctx).Errorf("No treeid yet, bailing")
-		os.Exit(-1)
-	}
-
-	logging.FromContext(ctx).Infof("Found treeid: %s", treeID)
-	treeIDInt, err := strconv.ParseInt(treeID, 10, 64)
-	if err != nil {
-		logging.FromContext(ctx).Panicf("Invalid TreeID %s : %v", treeID, err)
-	}
 
 	// Fetch the fulcio Root CA
 	u, err := url.Parse(*fulcioURL)
@@ -131,13 +102,6 @@ func main() {
 		logging.FromContext(ctx).Panicf("Failed to fetch fulcio Root cert: %w", err)
 	}
 
-	// See if there's an existing configuration already in the ConfigMap
-	var existingCMConfig []byte
-	if cm.BinaryData != nil && cm.BinaryData[configKey] != nil {
-		logging.FromContext(ctx).Infof("Found existing ctlog config in ConfigMap")
-		existingCMConfig = cm.BinaryData[configKey]
-	}
-
 	// See if there's existing secret with the keys we want
 	nsSecret := clientset.CoreV1().Secrets(ns)
 	existingSecret, err := nsSecret.Get(ctx, *secretName, metav1.GetOptions{})
@@ -145,83 +109,43 @@ func main() {
 		logging.FromContext(ctx).Fatalf("Failed to get secret %s/%s: %v", ns, *secretName, err)
 	}
 
-	// If any of the private, public or config either from secret or configmap
-	// is not there, create a new configuration.
-	if existingSecret.Data[privateKey] == nil ||
-		existingSecret.Data[publicKey] == nil ||
-		(existingSecret.Data[configKey] == nil && existingCMConfig == nil) {
-		var ctlogConfig *ctlog.Config
-		var err error
-		if *privateKeySecret != "" {
-			// We have an existing private key, use it instead of creating
-			// a new one.
-			ctlogConfig, err = createConfigFromExistingSecret(ctx, nsSecret, *privateKeySecret)
-		} else {
-			// Create a fresh private key.
-			ctlogConfig, err = createConfigWithKeys(ctx, *keyType)
-		}
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to generate keys: %v", err)
-		}
-		ctlogConfig.PrivKeyPassword = *keyPassword
-		ctlogConfig.LogID = treeIDInt
-		ctlogConfig.LogPrefix = *ctlogPrefix
-		ctlogConfig.TrillianServerAddr = *trillianServerAddr
-		if err = ctlogConfig.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
-			logging.FromContext(ctx).Infof("Failed to add fulcio root: %v", err)
-		}
-		configMap, err := ctlogConfig.MarshalConfig(ctx)
-		if err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to marshal ctlog config: %v", err)
-		}
-
-		if err := secret.ReconcileSecret(ctx, *secretName, ns, configMap, nsSecret); err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to reconcile secret: %v", err)
-		}
-
-		pubData := map[string][]byte{publicKey: configMap[publicKey]}
-		if err := secret.ReconcileSecret(ctx, *pubKeySecretName, ns, pubData, nsSecret); err != nil {
-			logging.FromContext(ctx).Panicf("Failed to reconcile public key secret %s/%s: %v", ns, *secretName, err)
-		}
-
-		logging.FromContext(ctx).Infof("Created CTLog configuration")
+	// If either the private or public key from secret is not there, create a new configuration.
+	if existingSecret.Data[privateKey] != nil &&
+		existingSecret.Data[publicKey] != nil {
+		logging.FromContext(ctx).Infof("Public and private key already exist")
 		os.Exit(0)
 	}
 
-	// Prefer the secret config if it exists, but if it doesn't use
-	// configmap for backwards compatibility / migration.
-	if existingSecret.Data[configKey] != nil {
-		logging.FromContext(ctx).Infof("Found existing config in the secret, using that %s/%s", ns, *secretName)
+	var ctlogConfig *ctlog.Config
+	if *privateKeySecret != "" {
+		// We have an existing private key, use it instead of creating
+		// a new one.
+		ctlogConfig, err = createConfigFromExistingSecret(ctx, nsSecret, *privateKeySecret)
 	} else {
-		existingSecret.Data[configKey] = existingCMConfig
+		// Create a fresh private key.
+		ctlogConfig, err = createConfigWithKeys(ctx, *keyType)
+	}
+	if err != nil {
+		logging.FromContext(ctx).Fatalf("Failed to generate keys: %v", err)
+	}
+	if err = ctlogConfig.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
+		logging.FromContext(ctx).Infof("Failed to add fulcio root: %v", err)
+	}
+	marshaled, err := ctlogConfig.MarshalConfig()
+	if err != nil {
+		logging.FromContext(ctx).Fatalf("Failed to marshal ctlog config: %v", err)
 	}
 
-	existingConfig, err := ctlog.Unmarshal(ctx, existingSecret.Data)
-	if err != nil {
-		log.Fatalf("Failed to unmarshal existing configuration: %v", err)
-	}
-
-	// Finally add Fulcio to it, marshal and write out.
-	if err = existingConfig.AddFulcioRoot(ctx, root.ChainPEM); err != nil {
-		log.Printf("Failed to add fulcio root: %v", err)
-	}
-	marshaled, err := existingConfig.MarshalConfig(ctx)
-	if err != nil {
-		log.Fatalf("Failed to marshal new configuration: %v", err)
-	}
-	// Take out the public / private key from the secret since we didn't mess
-	// with those. ReconcileSecret will not touch fields that are not here, so
-	// just remove them from the map.
-	delete(marshaled, privateKey)
-	delete(marshaled, publicKey)
 	if err := secret.ReconcileSecret(ctx, *secretName, ns, marshaled, nsSecret); err != nil {
-		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
+		logging.FromContext(ctx).Fatalf("Failed to reconcile secret: %v", err)
 	}
 
-	pubData := map[string][]byte{publicKey: existingSecret.Data[publicKey]}
+	pubData := map[string][]byte{publicKey: marshaled[publicKey]}
 	if err := secret.ReconcileSecret(ctx, *pubKeySecretName, ns, pubData, nsSecret); err != nil {
-		logging.FromContext(ctx).Panicf("Failed to reconcile secret %s/%s: %v", ns, *secretName, err)
+		logging.FromContext(ctx).Panicf("Failed to reconcile public key secret %s/%s: %v", ns, *secretName, err)
 	}
+
+	logging.FromContext(ctx).Infof("Created CTLog configuration")
 }
 
 // createConfigWithKeys creates otherwise empty CTLogCOnfig but fills
@@ -263,7 +187,7 @@ func createConfigFromExistingSecret(ctx context.Context, nsSecret v1.SecretInter
 	if len(private) == 0 {
 		return nil, errors.New("secret missing private key entry")
 	}
-	priv, pub, err := ctlog.DecryptExistingPrivateKey(private, *keyPassword)
+	priv, pub, err := ctlog.ParseExistingPrivateKey(private)
 	if err != nil {
 		return nil, fmt.Errorf("decrypting existing private key secret: %w", err)
 	}

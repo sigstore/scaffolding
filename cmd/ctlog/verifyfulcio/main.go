@@ -51,7 +51,6 @@ type CertResponse struct {
 func main() {
 	flag.Var(&fulcioList, "fulcio", "List of fulcios which must be in the list")
 	var ctlogURL = flag.String("ctlog-url", "ctlog.ctlog-system.svc", "CTLog to check Fulcios against.")
-	var ctlogPrefix = flag.String("log-prefix", "sigstorescaffolding", "Prefix to append to the gtlogURL url. This is basically the name of the log.")
 	flag.Parse()
 	var strictMatch = flag.Bool("strict", true, "If set to true ctlog must only contain the Fulcios in the list, no more, no less")
 	ctx := signals.NewContext()
@@ -66,7 +65,7 @@ func main() {
 	fmt.Printf("GOT: %s\n", fulcioList.String())
 
 	// First grab the certs that CTLog has.
-	ctlog := fmt.Sprintf("%s/%s/ct/v1/get-roots", *ctlogURL, *ctlogPrefix)
+	ctlog := fmt.Sprintf("%s/ct/v1/get-roots", *ctlogURL)
 	/* #nosec G107 */
 	ctlogResponse, err := http.Get(ctlog)
 	if err != nil {

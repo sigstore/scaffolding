@@ -21,11 +21,9 @@ spec:
       - name: managectroots
         image: ko://github.com/sigstore/scaffolding/cmd/ctlog/managectroots
         args: [
-          "--configmap=ctlog-config",
           "--secret=ctlog-secret",
           "--fulcio-url=http://fulcio.fulcio-system.svc",
           "--operation=remove",
-          "--config-in-secret=true"
         ]
         env:
           - name: NAMESPACE

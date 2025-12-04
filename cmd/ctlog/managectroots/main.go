@@ -18,11 +18,9 @@ import (
 	"flag"
 	"net/url"
 	"os"
-	"strings"
 
 	fulcioclient "github.com/sigstore/fulcio/pkg/api"
 	"github.com/sigstore/scaffolding/pkg/ctlog"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
@@ -31,19 +29,10 @@ import (
 	"sigs.k8s.io/release-utils/version"
 )
 
-const (
-	// Key in the configmap holding the value of the tree.
-	treeKey   = "treeID"
-	configKey = "config"
-	bitSize   = 4096
-)
-
 var (
-	cmname         = flag.String("configmap", "ctlog-config", "Name of the configmap where the treeID lives. if configInSecret is false, ctlog config gets added here also.")
-	configInSecret = flag.Bool("config-in-secret", false, "If set to true, fetch / update the ctlog configuration proto into a secret specified in ctlog-secrets under key 'config'.")
-	secretName     = flag.String("secret", "ctlog-secrets", "Name of the secret to fetch private key for CTLog.")
-	fulcioURL      = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from.")
-	operation      = flag.String("operation", "", "Operation to perform for the specified fulcio [add,remove]")
+	secretName = flag.String("secret", "ctlog-secrets", "Name of the secret to fetch private key for CTLog.")
+	fulcioURL  = flag.String("fulcio-url", "http://fulcio.fulcio-system.svc", "Where to fetch the fulcio Root CA from.")
+	operation  = flag.String("operation", "", "Operation to perform for the specified fulcio [add,remove]")
 )
 
 type ctRootOp string
@@ -107,27 +96,7 @@ func main() {
 	current["private"] = secrets.Data["private"]
 	current["public"] = secrets.Data["public"]
 	current["rootca"] = secrets.Data["rootca"]
-	for k, v := range secrets.Data {
-		if strings.HasPrefix(k, "fulcio-") {
-			current[k] = v
-		}
-	}
-	// If the config is stored in the secret, we don't need to deal with the
-	// configmap.
-	var cm *corev1.ConfigMap
-	if !*configInSecret {
-		var err error
-		cm, err = clientset.CoreV1().ConfigMaps(ns).Get(ctx, *cmname, metav1.GetOptions{})
-		if err != nil {
-			logging.FromContext(ctx).Panicf("Failed to get the configmap %s/%s: %v", ns, *cmname, err)
-		}
-		if cm.BinaryData == nil || cm.BinaryData[configKey] == nil {
-			logging.FromContext(ctx).Fatalf("Configmap does not hold existing configmap %s/%s: %v", ns, *cmname, err)
-		}
-		current[configKey] = cm.BinaryData[configKey]
-	} else {
-		current[configKey] = secrets.Data[configKey]
-	}
+	current["fulcio"] = secrets.Data["fulcio"]
 
 	conf, err := ctlog.Unmarshal(ctx, current)
 	if err != nil {
@@ -144,15 +113,9 @@ func main() {
 	}
 
 	// Marshal it and update configuration
-	newConfig, err := conf.MarshalConfig(ctx)
+	newConfig, err := conf.MarshalConfig()
 	if err != nil {
 		logging.FromContext(ctx).Fatalf("Failed to marshal config: %v", err)
-	}
-	if !*configInSecret {
-		cm.BinaryData[configKey] = newConfig[configKey]
-		if _, err = clientset.CoreV1().ConfigMaps(ns).Update(ctx, cm, metav1.UpdateOptions{}); err != nil {
-			logging.FromContext(ctx).Fatalf("Failed to update configmap %s/%s: %v", ns, *cmname, err)
-		}
 	}
 
 	// Update the secret with the information

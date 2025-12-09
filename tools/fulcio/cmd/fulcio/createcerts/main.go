@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Deprecated: create certificates externally and upload them as Secrets.
+
 package main
 
 import (
@@ -60,6 +62,7 @@ func main() {
 
 	versionInfo := version.GetVersionInfo()
 	logging.FromContext(ctx).Infof("running create_certs Version: %s GitCommit: %s BuildDate: %s", versionInfo.GitVersion, versionInfo.GitCommit, versionInfo.BuildDate)
+	logging.FromContext(ctx).Warn("DEPRECATED: create certificates externally instead of relying on this command")
 
 	config, err := rest.InClusterConfig()
 	if err != nil {

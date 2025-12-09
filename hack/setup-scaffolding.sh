@@ -57,15 +57,30 @@ if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' config/fulcio/fulcio/200-configmap.yaml > ./200-configmap-new.yaml
   mv ./200-configmap-new.yaml config/fulcio/fulcio/200-configmap.yaml
 fi
+
+pass=$(uuidgen)
+tmp=$(mktemp -d)
+openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${tmp}/key.pem"
+openssl req -x509 -new -key "${tmp}/key.pem" -out "${tmp}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=fulcio.scaffolding.test" -passin "pass:${pass}"
+cleanup() {
+    rm "${tmp}/cert.pem" "${tmp}/key.pem"
+}
+trap cleanup EXIT
+cp config/fulcio/fulcio/200-secret.yaml 200-secret.original.yaml
+sed -i -e "s/<private-placeholder>/$(cat "${tmp}/key.pem" | base64 -w0)/" \
+  -e "s/<cert-placeholder>/$(cat "${tmp}/cert.pem" | base64 -w0)/" \
+  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" config/fulcio/fulcio/200-secret.yaml
+
 make ko-apply-fulcio
 echo '::endgroup::'
 
+echo "Restoring Fulcio secret placeholder"
+mv ./200-secret.original.yaml config/fulcio/fulcio/200-secret.yaml
 if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Restoring Fulcio config"
   mv ./200-configmap.yaml config/fulcio/fulcio/200-configmap.yaml
 fi
 echo '::group:: Wait for Fulcio ready'
-kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-grpc
 echo '::endgroup::'
@@ -96,10 +111,10 @@ make ko-apply-tuf
 
 # Then copy the secrets (even though it's all public stuff, certs, public keys)
 # to the tuf-system namespace so that we can construct a tuf root out of it.
-kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 echo '::endgroup::'
 
 # Make sure the tuf jobs complete

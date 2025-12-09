@@ -184,26 +184,27 @@ entry in it called `public` that holds the public key for the Rekor.
 ## Fulcio
 
 For Fulcio we just need to create a Root Certificate that it will use to sign
-incoming Signing Certificate requests. For this we again have a Job
-‘**createcerts**’ that will create a self signed certificate, private/public
-keys as well as password used to encrypt the private key.
-Basically we need to ensure we have all the
+incoming Signing Certificate requests. For this we will need to create a self
+signed certificate, private key as well as password used to encrypt the
+private key.  Basically we need to ensure we have all the
 [necessary pieces](https://github.com/sigstore/fulcio/blob/156bc98ddacda11850d7aad5f37cda94ed160315/cmd/app/serve.go#L91-L93)
 to start up Fulcio.
 
 This ‘**createcerts**’ job just creates the pieces mentioned above and creates
 two Secrets, one called `fulcio-secrets` containing the following keys:
+These pieces can be created using openssl:
 
-* cert - Root Certificate
-* private - Private key
-* password - Password to use for decrypting the private key
-* public - Public key
+```
+pass=$(uuidgen)
+openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "/pki/key.pem"
+openssl req -x509 -new -key "/pki/key.pem" -out "/pki/cert.pem" -sha256 -days 10 -subj "/O=yourorg/CN=fulcio.your.domain" -passin "pass:${pass}"
+kubectl -n fulcio-system create secret generic --from-file=private=/pki/key.pem --from-file=cert=/pki/cert.pem --from-literal=password=${pass} fulcio-secret
+```
 
 We also create another secret that just holds the public information called
-`pubkeysecret` that has two keys:
+`fulcio-pub-key` that has one key:
 
 * cert - Root Certificate
-* public - Public key
 
 And as seen already above, we modify the Deployment to not start the Pod until
 all the pieces are available, making our Deployment of Fulcio look (simplified

@@ -98,15 +98,15 @@ if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   sed -i -e 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' "${fulcio}"
 fi
 pass=$(uuidgen)
-tmp=$(mktemp -d)
-openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${tmp}/key.pem"
-openssl req -x509 -new -key "${tmp}/key.pem" -out "${tmp}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=fulcio.scaffolding.test" -passin "pass:${pass}"
+fulciodir=$(mktemp -d)
+openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${fulciodir}/key.pem"
+openssl req -x509 -new -key "${fulciodir}/key.pem" -out "${fulciodir}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=fulcio.scaffolding.test" -passin "pass:${pass}"
 cleanup() {
-    rm "${tmp}/cert.pem" "${tmp}/key.pem"
+    rm "${fulciodir}/cert.pem" "${fulciodir}/key.pem"
 }
 trap cleanup EXIT
-sed -i -e "s/<private-placeholder>/$(cat "${tmp}/key.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${tmp}/cert.pem" | base64 -w0)/" \
+sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
+  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \
   -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" "${fulcio}"
 kubectl apply -f "${fulcio}"
 rm "${fulcio}"
@@ -124,7 +124,17 @@ echo '::endgroup::'
 
 # Install CTlog and wait for it to come up
 echo '::group:: Install CTLog'
-kubectl apply -f "${CTLOG}"
+ctdir=$(mktemp -d)
+openssl ecparam -name prime256v1 -genkey -noout -out "${ctdir}/key.pem"
+openssl ec -in "${ctdir}/key.pem" -pubout -out "${ctdir}/pub.pem"
+cleanup_ctlog() {
+    rm "${ctdir}/pub.pem" "${ctdir}/key.pem"
+}
+trap cleanup_ctlog EXIT
+curl -Ls "${CTLOG}" | sed -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" | base64 -w0)/" \
+  -e "s/<public-placeholder>/$(cat "${ctdir}/pub.pem" | base64 -w0)/" \
+  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" | \
+  kubectl apply -f -
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'

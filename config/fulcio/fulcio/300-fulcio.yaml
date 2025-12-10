@@ -34,7 +34,7 @@ spec:
           - "/var/run/fulcio-secrets/cert.pem"
           - "--fileca-key-passwd"
           - "$(PASSWORD)"
-          - "--ct-log-url=http://ctlog.ctlog-system.svc/sigstorescaffolding"
+          - "--ct-log-url=http://ctlog.ctlog-system.svc"
         env:
         - name: PASSWORD
           valueFrom:
@@ -104,7 +104,7 @@ spec:
           - "/var/run/fulcio-secrets/cert.pem"
           - "--fileca-key-passwd"
           - "$(PASSWORD)"
-          - "--ct-log-url=http://ctlog.ctlog-system.svc/sigstorescaffolding"
+          - "--ct-log-url=http://ctlog.ctlog-system.svc"
         env:
         - name: PASSWORD
           valueFrom:

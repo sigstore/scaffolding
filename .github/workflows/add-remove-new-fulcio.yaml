@@ -40,7 +40,7 @@ jobs:
       GO111MODULE: on
       GOFLAGS: -ldflags=-s -ldflags=-w
       KO_DOCKER_REPO: registry.local:5000/knative
-      KOCACHE: ~/ko
+      KOCACHE: /home/runner/ko
 
     steps:
     - uses: chainguard-dev/actions/setup-mirror@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
@@ -203,7 +203,7 @@ jobs:
 
     - name: Verify both Fulcio certs are there
       run: |
-        go run ./cmd/ctlog/verifyfulcio/main.go \
+        go run ./tools/ctlog/cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
         --fulcio ${FULCIO_URL} \
@@ -232,7 +232,7 @@ jobs:
 
     - name: Verify that only new Fulcio cert is there
       run: |
-        go run ./cmd/ctlog/verifyfulcio/main.go \
+        go run ./tools/ctlog/cmd/ctlog/verifyfulcio/main.go \
         --ctlog-url ${CTLOG_URL} \
         --log-prefix sigstorescaffolding \
         --fulcio ${NEW_FULCIO_URL}

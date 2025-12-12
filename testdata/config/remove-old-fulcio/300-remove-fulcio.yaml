@@ -19,7 +19,7 @@ spec:
       automountServiceAccountToken: true
       containers:
       - name: managectroots
-        image: ko://github.com/sigstore/scaffolding/cmd/ctlog/managectroots
+        image: ko://github.com/sigstore/scaffolding/tools/ctlog/cmd/ctlog/managectroots
         args: [
           "--configmap=ctlog-config",
           "--secret=ctlog-secret",

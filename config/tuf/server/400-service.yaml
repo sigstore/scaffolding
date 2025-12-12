@@ -18,7 +18,7 @@ spec:
     spec:
       serviceAccountName: tuf
       containers:
-      - image: ko://github.com/sigstore/scaffolding/cmd/tuf/server
+      - image: ko://github.com/sigstore/scaffolding/tools/tuf/cmd/tuf/server
         name: tuf
         args: [
           "--file-dir=/var/run/tuf-secrets",

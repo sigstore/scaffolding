@@ -1,11 +1,11 @@
 ---
 defaultBaseImage: gcr.io/distroless/static-debian12:nonroot
 baseImageOverrides:
-  github.com/sigstore/scaffolding/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.19.0-alpine
+  github.com/sigstore/scaffolding/tools/cloudsqlproxy/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.19.0-alpine
 
 builds:
   - id: ctlog-createctconfig
-    dir: .
+    dir: ./tools/ctlog/
     main: ./cmd/ctlog/createctconfig
     env:
       - CGO_ENABLED=0
@@ -20,7 +20,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: ctlog-managectroots
-    dir: .
+    dir: ./tools/ctlog/
     main: ./cmd/ctlog/managectroots
     env:
       - CGO_ENABLED=0
@@ -35,7 +35,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: ctlog-verifyfulcio
-    dir: .
+    dir: ./tools/ctlog/
     main: ./cmd/ctlog/verifyfulcio
     env:
       - CGO_ENABLED=0
@@ -50,7 +50,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: fulcio-createcerts
-    dir: .
+    dir: ./tools/fulcio/
     main: ./cmd/fulcio/createcerts
     env:
       - CGO_ENABLED=0
@@ -65,7 +65,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: tuf-createsecret
-    dir: .
+    dir: ./tools/tuf/
     main: ./cmd/tuf/createsecret
     env:
       - CGO_ENABLED=0
@@ -80,7 +80,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: tuf-server
-    dir: .
+    dir: ./tools/tuf/
     main: ./cmd/tuf/server
     env:
       - CGO_ENABLED=0
@@ -95,7 +95,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: trillian-createtree
-    dir: .
+    dir: ./tools/trillian/
     main: ./cmd/trillian/createtree
     env:
       - CGO_ENABLED=0
@@ -110,7 +110,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: trillian-createdb
-    dir: .
+    dir: ./tools/trillian/
     main: ./cmd/trillian/createdb
     env:
       - CGO_ENABLED=0
@@ -125,7 +125,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: trillian-updatetree
-    dir: .
+    dir: ./tools/trillian/
     main: ./cmd/trillian/updatetree
     env:
       - CGO_ENABLED=0
@@ -140,7 +140,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: cloudsqlproxy
-    dir: .
+    dir: ./tools/cloudsqlproxy/
     main: ./cmd/cloudsqlproxy
     env:
       - CGO_ENABLED=0
@@ -155,7 +155,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: getoidctoken
-    dir: .
+    dir: ./tools/getoidctoken/
     main: ./cmd/getoidctoken
     env:
       - CGO_ENABLED=0
@@ -170,7 +170,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: prober
-    dir: .
+    dir: ./tools/prober/
     main: ./cmd/prober
     env:
       - CGO_ENABLED=0
@@ -185,7 +185,7 @@ builds:
       - "{{ .Env.LDFLAGS }}"
 
   - id: rekor-createsecret
-    dir: .
+    dir: ./tools/rekor/
     main: ./cmd/rekor/rekor-createsecret
     env:
       - CGO_ENABLED=0

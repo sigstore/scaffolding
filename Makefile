@@ -5,11 +5,14 @@ LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) -X 
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
-TRILLIAN_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/google/trillian)
+TRILLIAN_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/google/trillian)
 
-OMNIWITNESS_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
+OMNIWITNESS_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
 
-TESSERACT_VERSION=$(shell go list -m -f '{{ .Version }}' github.com/transparency-dev/tesseract)
+TESSERACT_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/tesseract)
+
+lint:
+	go list -f '{{.Dir}}/...' -m | xargs golangci-lint run
 
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := trillian ctlog fulcio rekor tsa tuf prober
@@ -23,7 +26,7 @@ ko-resolve:
 	--image-refs imagerefs-$(artifact) > release-$(artifact).yaml )) \
 	# "Building cloudsqlproxy wrapper"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./cmd/cloudsqlproxy
+	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./tools/cloudsqlproxy/cmd/cloudsqlproxy
 	# "Building trillian_log_server"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_server github.com/google/trillian/cmd/trillian_log_server
@@ -66,7 +69,7 @@ release-images: ko-resolve ko-resolve-testdata
 
 .PHONY: prober
 prober:
-	go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./cmd/prober
+	go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./tools/prober/cmd/prober
 
 ### Testing
 
@@ -130,52 +133,52 @@ build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-ctl
 
 .PHONY: build-cloudsqlproxy
 build-cloudsqlproxy:
-	go build -trimpath ./cmd/cloudsqlproxy
+	go build -trimpath ./tools/cloudsqlproxy/cmd/cloudsqlproxy
 
 .PHONY: build-ctlog-createctconfig
 build-ctlog-createctconfig:
-	go build -trimpath ./cmd/ctlog/createctconfig
+	go build -trimpath ./tools/ctlog/cmd/ctlog/createctconfig
 
 .PHONY: build-ctlog-managectroots
 build-ctlog-managectroots:
-	go build -trimpath ./cmd/ctlog/managectroots
+	go build -trimpath ./tools/ctlog/cmd/ctlog/managectroots
 
 .PHONY: build-ctlog-verifyfulcio
 build-ctlog-verifyfulcio:
-	go build -trimpath ./cmd/ctlog/verifyfulcio
+	go build -trimpath ./tools/ctlog/cmd/ctlog/verifyfulcio
 
 .PHONY: build-fulcio-createcerts
 build-fulcio-createcerts:
-	go build -trimpath ./cmd/fulcio/createcerts
+	go build -trimpath ./tools/fulcio/cmd/fulcio/createcerts
 
 .PHONY: build-getoidctoken
 build-getoidctoken:
-	go build -trimpath ./cmd/getoidctoken
+	go build -trimpath ./tools/getoidctoken/cmd/getoidctoken
 
 .PHONY: build-rekor-createsecret
 build-rekor-createsecret:
-	go build -trimpath ./cmd/rekor/rekor-createsecret
+	go build -trimpath ./tools/rekor/cmd/rekor/rekor-createsecret
 
 .PHONY: build-trillian-createdb
 build-trillian-createdb:
-	go build -trimpath ./cmd/trillian/createdb
+	go build -trimpath ./tools/trillian/cmd/trillian/createdb
 
 .PHONY: build-trillian-createtree
 build-trillian-createtree:
-	go build -trimpath ./cmd/trillian/createtree
+	go build -trimpath ./tools/trillian/cmd/trillian/createtree
 
 .PHONY: build-trillian-updatetree
 build-trillian-updatetree:
-	go build -trimpath ./cmd/trillian/updatetree
+	go build -trimpath ./tools/trillian/cmd/trillian/updatetree
 
 .PHONY: build-tsa-createcertchain
 build-tsa-createcertchain:
-	go build -trimpath ./cmd/tsa/createcertchain
+	go build -trimpath ./tools/tsa/cmd/tsa/createcertchain
 
 .PHONY: build-tuf-createsecret
 build-tuf-createsecret:
-	go build -trimpath ./cmd/tuf/createsecret
+	go build -trimpath ./tools/tuf/cmd/tuf/createsecret
 
 .PHONY: build-tuf-server
 build-tuf-server:
-	go build -trimpath ./cmd/tuf/server
+	go build -trimpath ./tools/tuf/cmd/tuf/server

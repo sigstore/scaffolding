@@ -40,7 +40,7 @@ jobs:
       GO111MODULE: on
       GOFLAGS: -ldflags=-s -ldflags=-w
       KO_DOCKER_REPO: registry.local:5000/knative
-      KOCACHE: ~/ko
+      KOCACHE: /home/runner/ko
 
     steps:
     - name: Check out our repo

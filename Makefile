@@ -14,6 +14,9 @@ TESSERACT_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/t
 lint:
 	go list -f '{{.Dir}}/...' -m | xargs golangci-lint run
 
+tidy:
+	./hack/modtidy.sh
+
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := trillian ctlog fulcio rekor tsa tuf prober
 

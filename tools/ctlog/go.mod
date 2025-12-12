@@ -11,11 +11,11 @@ require (
 	github.com/sigstore/fulcio v1.8.3
 	github.com/sigstore/rekor v1.4.3
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
-	github.com/sigstore/sigstore v1.10.0
+	github.com/sigstore/sigstore v1.10.2
 	google.golang.org/protobuf v1.36.10
-	k8s.io/api v0.34.2
-	k8s.io/apimachinery v0.34.2
-	k8s.io/client-go v0.34.2
+	k8s.io/api v0.34.3
+	k8s.io/apimachinery v0.34.3
+	k8s.io/client-go v0.34.3
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 	sigs.k8s.io/release-utils v0.12.2
 )
@@ -50,7 +50,6 @@ require (
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.1 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect

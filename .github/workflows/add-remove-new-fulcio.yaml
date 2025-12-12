@@ -179,6 +179,13 @@ jobs:
 
     - name: Spin up a new Fulcio with new keys
       run: |
+        pass=$(uuidgen)
+        tmp=$(mktemp -d)
+        openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${tmp}/key.pem"
+        openssl req -x509 -new -key "${tmp}/key.pem" -out "${tmp}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=new.fulcio.test" -passin "pass:${pass}"
+        sed -i -e "s/<private-placeholder>/$(cat "${tmp}/key.pem" | base64 -w0)/" \
+          -e "s/<cert-placeholder>/$(cat "${tmp}/cert.pem" | base64 -w0)/" \
+          -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" testdata/config/new-fulcio/fulcio/200-secret.yaml
         ko apply -BRf ./testdata/config/new-fulcio
         kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio-new
         NEW_FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio-new -ojsonpath='{.status.url}')

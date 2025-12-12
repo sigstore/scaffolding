@@ -91,17 +91,30 @@ echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
 echo '::group:: Install Fulcio'
+fulcio=$(mktemp --tmpdir fulcioXXX)
+curl -Ls -o "${fulcio}" "${FULCIO}"
 if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
-  curl -Ls "${FULCIO}" | sed 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' | kubectl apply -f -
-else
-  kubectl apply -f "${FULCIO}"
+  sed -i -e 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' "${fulcio}"
 fi
+pass=$(uuidgen)
+tmp=$(mktemp -d)
+openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${tmp}/key.pem"
+openssl req -x509 -new -key "${tmp}/key.pem" -out "${tmp}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=fulcio.scaffolding.test" -passin "pass:${pass}"
+cleanup() {
+    rm "${tmp}/cert.pem" "${tmp}/key.pem"
+}
+trap cleanup EXIT
+sed -i -e "s/<private-placeholder>/$(cat "${tmp}/key.pem" | base64 -w0)/" \
+  -e "s/<cert-placeholder>/$(cat "${tmp}/cert.pem" | base64 -w0)/" \
+  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" "${fulcio}"
+kubectl apply -f "${fulcio}"
+rm "${fulcio}"
 
 kubectl get -n fulcio-system cm fulcio-config -o json
 
 echo '::group:: Wait for Fulcio ready'
-kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
+kubectl -n fulcio-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n fulcio-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n fulcio-system --for=condition=Ready ksvc fulcio
 # this checks if the requested version is > 0.4.12 (and therefore has fulcio-grpc in it)
 if [[ "${PATCH}" -gt 12 ]] || [[ "${MINOR}" -ge 5 ]]; then
@@ -132,12 +145,12 @@ kubectl apply -f "${TUF}"
 
 # Then copy the secrets (even though it's all public stuff, certs, public keys)
 # to the tuf-system namespace so that we can construct a tuf root out of it.
-kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
-kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n ctlog-system get secrets ctlog-public-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n fulcio-system get secrets fulcio-pub-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n rekor-system get secrets rekor-pub-key -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 
 if [[ "${INSTALL_TSA}" == "true" ]]; then
-kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
+kubectl -n tsa-system get secrets tsa-cert-chain -oyaml | sed -e '/creationTimestamp:/d' -e '/uid:/d' -e '/resourceVersion:/d' -e 's/namespace: .*/namespace: tuf-system/' | kubectl apply -f -
 fi
 echo '::endgroup::'
 

@@ -34,21 +34,6 @@ builds:
       - -extldflags "-static"
       - "{{ .Env.LDFLAGS }}"
 
-  - id: ctlog-verifyfulcio
-    dir: ./tools/ctlog/
-    main: ./cmd/ctlog/verifyfulcio
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -tags
-      - nostackdriver
-    ldflags:
-      - -s
-      - -w
-      - -extldflags "-static"
-      - "{{ .Env.LDFLAGS }}"
-
   - id: fulcio-createcerts
     dir: ./tools/fulcio/
     main: ./cmd/fulcio/createcerts

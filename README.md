@@ -94,7 +94,6 @@ graph TD
     Client --> TimeStampAuthority
     Fulcio --> CTLog[Certificate Transparency Log]
     Rekor --> |Rekor TreeID|Trillian
-    CTLog --> |CTLog TreeID|Trillian
     Trillian --> MySQL
     subgraph k8s
       Fulcio
@@ -228,7 +227,7 @@ spec:
           - "/var/run/fulcio-secrets/cert.pem"
           - "--fileca-key-passwd"
           - "$(PASSWORD)"
-          - "--ct-log-url=http://ctlog.ctlog-system.svc/e2e-test-tree"
+          - "--ct-log-url=http://ctlog.ctlog-system.svc"
         env:
         - name: PASSWORD
           valueFrom:
@@ -252,43 +251,29 @@ spec:
 ```
 
 
-## [CTLog](https://github.com/google/certificate-transparency-go)
+## [CTLog](https://github.com/transparency-dev/tesseract)
 
-CTLog is the first piece in the puzzle that requires a bit more wrangling
-because it actually has a dependency on Trillian as well as Fulcio that we
-created above.
+> **_NOTE:_** CTLog used to be the ct_server binary from
+> [certificate-tranpsarency-go](https://github.com/google/certificate-transparency-go).
+> We now use [TesseraCT](https://github.com/transparency-dev/tesseract) which
+> does not require Trillian or MySQL.
 
-For Trillian, we just need to create another TreeID, but we’re reusing the
-same ‘**createtree**’ Job from above.
+CTLog also needs its own public and private keys created, and it needs to know
+Fulcio's root certificate. The private key for this server is not encrypted:
 
-In addition to Trillian, the dependency on Fulcio is that we need to establish
-trust for the Root Certificate that Fulcio is using so that when Fulcio sends
-requests for inclusion in our CTLog, we trust it. For this, we use the
-[RootCert](https://github.com/sigstore/fulcio/blob/156bc98ddacda11850d7aad5f37cda94ed160315/pkg/api/client.go#L155)
-API call to fetch the Certificate.
+```
+openssl ecparam -name prime256v1 -genkey -noout -out "/pki/ctkey.pem"
+openssl ec -in "${ctdir}/key.pem" -pubout -out "/pki/ctpub.pem"
+kubectl -n ctlog-system create secret generic --from-file=private=/pki/ctkey.pem \
+    --from-file=public=/pki/pub.pem \
+    --from-file=fulcio=/tmp/cert.pem \  # use the Fulcio CA generated above
+    ctlog-secret
+```
 
-Lastly we need to create a Certificate for CTLog itself.
+Also create a secret just for the public key:
 
-So in addition to ‘**createtree**’ Job, we also have a ‘**createctconfig**’ Job
-that will fail to make progress until TreeID has been populated in the ConfigMap
-by the ‘**createtree**’ call above. Once the TreeID has been created, it will
-try to fetch a Fulcio Root Certificate (again, failing until it becomes
-available). Once the Fulcio Root Certificate is retrieved, the Job will then
-create a Public/Private keys to be used by the CTLog service and will write the
-following two Secrets (names can be changed ofc):
-
-* ctlog-secrets - Holds the public/private keys for CTLog as well as Root Certificate for Fulcio in the following keys:
-    * private - CTLog private key
-    * public - CTLog public key
-    * rootca - Fulcio Root Certificate
-    * config - Serialized Protobuf required by the CTLog to start up.
 * ctlog-public-key - Holds the public key for CTLog so that clients calling
 Fulcio will able to verify the SCT that they receive from Fulcio.
-
-In addition to the Secrets above, the Job will also add a new entry into the
-ConfigMap (now that I write this, it could just as well go in the secrets above
-I think…) created by the ‘**createtree**’ above. This entry is called ‘config’
-and it’s a serialized ProtoBuf required by the CTLog to start up.
 
 Again by using the fact that the Pod will not start until all the required
 ConfigMaps / Secrets are available, we can configure the CTLog deployment to
@@ -301,45 +286,28 @@ spec:
     spec:
       containers:
         - name: ctfe
-          image: ko://github.com/google/certificate-transparency-go/trillian/ctfe/ct_server
+          image: ko://github.com/transparency-dev/tesseract/cmd/tesseract/posix
           args: [
             "--http_endpoint=0.0.0.0:6962",
-            "--log_config=/ctfe-config/ct_server.cfg",
-            "--alsologtostderr"
+            "--storage_dir=/ctfe",
+            "--origin=ctlog.ctlog-system.svc",
+            "--ext_key_usages=CodeSigning",
+            "--v=1",
+            "--private_key=/ctfe-keys/private",
+            "--roots_pem_file=/ctfe-keys/fulcio",
           ]
           volumeMounts:
           - name: keys
             mountPath: "/ctfe-keys"
             readOnly: true
-          - name: config
-            mountPath: "/ctfe-config"
-            readOnly: true
       volumes:
         - name: keys
           secret:
             secretName: ctlog-secret
-            items:
-            - key: private
-              path: privkey.pem
-            - key: public
-              path: pubkey.pem
-            - key: rootca
-              path: roots.pem
-        - name: config
-          secret:
-            secretName: ctlog-secret
-            items:
-            - key: config
-              path: ct_server.cfg
 ```
 
 Here instead of mounting into environmental variables, we must mount to the
 filesystem given how the CTLog expects these things to be materialized.
-
-Ok, so with the ‘**createtree**’ and ‘**createctconfig**’ jobs having successfully
-completed, CTLog will happily start up and be ready to serve requests. Again if
-it fails, tests will fail and the logs will contain information about the
-particular failure.
 
 Also, the reason why the public key was created in a different secret is because
 clients will need access to this key because they need that public key to verify

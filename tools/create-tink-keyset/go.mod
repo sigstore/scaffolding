@@ -7,7 +7,7 @@ require (
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/viper v1.21.0
 	github.com/tink-crypto/tink-go-gcpkms/v2 v2.2.0
-	github.com/tink-crypto/tink-go/v2 v2.5.0
+	github.com/tink-crypto/tink-go/v2 v2.6.0
 )
 
 require (
@@ -33,7 +33,7 @@ require (
 	github.com/sagikazarmark/locafero v0.11.0 // indirect
 	github.com/secure-systems-lab/go-securesystemslib v0.9.1 // indirect
 	github.com/sigstore/protobuf-specs v0.5.0 // indirect
-	github.com/sigstore/sigstore v1.10.0 // indirect
+	github.com/sigstore/sigstore v1.10.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.0 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.10.0 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.10.0 // indirect

@@ -18,7 +18,7 @@ tidy:
 	./hack/modtidy.sh
 
 # These are the subdirs under config that we'll turn into separate artifacts.
-artifacts := trillian ctlog fulcio rekor tsa tuf prober
+artifacts := trillian ctlog fulcio rekor tsa tuf
 
 .PHONY: ko-resolve
 ko-resolve:
@@ -69,10 +69,6 @@ sign-release-images: sign-test-images
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata
-
-.PHONY: prober
-prober:
-	go build -trimpath -ldflags "$(LDFLAGS)" -o $@ ./tools/prober/cmd/prober
 
 ### Testing
 

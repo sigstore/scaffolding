@@ -154,21 +154,6 @@ builds:
       - -extldflags "-static"
       - "{{ .Env.LDFLAGS }}"
 
-  - id: prober
-    dir: ./tools/prober/
-    main: ./cmd/prober
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -tags
-      - nostackdriver
-    ldflags:
-      - -s
-      - -w
-      - -extldflags "-static"
-      - "{{ .Env.LDFLAGS }}"
-
   - id: rekor-createsecret
     dir: ./tools/rekor/
     main: ./cmd/rekor/rekor-createsecret

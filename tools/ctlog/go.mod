@@ -11,11 +11,11 @@ require (
 	github.com/sigstore/fulcio v1.8.3
 	github.com/sigstore/rekor v1.4.3
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
-	github.com/sigstore/sigstore v1.10.0
-	google.golang.org/protobuf v1.36.10
-	k8s.io/api v0.34.2
-	k8s.io/apimachinery v0.34.2
-	k8s.io/client-go v0.34.2
+	github.com/sigstore/sigstore v1.10.3
+	google.golang.org/protobuf v1.36.11
+	k8s.io/api v0.34.3
+	k8s.io/apimachinery v0.34.3
+	k8s.io/client-go v0.34.3
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 	sigs.k8s.io/release-utils v0.12.2
 )

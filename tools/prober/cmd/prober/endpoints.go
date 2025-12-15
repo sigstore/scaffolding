@@ -43,7 +43,7 @@ var ShardlessRekorEndpoints = []ReadProberCheck{
 	}, {
 		Endpoint: "/api/v1/log/entries/retrieve",
 		Method:   POST,
-		Body:     []byte(`{"hash":"sha256:2bd37672a9e472c79c64f42b95e362db16870e28a90f3b17fee8faf952e79b4b"}`),
+		Body:     []byte(`{"entryUUIDs":["362f8ecba72f432663d86f73f83a1a1032637c79679113b224e91d757c835cd08379739f9097cf8a"]}`),
 	}, {
 		Endpoint: "/api/v1/index/retrieve",
 		Method:   POST,

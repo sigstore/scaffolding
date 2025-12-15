@@ -22,6 +22,6 @@ spec:
     spec:
       containers:
       - name: sigstore-prober
-        image: ko://github.com/sigstore/scaffolding/tools/prober/cmd/prober
+        image: ko://github.com/sigstore/sigstore-probers/prober/prober
         ports:
         - containerPort: 8080 # metrics

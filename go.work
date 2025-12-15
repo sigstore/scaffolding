@@ -7,7 +7,6 @@ use (
 	./tools/ctlog
 	./tools/fulcio
 	./tools/getoidctoken
-	./tools/prober
 	./tools/rekor
 	./tools/secret
 	./tools/trillian

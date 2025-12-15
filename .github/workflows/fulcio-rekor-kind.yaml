@@ -153,8 +153,16 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+        ## work around for now
+        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+
       env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
@@ -169,7 +177,12 @@ jobs:
 
     - name: Sign a blob with signature bundle format
       run: |
-        cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --identity-token $OIDC_TOKEN README.md
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --identity-token $OIDC_TOKEN README.md
+
+        # workaround for now
+        cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --identity-token $OIDC_TOKEN README.md
+
 
     - name: Verify blob with signature bundle format using trusted_root.json
       run: |

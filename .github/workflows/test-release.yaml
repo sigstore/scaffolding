@@ -124,8 +124,15 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+        # workaround for now
+        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
       env:
+        REKOR_URL: ${{ env.REKOR_URL }}
+        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 

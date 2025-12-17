@@ -38,7 +38,7 @@ jobs:
     steps:
     - uses: chainguard-dev/actions/setup-mirror@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
 
-    - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+    - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: Set up Go
       uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
@@ -74,18 +74,10 @@ jobs:
         /tmp/setup-scaffolding-from-release.sh --release-version ${RELEASE_VERSION}
 
         # TODO(vaikas): Figure out how these could be exposed by above.
-        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
-        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
-        FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
-        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
         TUF_MIRROR=$(kubectl -n tuf-system get ksvc tuf -ojsonpath='{.status.url}')
         TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
 
         # Set the endopints
-        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
-        echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
-        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
         echo "TUF_MIRROR=$TUF_MIRROR" >> $GITHUB_ENV
         echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
@@ -132,7 +124,12 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+        # workaround for now
         cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
       env:
         REKOR_URL: ${{ env.REKOR_URL }}
         FULCIO_URL: ${{ env.FULCIO_URL }}
@@ -141,12 +138,11 @@ jobs:
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.

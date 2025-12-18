@@ -9,8 +9,6 @@ TRILLIAN_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/go
 
 OMNIWITNESS_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
 
-TESSERACT_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/tesseract)
-
 lint:
 	go list -f '{{.Dir}}/...' -m | xargs golangci-lint run
 
@@ -39,12 +37,6 @@ ko-resolve:
 	# Building omniwitness
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/gcp/omniwitness
-	# Building gcp_tesseract
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO="$(KO_DOCKER_REPO)/tesseract" \
-	ko build --base-import-paths --platform=all --tags $(TESSERACT_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_tesseract github.com/transparency-dev/tesseract/cmd/tesseract/gcp
-	# Building posix_tesseract
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO="$(KO_DOCKER_REPO)/tesseract" \
-	ko build --base-import-paths --platform=all --tags $(TESSERACT_VERSION),$(GIT_TAG),latest --image-refs imagerefs-posix_tesseract github.com/transparency-dev/tesseract/cmd/tesseract/posix
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
@@ -64,8 +56,6 @@ sign-release-images: sign-test-images
 	)
 	echo "Signing cloudsqlproxy"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-cloudsqlproxy; ./scripts/sign-release-images.sh \
 	echo "Signing omniwitness"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-gcp_omniwitness; ./scripts/sign-release-images.sh \
-	echo "Signing gcp_tesseract"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-gcp_tesseract; ./scripts/sign-release-images.sh \
-	echo "Signing posix_tesseract"; export GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-posix_tesseract; ./scripts/sign-release-images.sh \
 
 .PHONY: release-images
 release-images: ko-resolve ko-resolve-testdata

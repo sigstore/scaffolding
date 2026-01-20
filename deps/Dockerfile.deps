@@ -1,5 +1,5 @@
 # This Dockerfile simply serves as a trigger for dependabot to notify when a new upstream release of a component is available
 #
 # This will trigger a Dependabot update, which should trigger a workflow to update .ko.yaml accordingly
-FROM gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.20.0-alpine@sha256:1dd811c08d1ecc466fc1433f3a2a5bba978789f5c782588765c429e8b3d65964
+FROM gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.21.0-alpine@sha256:a5936e0cf0100c5c25d301029237a7f83c03ed1ddc41503333ac110eb3701503
 ENV FOO=BAR

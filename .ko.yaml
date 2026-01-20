@@ -1,7 +1,7 @@
 ---
 defaultBaseImage: gcr.io/distroless/static-debian12:nonroot
 baseImageOverrides:
-  github.com/sigstore/scaffolding/tools/cloudsqlproxy/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.20.0-alpine
+  github.com/sigstore/scaffolding/tools/cloudsqlproxy/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.21.0-alpine
 
 builds:
   - id: ctlog-createctconfig

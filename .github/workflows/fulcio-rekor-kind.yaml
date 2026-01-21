@@ -73,7 +73,7 @@ jobs:
 
     - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
 
-    - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+    - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
@@ -143,18 +143,6 @@ jobs:
 
     - name: Get the endpoints on the cluster
       run: |
-        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
-        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
-
-        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
-        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
-
-        #FULCIO_GRPC_URL=$(kubectl -n fulcio-system get ksvc fulcio-grpc -ojsonpath='{.status.url}')
-        #echo "FULCIO_GRPC_URL=$FULCIO_GRPC_URL" >> $GITHUB_ENV
-
-        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
-        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
-
         ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
         echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
         OIDC_TOKEN=`curl -s $ISSUER_URL`
@@ -165,7 +153,13 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+        ## work around for now
         cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+
       env:
         REKOR_URL: ${{ env.REKOR_URL }}
         FULCIO_URL: ${{ env.FULCIO_URL }}
@@ -174,17 +168,21 @@ jobs:
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Sign a blob with signature bundle format
       run: |
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --identity-token $OIDC_TOKEN README.md
+
+        # workaround for now
         cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --identity-token $OIDC_TOKEN README.md
+
 
     - name: Verify blob with signature bundle format using trusted_root.json
       run: |
@@ -197,7 +195,6 @@ jobs:
             --certificate-identity-regexp="https://kubernetes.io/namespaces/default/serviceaccounts/default" \
             --certificate-oidc-issuer-regexp="https://kubernetes.default.svc.cluster.local" \
             --bundle=bundle.json  --new-bundle-format \
-            --rekor-url $REKOR_URL \
             --trusted-root=$HOME/.sigstore/root/$TUF_MIRROR/targets/trusted_root.json \
             README.md
       env:
@@ -225,7 +222,7 @@ jobs:
     #    ROOT=${PWD}/repository/1.root.json
     #    REPOSITORY=${PWD}/repository
     #    ./cosign initialize --root ${ROOT} --mirror file://${REPOSITORY}
-    #    ./cosign verify --rekor-url ${{ env.REKOR_URL }} --allow-insecure-registry ${{ env.demoimage }}
+    #    ./cosign verify --allow-insecure-registry ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
       uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0

@@ -49,7 +49,7 @@ jobs:
 
     # Install cosign
     - name: Install cosign
-      uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: Set up Go
       uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
@@ -82,6 +82,10 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
+        ## Once the generated TUF repository contains a signing config, this should be used:
+        # cosign sign --yes --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+
+        # workaround for now
         cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
         REKOR_URL: ${{ env.REKOR_URL }}
@@ -91,12 +95,11 @@ jobs:
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.

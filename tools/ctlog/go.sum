@@ -102,8 +102,8 @@ github.com/sigstore/fulcio v1.8.5 h1:HYTD1/L5wlBp8JxsWxUf8hmfaNBBF/x3r3p5l6tZwbA
 github.com/sigstore/fulcio v1.8.5/go.mod h1:tSLYK3JsKvJpDW1BsIsVHZgHj+f8TjXARzqIUWSsSPQ=
 github.com/sigstore/rekor v1.4.3 h1:2+aw4Gbgumv8vYM/QVg6b+hvr4x4Cukur8stJrVPKU0=
 github.com/sigstore/rekor v1.4.3/go.mod h1:o0zgY087Q21YwohVvGwV9vK1/tliat5mfnPiVI3i75o=
-github.com/sigstore/sigstore v1.10.3 h1:s7fBYYOzW/2Vd0nND2ZdpWySb5vRF2u9eix/NZMHJm0=
-github.com/sigstore/sigstore v1.10.3/go.mod h1:T26vXIkpnGEg391v3TaZ8EERcXbnjtZb/1erh5jbIQk=
+github.com/sigstore/sigstore v1.10.4 h1:ytOmxMgLdcUed3w1SbbZOgcxqwMG61lh1TmZLN+WeZE=
+github.com/sigstore/sigstore v1.10.4/go.mod h1:tDiyrdOref3q6qJxm2G+JHghqfmvifB7hw+EReAfnbI=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=
 github.com/spf13/cobra v1.10.2/go.mod h1:7C1pvHqHw5A4vrJfjNwvOdzYu0Gml16OCs2GRiTUUS4=
 github.com/spf13/pflag v1.0.9/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=

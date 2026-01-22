@@ -11,7 +11,7 @@ require (
 	github.com/sigstore/fulcio v1.8.5
 	github.com/sigstore/rekor v1.4.3
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
-	github.com/sigstore/sigstore v1.10.3
+	github.com/sigstore/sigstore v1.10.4
 	google.golang.org/protobuf v1.36.11
 	k8s.io/api v0.34.3
 	k8s.io/apimachinery v0.34.3

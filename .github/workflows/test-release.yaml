@@ -36,12 +36,12 @@ jobs:
       KOCACHE: /home/runner/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+    - uses: chainguard-dev/actions/setup-mirror@f77a7c3431f961556be5a41e2602c450a590f3e5 # v1.5.12
 
-    - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+    - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
 
     - name: Set up Go
-      uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+      uses: actions/setup-go@7a3fe6cf4cb3a834922a1244abfce67bcef6a0c5 # v6.2.0
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
@@ -49,7 +49,7 @@ jobs:
     - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/setup-kind@f77a7c3431f961556be5a41e2602c450a590f3e5 # v1.5.12
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -58,7 +58,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/setup-knative@f77a7c3431f961556be5a41e2602c450a590f3e5 # v1.5.12
       with:
         version: "1.18.x"
         serving-features: >
@@ -150,7 +150,7 @@ jobs:
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
-      uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       with:
         repository: sigstore/timestamp-authority
         path: ./src/github.com/sigstore/timestamp-authority
@@ -181,4 +181,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/kind-diag@f77a7c3431f961556be5a41e2602c450a590f3e5 # v1.5.12

@@ -155,8 +155,8 @@ github.com/sigstore/protobuf-specs v0.5.0 h1:F8YTI65xOHw70NrvPwJ5PhAzsvTnuJMGLkA
 github.com/sigstore/protobuf-specs v0.5.0/go.mod h1:+gXR+38nIa2oEupqDdzg4qSBT0Os+sP7oYv6alWewWc=
 github.com/sigstore/rekor-tiles/v2 v2.0.1 h1:1Wfz15oSRNGF5Dzb0lWn5W8+lfO50ork4PGIfEKjZeo=
 github.com/sigstore/rekor-tiles/v2 v2.0.1/go.mod h1:Pjsbhzj5hc3MKY8FfVTYHBUHQEnP0ozC4huatu4x7OU=
-github.com/sigstore/sigstore v1.10.3 h1:s7fBYYOzW/2Vd0nND2ZdpWySb5vRF2u9eix/NZMHJm0=
-github.com/sigstore/sigstore v1.10.3/go.mod h1:T26vXIkpnGEg391v3TaZ8EERcXbnjtZb/1erh5jbIQk=
+github.com/sigstore/sigstore v1.10.4 h1:ytOmxMgLdcUed3w1SbbZOgcxqwMG61lh1TmZLN+WeZE=
+github.com/sigstore/sigstore v1.10.4/go.mod h1:tDiyrdOref3q6qJxm2G+JHghqfmvifB7hw+EReAfnbI=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.0 h1:UOHpiyezCj5RuixgIvCV3QyuxIGQT+N6nGZEXA7OTTY=
 github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.0/go.mod h1:U0CZmA2psabDa8DdiV7yXab0AHODzfKqvD2isH7Hrvw=
 github.com/sigstore/sigstore/pkg/signature/kms/azure v1.10.0 h1:fq4+8Y4YadxeF8mzhoMRPZ1mVvDYXmI3BfS0vlkPT7M=

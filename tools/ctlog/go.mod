@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.7.2
 	github.com/sigstore/fulcio v1.8.5
-	github.com/sigstore/rekor v1.4.3
+	github.com/sigstore/rekor v1.5.0
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.10.4
 	google.golang.org/protobuf v1.36.11
@@ -17,7 +17,7 @@ require (
 	k8s.io/apimachinery v0.34.3
 	k8s.io/client-go v0.34.3
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
-	sigs.k8s.io/release-utils v0.12.2
+	sigs.k8s.io/release-utils v0.12.3
 )
 
 require (
@@ -27,8 +27,8 @@ require (
 	github.com/emicklei/go-restful/v3 v3.12.2 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.0 // indirect
 	github.com/go-logr/logr v1.4.3 // indirect
-	github.com/go-openapi/jsonpointer v0.22.1 // indirect
-	github.com/go-openapi/jsonreference v0.21.3 // indirect
+	github.com/go-openapi/jsonpointer v0.22.4 // indirect
+	github.com/go-openapi/jsonreference v0.21.4 // indirect
 	github.com/go-openapi/swag v0.25.4 // indirect
 	github.com/go-openapi/swag/cmdutils v0.25.4 // indirect
 	github.com/go-openapi/swag/conv v0.25.4 // indirect

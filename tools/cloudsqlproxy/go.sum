@@ -1,5 +1,5 @@
-chainguard.dev/exitdir v0.0.1 h1:gYH0OCCE5mbHKNTkTzmeqX2pa8f7txAcTeNLmoOZGGE=
-chainguard.dev/exitdir v0.0.1/go.mod h1:qs/nTdekhJH7TvwwOsY+dyJW8jXVowlaqTsi/i23SbY=
+chainguard.dev/exitdir v0.0.2 h1:l3nKh3PqKpJTuNkwuJhjuFsn9kWzVS01gVKc6lAnblA=
+chainguard.dev/exitdir v0.0.2/go.mod h1:peUw47JPRSE1Xs5NlrBSqW2oakEtjKk0s6cQKX8Rohg=
 github.com/fsnotify/fsnotify v1.9.0 h1:2Ml+OJNzbYCTzsxtv8vKSFD9PbJjmhYF14k/jKC7S9k=
 github.com/fsnotify/fsnotify v1.9.0/go.mod h1:8jBTzvmWwFyi3Pb8djgCCO5IBqzKJ/Jwo8TRcHyHii0=
 golang.org/x/sys v0.38.0 h1:3yZWxaJjBmCWXqhN1qh02AkOnCQ1poK6oF+a7xWL6Gc=

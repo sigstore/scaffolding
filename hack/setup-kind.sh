@@ -158,8 +158,8 @@ cat >> kind.yaml <<EOF_3
 # Configure registry for KinD.
 containerdConfigPatches:
 - |-
-  [plugins."io.containerd.grpc.v1.cri".registry.mirrors."$REGISTRY_NAME:$REGISTRY_PORT"]
-    endpoint = ["http://$REGISTRY_NAME:$REGISTRY_PORT"]
+  [plugins."io.containerd.grpc.v1.cri".registry]
+    config_path = "/etc/containerd/certs.d"
 
 # This is needed in order to support projected volumes with service account tokens.
 # See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600268272383600
@@ -174,9 +174,28 @@ kubeadmConfigPatches:
         "service-account-issuer": "https://kubernetes.default.svc.cluster.local"
         "service-account-key-file": "/etc/kubernetes/pki/sa.pub"
         "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
-        "service-account-api-audiences": "api,spire-server"
+        "api-audiences": "api,spire-server"
         "service-account-jwks-uri": "https://kubernetes.default.svc/openid/v1/jwks"
         "v": "4"
+    networking:
+      dnsDomain: "${CLUSTER_SUFFIX}"
+  - |
+    kind: ClusterConfiguration
+    apiVersion: kubeadm.k8s.io/v1beta4
+    apiServer:
+      extraArgs:
+        - name: "service-account-issuer"
+          value: "https://kubernetes.default.svc.cluster.local"
+        - name: "service-account-key-file"
+          value: "/etc/kubernetes/pki/sa.pub"
+        - name: "service-account-signing-key-file"
+          value: "/etc/kubernetes/pki/sa.key"
+        - name: "api-audiences"
+          value: "api,spire-server"
+        - name: "service-account-jwks-uri"
+          value: "https://kubernetes.default.svc/openid/v1/jwks"
+        - name: "v"
+          value: "4"
     networking:
       dnsDomain: "${CLUSTER_SUFFIX}"
 EOF_3
@@ -188,6 +207,18 @@ echo '::group:: Create KinD Cluster'
 kind create cluster --config kind.yaml --wait 5m
 
 kubectl describe nodes
+echo '::endgroup::'
+
+echo '::group:: Configure Registry on Nodes'
+
+# Configure registry hosts.toml on each node for containerd 2.x
+for node in $(kind get nodes); do
+  docker exec "${node}" mkdir -p "/etc/containerd/certs.d/${REGISTRY_NAME}:${REGISTRY_PORT}"
+  cat <<EOF | docker exec -i "${node}" cp /dev/stdin "/etc/containerd/certs.d/${REGISTRY_NAME}:${REGISTRY_PORT}/hosts.toml"
+[host."http://${REGISTRY_NAME}:${REGISTRY_PORT}"]
+EOF
+done
+
 echo '::endgroup::'
 
 echo '::group:: Expose OIDC Discovery'

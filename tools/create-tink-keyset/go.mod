@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/create-tink-keyset
 
-go 1.25.0
+go 1.25.5
 
 require (
 	github.com/sigstore/rekor-tiles/v2 v2.0.1

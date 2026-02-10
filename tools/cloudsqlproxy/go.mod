@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/cloudsqlproxy
 
-go 1.25.0
+go 1.25.5
 
 require (
 	chainguard.dev/exitdir v0.0.2

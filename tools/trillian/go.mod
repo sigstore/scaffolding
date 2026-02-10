@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/trillian
 
-go 1.25.0
+go 1.25.5
 
 require (
 	chainguard.dev/exitdir v0.0.2

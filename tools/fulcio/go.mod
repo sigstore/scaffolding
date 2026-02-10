@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/fulcio
 
-go 1.25.0
+go 1.25.5
 
 replace github.com/sigstore/scaffolding/tools/secret => ../secret
 

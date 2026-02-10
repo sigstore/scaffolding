@@ -2,9 +2,10 @@ name: Fulcio&Rekor E2E Tests
 
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
-permissions: read-all
+permissions: {}
 
 defaults:
   run:
@@ -20,14 +21,17 @@ jobs:
     name: e2e tests
     runs-on: ubuntu-latest
 
+    permissions:
+      contents: read
+
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.31.x
           - v1.32.x
           - v1.33.x
           - v1.34.x
+          - v1.35.x
 
         leg:
           - fulcio rekor ctlog e2e
@@ -49,7 +53,7 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-mirror@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+    - uses: chainguard-dev/actions/setup-mirror@eba358c567c5b091e34187d905258baebdd2a4ec # v1.5.16
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
@@ -76,7 +80,7 @@ jobs:
     - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/setup-kind@eba358c567c5b091e34187d905258baebdd2a4ec # v1.5.16
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -85,7 +89,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/setup-knative@eba358c567c5b091e34187d905258baebdd2a4ec # v1.5.16
       with:
         version: "1.18.x"
         serving-features: >
@@ -261,6 +265,6 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@3e8a2a226fad9e1ecbf2d359b8a7697554a4ac6d # v1.5.10
+      uses: chainguard-dev/actions/kind-diag@eba358c567c5b091e34187d905258baebdd2a4ec # v1.5.16
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

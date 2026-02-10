@@ -2,7 +2,8 @@ name: Test github action with TUF
 
 on:
   pull_request:
-    branches: [ main ]
+    branches:
+      - main
 
 defaults:
   run:
@@ -13,18 +14,24 @@ concurrency:
   group: test-github-action-with-tuf${{ github.head_ref }}
   cancel-in-progress: true
 
+permissions: {}
+
 jobs:
   test-github-action:
     name: Test github action with TUF
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     strategy:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.31.x
           - v1.32.x
           - v1.33.x
           - v1.34.x
+          - v1.35.x
         release-version:
           - "main" # Test explicitly with latest
         go-version:

@@ -7,8 +7,7 @@ on:
     paths:
     - 'tools/create-tink-keyset/cmd/create-tink-keyset/**'
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   create-tink-keyset-test:
@@ -19,12 +18,15 @@ jobs:
     steps:
       - name: 'Checkout'
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
 
       - name: Set up Go
         uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
         with:
           go-version-file: 'go.work'
           check-latest: true
+          cache: false
 
       - name: Create Tink Keyset build
         id: create-tink-keyset-test

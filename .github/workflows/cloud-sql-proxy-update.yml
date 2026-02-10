@@ -2,7 +2,8 @@ name: Cloud-SQL-Proxy update
 
 on:
   pull_request:
-    types: [labeled]
+    types:
+      - labeled
 
 permissions: {}
 
@@ -11,6 +12,7 @@ jobs:
     name: Update cloud-sql-proxy
     runs-on: ubuntu-latest
     if: github.event.label.name == 'cloud-sql-proxy'
+
     permissions:
       contents: write
 

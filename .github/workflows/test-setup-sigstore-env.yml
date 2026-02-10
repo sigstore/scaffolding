@@ -7,21 +7,32 @@ on:
   pull_request:
     paths:
       - 'actions/setup-sigstore-env/**'
+
+permissions: {}
+
 jobs:
   test:
     name: Test Sigstore setup
     runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
     steps:
       - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           persist-credentials: false
+
       - id: setup-sigstore-env
         uses: ./actions/setup-sigstore-env
+
       - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
         with:
           cosign-release: main
+
       - name: Create artifact to sign
         run: head -c 128 < /dev/urandom > artifact
+
       - name: Run cosign sign-blob
         env:
           SIGSTORE_CT_LOG_PUBLIC_KEY_FILE: ${{ steps.setup-sigstore-env.outputs.ct-log-key }}
@@ -38,6 +49,7 @@ jobs:
             --fulcio-url http://localhost:5555 \
             --identity-token ${STEPS_SETUP_SIGSTORE_ENV_OUTPUTS_OIDC_TOKEN} \
             artifact
+
       - name: Run cosign verify-blob with trusted root
         run: |
           cosign verify-blob \

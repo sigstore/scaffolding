@@ -264,11 +264,12 @@ func TestConstructTrustedRoot(t *testing.T) {
 		t.Fatalf("Failed to split TSA cert chain: %v", err)
 	}
 
-	targets := []TargetWithMetadata{
-		{Name: "fulcio.crt.pem", Bytes: []byte(fulcioRootCert)},
-		{Name: "ctfe.pub", Bytes: []byte(ctlogPublicKey)},
-		{Name: "rekor.pub", Bytes: []byte(rekorPublicKey)},
-	}
+	targets := make([]TargetWithMetadata, 0, 6)
+	targets = append(targets,
+		TargetWithMetadata{Name: "fulcio.crt.pem", Bytes: []byte(fulcioRootCert)},
+		TargetWithMetadata{Name: "ctfe.pub", Bytes: []byte(ctlogPublicKey)},
+		TargetWithMetadata{Name: "rekor.pub", Bytes: []byte(rekorPublicKey)},
+	)
 
 	for k, v := range tsaCerts {
 		targets = append(targets, TargetWithMetadata{Name: k, Bytes: v})

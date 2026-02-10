@@ -219,7 +219,7 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 
 		// Now test that we have configuration that trusts both Fulcio roots
 		// simulating while one is being spun down.
-		expected := [][]byte{}
+		expected := make([][]byte, 0, 2)
 		expected = append(expected, []byte(existingRootCert), newFulcioCert)
 		validateFulcioEntries(ctx, marshaled, expected, t)
 
@@ -243,7 +243,7 @@ func TestAddNewFulcioAndRemoveOld(t *testing.T) {
 
 		// Now test that we have configuration that trusts only the new Fulcio
 		// root, simulating that the old one has been spun down.
-		expected = make([][]byte, 0)
+		expected = make([][]byte, 0, 1)
 		expected = append(expected, newFulcioCert)
 		validateFulcioEntries(ctx, marshaledNew, expected, t)
 	}

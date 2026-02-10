@@ -165,8 +165,8 @@ containerdConfigPatches:
 # See: https://kubernetes.slack.com/archives/CEKK1KTN2/p1600268272383600
 kubeadmConfigPatches:
   - |
-    apiVersion: kubeadm.k8s.io/v1beta2
     kind: ClusterConfiguration
+    apiVersion: kubeadm.k8s.io/v1beta3
     metadata:
       name: config
     apiServer:
@@ -176,6 +176,7 @@ kubeadmConfigPatches:
         "service-account-signing-key-file": "/etc/kubernetes/pki/sa.key"
         "service-account-api-audiences": "api,spire-server"
         "service-account-jwks-uri": "https://kubernetes.default.svc/openid/v1/jwks"
+        "v": "4"
     networking:
       dnsDomain: "${CLUSTER_SUFFIX}"
 EOF_3

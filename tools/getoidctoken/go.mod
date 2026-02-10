@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0
-	sigs.k8s.io/release-utils v0.12.2
+	sigs.k8s.io/release-utils v0.12.3
 )
 
 require (

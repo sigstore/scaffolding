@@ -5,6 +5,8 @@ on:
     tags:
     - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
+pemissions: {}
+
 jobs:
   release:
     name: Release
@@ -18,7 +20,6 @@ jobs:
     env:
       GOPATH: ${{ github.workspace }}
       GO111MODULE: on
-      COSIGN_EXPERIMENTAL: "true"
 
     steps:
     - name: Check out code onto GOPATH
@@ -32,6 +33,7 @@ jobs:
       with:
         go-version-file: ./src/github.com/${{ github.repository }}/go.work
         check-latest: true
+        cache: false
 
     - name: Install ko
       uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9

@@ -4,9 +4,9 @@ go 1.25.5
 
 require (
 	github.com/google/go-cmp v0.7.0
-	k8s.io/api v0.35.0
-	k8s.io/apimachinery v0.35.0
-	k8s.io/client-go v0.35.0
+	k8s.io/api v0.35.1
+	k8s.io/apimachinery v0.35.1
+	k8s.io/client-go v0.35.1
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 )
 

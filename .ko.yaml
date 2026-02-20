@@ -19,21 +19,6 @@ builds:
       - -extldflags "-static"
       - "{{ .Env.LDFLAGS }}"
 
-  - id: ctlog-managectroots
-    dir: ./tools/ctlog/
-    main: ./cmd/ctlog/managectroots
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -tags
-      - nostackdriver
-    ldflags:
-      - -s
-      - -w
-      - -extldflags "-static"
-      - "{{ .Env.LDFLAGS }}"
-
   - id: fulcio-createcerts
     dir: ./tools/fulcio/
     main: ./cmd/fulcio/createcerts

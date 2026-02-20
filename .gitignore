@@ -14,6 +14,5 @@ kind.yaml
 /rekor-createsecret
 /createtree
 /getoidctoken
-/managectroots
 /server
 /updatetree

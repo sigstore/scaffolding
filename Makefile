@@ -118,7 +118,7 @@ ko-apply-gettoken:
 	ko apply -f ./testdata/config/gettoken
 
 .PHONY: build
-build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-ctlog-managectroots build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
+build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
 
 .PHONY: build-cloudsqlproxy
 build-cloudsqlproxy:
@@ -127,10 +127,6 @@ build-cloudsqlproxy:
 .PHONY: build-ctlog-createctconfig
 build-ctlog-createctconfig:
 	go build -trimpath ./tools/ctlog/cmd/ctlog/createctconfig
-
-.PHONY: build-ctlog-managectroots
-build-ctlog-managectroots:
-	go build -trimpath ./tools/ctlog/cmd/ctlog/managectroots
 
 .PHONY: build-fulcio-createcerts
 build-fulcio-createcerts:

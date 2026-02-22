@@ -14,7 +14,7 @@ spec:
       # gets initialized and will be used by the main container.
       initContainers:
       - name: cosign-initialize
-        image: gcr.io/projectsigstore/cosign@sha256:9377edd13ae515dcb97c15052e577a2cbce098f36b0361bdb2348e3bdd8fe536 # cosign v1.10.1
+        image: gcr.io/projectsigstore/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb # cosign v3.0.5
         args: [
           "initialize",
           "--mirror", "http://tuf.tuf-system.svc",
@@ -31,19 +31,16 @@ spec:
           mountPath: "/var/run/sigstore"
       containers:
       - name: cosign
-        image: gcr.io/projectsigstore/cosign@sha256:9377edd13ae515dcb97c15052e577a2cbce098f36b0361bdb2348e3bdd8fe536 # cosign v1.10.1
+        image: gcr.io/projectsigstore/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb # cosign v3.0.5
         args: [
           "sign",
           "--fulcio-url", "http://fulcio.fulcio-system.svc",
           "--rekor-url", "http://rekor.rekor-system.svc",
-          "--force",
           "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
         ]
         env:
         - name: HOME
           value: "/var/run/sigstore"
-        - name: COSIGN_EXPERIMENTAL
-          value: "true"
         - name: COSIGN_REPOSITORY
           value: "registry.local:5000/knative"
         volumeMounts:

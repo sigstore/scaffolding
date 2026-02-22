@@ -98,23 +98,10 @@ export KO_DOCKER_REPO=registry.local:5001/sigstore
 
 The step above creates 5 namespaces:
 
- * trillian-system
  * ctlog-system
  * fulcio-system
  * rekor-system
  * tuf-system
-
-## trillian-system namespace
-
-`trillian-system` namespace contains all things related to
-[Trillian](https://github.com/google/trillian). This means there will be two
-services `log-server`, `log-signer`, and a mysql pod.
-
-To access these services from the cluster, you'd use:
-
- * `log-server.trillian-system.svc`
- * `log-signer.trillian-system.svc`
- * `mysql-trillian.trillian-system.svc`
 
  ## ctlog-system namespace
 
@@ -135,8 +122,8 @@ or
 
 ## rekor-system namespace
 
-`rekor-system` namespace contains [Rekor](https://github.com/sigstore/rekor)
-and Rekor can be accessed in the cluster with:
+`rekor-system` namespace contains [Rekor v2](https://github.com/sigstore/rekor-tiles)
+which can be accessed in the cluster with:
 
  * `rekor.rekor-system.svc`
 

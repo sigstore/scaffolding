@@ -1,0 +1,57 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: rekor
+  namespace: rekor-system
+---
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  namespace: rekor-system
+  name: rekor
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/min-scale: "1"
+    spec:
+      serviceAccountName: rekor
+      containers:
+      - name: rekor-tiles-posix
+        image: ghcr.io/sigstore/rekor-tiles/posix:v2.2.1@sha256:627422bf9da146d1d9ff4e1c1e8301a1780ab6ad9b32bccff51ecd9f8c820e41
+        ports:
+        - containerPort: 3000
+        args: [
+          "rekor-server",
+          "serve",
+          "--http-address=0.0.0.0",
+          "--grpc-address=0.0.0.0",
+          "--signer-filepath=/var/run/rekor-secrets/signing-secret",
+          "--hostname=rekor-tiles.rekor-tiles-system.svc",
+          "--checkpoint-interval=2s",
+          "--persistent-antispam",
+          "--storage-dir=/tiles",
+        ]
+        env:
+        - name: SECRET_SIGNING_PWD
+          valueFrom:
+            secretKeyRef:
+              name: rekor-signing-secret
+              key: password
+        volumeMounts:
+        - name: rekor-secrets
+          mountPath: "/var/run/rekor-secrets"
+          readOnly: true
+        - name: storage
+          mountPath: "/tiles"
+      volumes:
+      - name: rekor-secrets
+        secret:
+          secretName: rekor-signing-secret
+          items:
+          - key: private
+            path: signing-secret
+      - name: storage
+        persistentVolumeClaim:
+          claimName: rekor-tiles-storage

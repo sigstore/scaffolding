@@ -106,79 +106,28 @@ graph TD
     end
 ```
 
-## [Trillian](https://github.com/google/trillian)
+## [Rekor v2](https://github.com/sigstore/rekor-tiles)
 
-Trillian requires a database to work, so we create one using Trillian CI
-[container](https://gcr.io/trillian-opensource-ci/db_server@sha256:e58334fead37d1f03c77c80f66008966e79739d85214b373b3c0a69f97c59359)
-that has the mysql running, and Trillian
-[schema](https://github.com/google/trillian/blob/master/storage/mysql/schema/storage.sql) on it.
-
-## [Rekor](https://github.com/sigstore/rekor)
-
-Rekor requires a Merkle tree that has been created in Trillian to function. This
-can be achieved by using the admin grpc client
-[CreateTree](https://github.com/google/trillian/blob/29373b23c1b1d8e830dc697f70b3185b65a1325f/trillian_admin_api.proto#L49https://github.com/google/trillian/blob/29373b23c1b1d8e830dc697f70b3185b65a1325f/trillian_admin_api.proto#L49)
-call. This again is a Job ‘**createtree**’ and this job will also create a
-ConfigMap containing the newly minted TreeID. This allows us to (recall mounting
-Configmaps to pods from above) to block Rekor server from starting before the
-TreeID has been provisioned. So, assuming that Rekor runs in Namespace
-rekor-system and the ConfigMap that is created by ‘**createtree**’ Job, we can
-have the following (some stuff omitted for readability) in our Rekor Deployment
-to ensure that Rekor will not start prior to TreeID having been properly
-provisioned.
-Rekor also needs a Signing Key that it will use, and we create one with
-[CreateSecret](./tools/rekor/cmd/rekor/rekor-createsecret/main.go). It will create two secrets,
-one holding the Private Signing key as well as the password used to encrypt it
-with. By default the secret is named `rekor-signing-secret` and contains two
-keys:
-
- * signing-secret - Holds the encrypted private key for signing
- * signing-secret-password - Holds the password used to encrypt the key above.
-
-That secret then gets mounted / used by Rekor as demonstrated below.
+Rekor needs a signing key, which can be created with:
 
 ```
-spec:
-  template:
-    spec:
-      containers:
-      - name: rekor
-        image: gcr.io/projectsigstore/rekor-server@sha256:516651575db19412c94d4260349a84a9c30b37b5d2635232fba669262c5cbfa6
-        args: [
-          "serve",
-          "--trillian_log_server.address=log-server.trillian-system.svc",
-          "--trillian_log_server.port=80",
-          "--trillian_log_server.tlog_id=$(TREE_ID)",
-        ]
-        env:
-        - name: TREE_ID
-          valueFrom:
-            configMapKeyRef:
-              name: rekor-config
-              key: treeID
-          - name: SECRET_SIGNING_PWD
-            valueFrom:
-              secretKeyRef:
-                name: rekor-secrets
-                key: signing-secret-password
-        volumeMounts:
-        - name: rekor-secrets
-          mountPath: "/var/run/rekor-secrets"
-          readOnly: true
-      volumes:
-      - name: rekor-secrets
-        secret:
-          secretName: rekor-signing-secret
-          items:
-          - key: signing-secret
-            path: signing-secret
+pass=$(uuidgen)
+openssl genpkey -algorithm ed25519 -out "/pki/key.pem" -pass pass:"${pass}"
+openssl pkey -in "${rekordir}/key.pem" -out "/pki/pub.pem" -pubout
+kubectl -n rekor-system create secret generic \
+  --from-file=private=/pki/key.pem \
+  --from-file=public=/pki/pub.pem \
+  --from-literal=password=$pass \
+  rekor-signing-secret
 ```
 
-In addition to creating a tree, we will also create a secret holding the
-public key of the Rekor client that we'll need to be able to construct a proper
-tuf root later on. This is handled by a rekor createsecret job and it creates
-a `rekor-pub-key` secret in the `rekor-system` namespace holding a single
-entry in it called `public` that holds the public key for the Rekor.
+ * private - Holds the encrypted private key for signing
+ * public - Holds the public key
+ * password - Holds the password used to encrypt the key above.
+
+Also create a secret for the public key that we'll need to be able to construct
+a proper TUF root lateron. Create secret `rekor-pub-key` in namespace 
+`rekor-system` holding entry `public` with the public key.
 
 ## Fulcio
 

@@ -117,7 +117,8 @@ U0Vwjeco6zyeh0zBTs9/7gV6AHNQ53xD
       },
       "logId": {
         "keyId": "jOSymJW6Ywhw2zAfvchs+4jsOS+Iux5cOrxTfO+HMCA="
-      }
+      },
+      "baseUrl": "http://rekor.rekor-system.svc"
     }
   ],
   "certificateAuthorities": [
@@ -150,7 +151,7 @@ U0Vwjeco6zyeh0zBTs9/7gV6AHNQ53xD
         }
       },
       "logId": {
-        "keyId": "8yGn++p+BUgM0YDLv+NiivfcC2kmMJAVpAm/UtCDn/Y="
+        "keyId": "JX/eVrqxfzwqnRD/d/LwUGjzj5cOdWcU75rFzQDHkBU="
       }
     }
   ],

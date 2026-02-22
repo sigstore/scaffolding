@@ -24,7 +24,6 @@ import (
 	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rsa"
-	"crypto/sha256"
 	"crypto/x509"
 	"encoding/hex"
 	"encoding/json"
@@ -41,6 +40,7 @@ import (
 	"time"
 
 	prototrustroot "github.com/sigstore/protobuf-specs/gen/pb-go/trustroot/v1"
+	"github.com/sigstore/rekor-tiles/v2/pkg/note"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/theupdateframework/go-tuf"
 	"knative.dev/pkg/logging"
@@ -240,13 +240,16 @@ func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, er
 				tsaRoot = target.Bytes
 			}
 		case RekorTarget:
-			tlinstance, id, err := pubkeyToTransparencyLogInstance(target.Bytes, now)
+			rekorURL := "rekor.rekor-system.svc"
+			tlinstance, id, err := pubkeyToTransparencyLogInstance(rekorURL, target.Bytes, now)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse rekor key: %w", err)
 			}
+			tlinstance.BaseURL = "http://" + rekorURL
 			rekorKeys[id] = tlinstance
 		case CTFETarget:
-			tlinstance, id, err := pubkeyToTransparencyLogInstance(target.Bytes, now)
+			ctlogURL := "ctlog.ctlog-system.svc"
+			tlinstance, id, err := pubkeyToTransparencyLogInstance(ctlogURL, target.Bytes, now)
 			if err != nil {
 				return nil, fmt.Errorf("failed to parse ctlog key: %w", err)
 			}
@@ -319,7 +322,7 @@ func constructSigningConfig() (*TargetWithMetadata, error) {
 	rekorServices := []root.Service{
 		{
 			URL:                 rekorURL,
-			MajorAPIVersion:     1,
+			MajorAPIVersion:     2,
 			ValidityPeriodStart: validityStart,
 			Operator:            "test",
 		},
@@ -362,22 +365,25 @@ func constructSigningConfig() (*TargetWithMetadata, error) {
 	}, nil
 }
 
-func pubkeyToTransparencyLogInstance(keyBytes []byte, tm time.Time) (*root.TransparencyLog, string, error) {
+func pubkeyToTransparencyLogInstance(origin string, keyBytes []byte, tm time.Time) (*root.TransparencyLog, string, error) {
 	der, _ := pem.Decode(keyBytes)
-	logID := sha256.Sum256(der.Bytes)
 	key, keyDetails, err := getKeyWithDetails(der.Bytes)
+	if err != nil {
+		return nil, "", err
+	}
+	_, logID, err := note.KeyHash(origin, key)
 	if err != nil {
 		return nil, "", err
 	}
 
 	return &root.TransparencyLog{
 		BaseURL:             "",
-		ID:                  logID[:],
+		ID:                  logID,
 		ValidityPeriodStart: tm,
 		HashFunc:            crypto.SHA256, // we can't get this from the keyBytes, assume SHA256
 		PublicKey:           key,
 		SignatureHashFunc:   keyDetails,
-	}, hex.EncodeToString(logID[:]), nil
+	}, hex.EncodeToString(logID), nil
 }
 
 func getKeyWithDetails(key []byte) (crypto.PublicKey, crypto.Hash, error) {

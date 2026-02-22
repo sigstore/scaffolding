@@ -94,7 +94,9 @@ jobs:
         version: "1.18.x"
         serving-features: >
           {
-            "kubernetes.podspec-fieldref": "enabled"
+            "kubernetes.podspec-fieldref": "enabled",
+            "kubernetes.podspec-persistent-volume-claim": "enabled",
+            "kubernetes.podspec-persistent-volume-write": "enabled"
           }
 
     - name: Create sample image
@@ -167,45 +169,50 @@ jobs:
         TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
         echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
 
+    - name: Create a signing config
+      run: |
+        cosign signing-config create \
+          --fulcio=url=$FULCIO_URL,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor=url=$REKOR_URL,api-version=2,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor-config=ANY \
+          --tsa=url=$TSA_URL/api/v1/timestamp,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --tsa-config=ANY \
+          --out signing_config.json
+      env:
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        REKOR_URL: ${{ env.REKOR_URL }}
+        TSA_URL: ${{ env.TSA_URL }}
+
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
-        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
+        --new-bundle-format \
+        --use-signed-timestamps \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Sign a blob with signature bundle format
       run: |
-        cosign sign-blob --yes --new-bundle-format=true --bundle=bundle.json --rekor-url $REKOR_URL --fulcio-url $FULCIO_URL --identity-token $OIDC_TOKEN README.md
+        cosign sign-blob --yes --signing-config=signing_config.json --new-bundle-format=true --bundle=bundle.json --identity-token $OIDC_TOKEN README.md
 
     - name: Verify blob with signature bundle format using trusted_root.json
       run: |
-        # remove scheme from TUF_MIRROR if present
-        TUF_MIRROR="${TUF_MIRROR#http://}"
-        TUF_MIRROR="${TUF_MIRROR#https://}"
-        # the trusted_root.json is in the TUF target cache: Use --trusted-root while cosign does not
-        # use it by default
         cosign verify-blob \
             --certificate-identity-regexp="https://kubernetes.io/namespaces/default/serviceaccounts/default" \
             --certificate-oidc-issuer-regexp="https://kubernetes.default.svc.cluster.local" \
             --bundle=bundle.json  --new-bundle-format \
-            --rekor-url $REKOR_URL \
-            --trusted-root=$HOME/.sigstore/root/$TUF_MIRROR/targets/trusted_root.json \
+            --use-signed-timestamps \
             README.md
-      env:
-        TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
     # Test with cosign in 'airgapped mode'
     # Uncomment these once modified cosign goes in.

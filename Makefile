@@ -80,7 +80,7 @@ ko-apply-fulcio:
 .PHONY: ko-apply-rekor
 ko-apply-rekor:
 	LDFLAGS="$(LDFLAGS)" \
-	ko apply -BRf ./config/rekor
+	ko apply -BRf ./config/rekor-tiles
 
 .PHONY: ko-apply-trillian
 ko-apply-trillian:

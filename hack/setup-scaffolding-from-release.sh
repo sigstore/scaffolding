@@ -69,19 +69,42 @@ if [[ "${K8S_SERVER_VERSION}" == "21" ]] || [[ "${K8S_SERVER_VERSION}" == "22" ]
   NEED_TO_UPDATE_FULCIO_CONFIG="true"
 fi
 
-# Install Trillian and wait for it to come up
+cleanup_cmd=""
+cleanup() {
+    eval "$cleanup_cmd"
+}
+trap cleanup EXIT
+
+# Install Trillian if it is part of this release and wait for it to come up
 echo '::group:: Install Trillian'
-kubectl apply -f "${TRILLIAN}"
+has_trillian=1
+if curl -s -i https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml | grep 'HTTP/2 404' ; then
+  has_trillian=0
+fi
+[ -z $has_trillian ] || kubectl apply -f "${TRILLIAN}"
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
-kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
-kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
+[ -z $has_trillian ] || kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
+[ -z $has_trillian ] || kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
 echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
 echo '::group:: Install Rekor'
+
+pass=$(uuidgen)
+rekordir=$(mktemp -d)
+openssl genpkey -algorithm ed25519 -out "${rekordir}/key.pem" -pass pass:"${pass}"
+openssl pkey -in "${rekordir}/key.pem" -out "${rekordir}/pub.pem" -pubout
+cleanup_rekor() {
+    rm "${rekordir}/pub.pem" "${rekordir}/key.pem"
+}
+cleanup_cmd="cleanup_rekor"
 kubectl apply -f "${REKOR}"
+curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
+  -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
+  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" | \
+  kubectl apply -f -
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
@@ -101,10 +124,10 @@ pass=$(uuidgen)
 fulciodir=$(mktemp -d)
 openssl ecparam -name prime256v1 -genkey | openssl pkcs8 -passout "pass:${pass}" -topk8 -out "${fulciodir}/key.pem"
 openssl req -x509 -new -key "${fulciodir}/key.pem" -out "${fulciodir}/cert.pem" -sha256 -days 10 -subj "/O=test/CN=fulcio.scaffolding.test" -passin "pass:${pass}"
-cleanup() {
+cleanup_fulcio() {
     rm "${fulciodir}/cert.pem" "${fulciodir}/key.pem"
 }
-trap cleanup EXIT
+cleanup_cmd="$cleanup_cmd ; cleanup_fulcio"
 sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
   -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \
   -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" "${fulcio}"
@@ -130,7 +153,7 @@ openssl ec -in "${ctdir}/key.pem" -pubout -out "${ctdir}/pub.pem"
 cleanup_ctlog() {
     rm "${ctdir}/pub.pem" "${ctdir}/key.pem"
 }
-trap cleanup_ctlog EXIT
+cleanup_cmd="$cleanup_cmd ; cleanup_ctlog"
 curl -Ls "${CTLOG}" | sed -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" | base64 -w0)/" \
   -e "s/<public-placeholder>/$(cat "${ctdir}/pub.pem" | base64 -w0)/" \
   -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" | \

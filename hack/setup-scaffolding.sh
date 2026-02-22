@@ -27,23 +27,35 @@ if [[ "${K8S_SERVER_VERSION}" == "21" ]] || [[ "${K8S_SERVER_VERSION}" == "22" ]
   NEED_TO_UPDATE_FULCIO_CONFIG="true"
 fi
 
-# Install Trillian and wait for it to come up
-echo '::group:: Install Trillian'
-make ko-apply-trillian
-echo '::endgroup::'
-
-echo '::group:: Wait for Trillian ready'
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-server
-kubectl wait --timeout 2m -n trillian-system --for=condition=Ready ksvc log-signer
-echo '::endgroup::'
+cleanup_cmd=""
+cleanup() {
+    eval "$cleanup_cmd"
+}
+trap cleanup EXIT
 
 # Install Rekor and wait for it to come up
 echo '::group:: Install Rekor'
+
+pass=$(uuidgen)
+rekordir=$(mktemp -d)
+openssl genpkey -algorithm ed25519 -out "${rekordir}/key.pem" -pass pass:"${pass}"
+openssl pkey -in "${rekordir}/key.pem" -out "${rekordir}/pub.pem" -pubout
+cleanup_rekor() {
+    rm "${rekordir}/pub.pem" "${rekordir}/key.pem"
+}
+cleanup_cmd="cleanup_rekor"
+cp config/rekor-tiles/rekor-tiles/200-secret.yaml 200-secret.original.yaml
+sed -i -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
+  -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
+  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" config/rekor-tiles/rekor-tiles/200-secret.yaml
+
 make ko-apply-rekor
 echo '::endgroup::'
 
+echo "Restoring Rekor secret placeholder"
+mv ./200-secret.original.yaml config/rekor-tiles/rekor-tiles/200-secret.yaml
+
 echo '::group:: Wait for Rekor ready'
-kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
@@ -65,7 +77,7 @@ openssl req -x509 -new -key "${fulciodir}/key.pem" -out "${fulciodir}/cert.pem" 
 cleanup_fulcio() {
     rm "${fulciodir}/cert.pem" "${fulciodir}/key.pem"
 }
-trap cleanup_fulcio EXIT
+cleanup_cmd="$cleanup_cmd ; cleanup_fulcio"
 cp config/fulcio/fulcio/200-secret.yaml 200-secret.original.yaml
 sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
   -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \

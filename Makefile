@@ -5,8 +5,6 @@ LDFLAGS=-buildid= -X sigs.k8s.io/release-utils/version.gitVersion=$(GIT_TAG) -X 
 
 KO_DOCKER_REPO ?= ghcr.io/sigstore/scaffolding
 
-TRILLIAN_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/google/trillian)
-
 OMNIWITNESS_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
 
 lint:
@@ -16,7 +14,7 @@ tidy:
 	./hack/modtidy.sh
 
 # These are the subdirs under config that we'll turn into separate artifacts.
-artifacts := trillian ctlog fulcio rekor tsa tuf
+artifacts := ctlog fulcio rekor tsa tuf
 
 .PHONY: ko-resolve
 ko-resolve:
@@ -28,12 +26,6 @@ ko-resolve:
 	# "Building cloudsqlproxy wrapper"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./tools/cloudsqlproxy/cmd/cloudsqlproxy
-	# "Building trillian_log_server"
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_server github.com/google/trillian/cmd/trillian_log_server
-	# "Building trillian_log_signer"
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=all --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_signer github.com/google/trillian/cmd/trillian_log_signer
 	# Building omniwitness
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=all --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/gcp/omniwitness
@@ -80,12 +72,7 @@ ko-apply-fulcio:
 .PHONY: ko-apply-rekor
 ko-apply-rekor:
 	LDFLAGS="$(LDFLAGS)" \
-	ko apply -BRf ./config/rekor
-
-.PHONY: ko-apply-trillian
-ko-apply-trillian:
-	LDFLAGS="$(LDFLAGS)" \
-	ko apply -v -BRf ./config/trillian
+	ko apply -BRf ./config/rekor-tiles
 
 .PHONY: ko-apply-tsa
 ko-apply-tsa:
@@ -118,7 +105,11 @@ ko-apply-gettoken:
 	ko apply -f ./testdata/config/gettoken
 
 .PHONY: build
+<<<<<<< HEAD
 build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
+=======
+build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-ctlog-managectroots build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-tsa-createcertchain build-tuf-createsecret
+>>>>>>> 87e5847 (Upgrade setup-scaffolding to Rekor v2)
 
 .PHONY: build-cloudsqlproxy
 build-cloudsqlproxy:
@@ -139,18 +130,6 @@ build-getoidctoken:
 .PHONY: build-rekor-createsecret
 build-rekor-createsecret:
 	go build -trimpath ./tools/rekor/cmd/rekor/rekor-createsecret
-
-.PHONY: build-trillian-createdb
-build-trillian-createdb:
-	go build -trimpath ./tools/trillian/cmd/trillian/createdb
-
-.PHONY: build-trillian-createtree
-build-trillian-createtree:
-	go build -trimpath ./tools/trillian/cmd/trillian/createtree
-
-.PHONY: build-trillian-updatetree
-build-trillian-updatetree:
-	go build -trimpath ./tools/trillian/cmd/trillian/updatetree
 
 .PHONY: build-tsa-createcertchain
 build-tsa-createcertchain:

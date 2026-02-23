@@ -54,6 +54,7 @@ var (
 	noK8s           = flag.Bool("no-k8s", false, "Run in a non-k8s environment")
 	metadataTargets = flag.Bool("metadata-targets", true, "Serve individual targets with custom Sigstore metadata. This will be deprecated and removed in the future.")
 	trustedRoot     = flag.Bool("trusted-root", true, "Generate and serve trusted_root.json")
+	signingConfig   = flag.Bool("signing-config", true, "Generate and serve signing_config.v0.2.json")
 )
 
 func getNamespaceAndClientset(noK8s bool) (string, *kubernetes.Clientset, error) {
@@ -128,7 +129,7 @@ func initTUFRepo(ctx context.Context, certsDir, targetDir, repoSecretName, keysS
 	}
 
 	// Create a new TUF root with the listed artifacts.
-	local, dir, err := repo.CreateRepoWithOptions(ctx, files, repo.CreateRepoOptions{AddMetadataTargets: *metadataTargets, AddTrustedRoot: *trustedRoot})
+	local, dir, err := repo.CreateRepoWithOptions(ctx, files, repo.CreateRepoOptions{AddMetadataTargets: *metadataTargets, AddTrustedRoot: *trustedRoot, AddSigningConfig: *signingConfig})
 	if err != nil {
 		return fmt.Errorf("failed to create repo: %w", err)
 	}

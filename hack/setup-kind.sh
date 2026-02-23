@@ -35,7 +35,7 @@ done
 # Defaults
 K8S_VERSION="v1.32.x"
 REGISTRY_NAME="registry.local"
-REGISTRY_PORT="5001"
+REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"
 
 while [[ $# -ne 0 ]]; do

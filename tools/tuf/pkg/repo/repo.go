@@ -40,6 +40,7 @@ import (
 	"strings"
 	"time"
 
+	prototrustroot "github.com/sigstore/protobuf-specs/gen/pb-go/trustroot/v1"
 	"github.com/sigstore/sigstore-go/pkg/root"
 	"github.com/theupdateframework/go-tuf"
 	"knative.dev/pkg/logging"
@@ -56,6 +57,7 @@ const (
 type CreateRepoOptions struct {
 	AddMetadataTargets bool
 	AddTrustedRoot     bool
+	AddSigningConfig   bool
 }
 
 // TargetWithMetadata describes a TUF target with the given Name, Bytes, and
@@ -185,6 +187,13 @@ func CreateRepoWithOptions(ctx context.Context, files map[string][]byte, options
 		}
 		targets = append(targets, *trustedRootTarget)
 	}
+	if options.AddSigningConfig {
+		signingConfigTarget, err := constructSigningConfig()
+		if err != nil {
+			return nil, "", fmt.Errorf("failed to construct signing config: %w", err)
+		}
+		targets = append(targets, *signingConfigTarget)
+	}
 
 	return CreateRepoWithMetadata(ctx, targets)
 }
@@ -282,6 +291,73 @@ func constructTrustedRoot(targets []TargetWithMetadata) (*TargetWithMetadata, er
 
 	return &TargetWithMetadata{
 		Name:  "trusted_root.json",
+		Bytes: serialized,
+	}, nil
+}
+
+func constructSigningConfig() (*TargetWithMetadata, error) {
+	validityStart := time.Now()
+	fulcioURL := "http://fulcio.fulcio-system.svc"
+	fulcioServices := []root.Service{
+		{
+			URL:                 fulcioURL,
+			MajorAPIVersion:     1,
+			ValidityPeriodStart: validityStart,
+			Operator:            "test",
+		},
+	}
+	oidcURL := "https://kubernetes.default.svc.cluster.local"
+	oidcServices := []root.Service{
+		{
+			URL:                 oidcURL,
+			MajorAPIVersion:     1,
+			ValidityPeriodStart: validityStart,
+			Operator:            "test",
+		},
+	}
+	rekorURL := "http://rekor.rekor-system.svc"
+	rekorServices := []root.Service{
+		{
+			URL:                 rekorURL,
+			MajorAPIVersion:     1,
+			ValidityPeriodStart: validityStart,
+			Operator:            "test",
+		},
+	}
+	rekorConfig := root.ServiceConfiguration{
+		Selector: prototrustroot.ServiceSelector_ANY,
+	}
+	tsaURL := "http://tsa.tsa-system.svc/api/v1/timestamp"
+	tsaServices := []root.Service{
+		{
+			URL:                 tsaURL,
+			MajorAPIVersion:     1,
+			ValidityPeriodStart: validityStart,
+			Operator:            "test",
+		},
+	}
+	tsaConfig := root.ServiceConfiguration{
+		Selector: prototrustroot.ServiceSelector_ANY,
+	}
+	signingConfig, err := root.NewSigningConfig(
+		root.SigningConfigMediaType02,
+		fulcioServices,
+		oidcServices,
+		rekorServices,
+		rekorConfig,
+		tsaServices,
+		tsaConfig,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create SigningConfig: %w", err)
+	}
+	serialized, err := json.Marshal(signingConfig)
+	if err != nil {
+		return nil, fmt.Errorf("failed to serialize SigningConfig to JSON: %w", err)
+	}
+
+	return &TargetWithMetadata{
+		Name:  "signing_config.v0.2.json",
 		Bytes: serialized,
 	}, nil
 }

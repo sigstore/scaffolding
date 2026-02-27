@@ -5,7 +5,7 @@ go 1.25.5
 replace github.com/sigstore/scaffolding/tools/secret => ../secret
 
 require (
-	github.com/google/certificate-transparency-go v1.3.2
+	github.com/google/certificate-transparency-go v1.3.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.7.2
 	github.com/sigstore/fulcio v1.8.5
@@ -13,7 +13,6 @@ require (
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.10.4
 	google.golang.org/protobuf v1.36.11
-	k8s.io/api v0.35.1
 	k8s.io/apimachinery v0.35.1
 	k8s.io/client-go v0.35.1
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
@@ -56,15 +55,16 @@ require (
 	go.uber.org/zap v1.27.1 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
-	golang.org/x/crypto v0.47.0 // indirect
+	golang.org/x/crypto v0.48.0 // indirect
 	golang.org/x/net v0.49.0 // indirect
 	golang.org/x/oauth2 v0.34.0 // indirect
-	golang.org/x/sys v0.40.0 // indirect
-	golang.org/x/term v0.39.0 // indirect
-	golang.org/x/text v0.33.0 // indirect
+	golang.org/x/sys v0.41.0 // indirect
+	golang.org/x/term v0.40.0 // indirect
+	golang.org/x/text v0.34.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
+	k8s.io/api v0.35.1 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	k8s.io/utils v0.0.0-20251002143259-bc988d571ff4 // indirect

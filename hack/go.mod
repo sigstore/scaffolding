@@ -24,7 +24,7 @@ require (
 	cloud.google.com/go/spanner v1.86.1 // indirect
 	cloud.google.com/go/trace v1.11.7 // indirect
 	contrib.go.opencensus.io/exporter/stackdriver v0.13.14 // indirect
-	filippo.io/edwards25519 v1.1.0 // indirect
+	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/GoogleCloudPlatform/grpc-gcp-go/grpcgcp v1.5.3 // indirect
 	github.com/GoogleCloudPlatform/opentelemetry-operations-go/detectors/gcp v1.30.0 // indirect
 	github.com/avast/retry-go/v4 v4.7.0 // indirect

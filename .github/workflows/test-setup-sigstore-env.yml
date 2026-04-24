@@ -26,7 +26,7 @@ jobs:
       - id: setup-sigstore-env
         uses: ./actions/setup-sigstore-env
 
-      - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+      - uses: sigstore/cosign-installer@cad07c2e89fa2edd6e2d7bab4c1aa38e53f76003 # v4.1.1
         with:
           cosign-release: main
 

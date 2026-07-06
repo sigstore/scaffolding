@@ -125,6 +125,11 @@ jobs:
       env:
         RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 
+    - name: Wait for gettoken to be ready
+      run: |
+        sleep 2
+        kubectl wait --for=condition=Ready --timeout=30s ksvc gettoken
+
     - name: Get the issuer url endpoint on the cluster
       run: |
         ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
@@ -137,23 +142,36 @@ jobs:
       env:
         TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
+    - name: Create a signing config
+      run: |
+        cosign signing-config create \
+          --fulcio=url=$FULCIO_URL,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor=url=$REKOR_URL,api-version=2,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor-config=ANY \
+          --tsa=url=$TSA_URL/api/v1/timestamp,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --tsa-config=ANY \
+          --out signing_config.json
+      env:
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        REKOR_URL: ${{ env.REKOR_URL }}
+        TSA_URL: ${{ env.TSA_URL }}
+
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
-        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
+        --new-bundle-format \
+        --use-signed-timestamps \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.

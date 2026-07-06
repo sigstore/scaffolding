@@ -37,7 +37,7 @@ jobs:
           - fulcio rekor ctlog e2e
 
         go-version:
-          - 1.25.x
+          - 1.26.x
 
     env:
       GOPATH: ${{ github.workspace }}

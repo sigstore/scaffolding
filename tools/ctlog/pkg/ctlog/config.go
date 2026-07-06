@@ -131,12 +131,12 @@ func (c *Config) RemoveFulcioRoot(ctx context.Context, fulcioRoot []byte) error 
 
 func (c *Config) String() string {
 	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("PrivateKeyPassword: %s\n", c.PrivKeyPassword))
-	sb.WriteString(fmt.Sprintf("LogID: %d\n", c.LogID))
-	sb.WriteString(fmt.Sprintf("LogPrefix: %s\n", c.LogPrefix))
-	sb.WriteString(fmt.Sprintf("TrillianServerAddr: %s\n", c.TrillianServerAddr))
+	fmt.Fprintf(&sb, "PrivateKeyPassword: %s\n", c.PrivKeyPassword)
+	fmt.Fprintf(&sb, "LogID: %d\n", c.LogID)
+	fmt.Fprintf(&sb, "LogPrefix: %s\n", c.LogPrefix)
+	fmt.Fprintf(&sb, "TrillianServerAddr: %s\n", c.TrillianServerAddr)
 	for _, fulcioCert := range c.FulcioCerts {
-		sb.WriteString(fmt.Sprintf("fulciocert:\n%s\n", string(fulcioCert)))
+		fmt.Fprintf(&sb, "fulciocert:\n%s\n", string(fulcioCert))
 	}
 	// Note this goofy cast to crypto.Signer since the any interface has no
 	// methods so cast here so that we get the Public method which all core
@@ -149,7 +149,7 @@ func (c *Config) String() string {
 					Bytes: marshaledPub,
 				},
 			)
-			sb.WriteString(fmt.Sprintf("PublicKey:\n%s\n", pubPEM))
+			fmt.Fprintf(&sb, "PublicKey:\n%s\n", pubPEM)
 		}
 	}
 	return sb.String()

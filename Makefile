@@ -16,7 +16,7 @@ tidy:
 	./hack/modtidy.sh
 
 # These are the subdirs under config that we'll turn into separate artifacts.
-artifacts := trillian ctlog fulcio rekor tsa tuf
+artifacts := ctlog fulcio rekor-tiles tsa tuf
 
 .PHONY: ko-resolve
 ko-resolve:
@@ -81,11 +81,6 @@ ko-apply-fulcio:
 ko-apply-rekor:
 	LDFLAGS="$(LDFLAGS)" \
 	ko apply -BRf ./config/rekor-tiles
-
-.PHONY: ko-apply-trillian
-ko-apply-trillian:
-	LDFLAGS="$(LDFLAGS)" \
-	ko apply -v -BRf ./config/trillian
 
 .PHONY: ko-apply-tsa
 ko-apply-tsa:

@@ -87,7 +87,7 @@ var rootCmd = &cobra.Command{
 		ctx := context.Background()
 
 		// Generate GCP KMS client
-		kmsClient, err := gcpkms.NewClientWithOptions(ctx, kekURI)
+		kmsClient, err := gcpkms.NewClient(ctx, kekURI)
 		must(err)
 		kekAEAD, err := kmsClient.GetAEAD(kekURI)
 		must(err)

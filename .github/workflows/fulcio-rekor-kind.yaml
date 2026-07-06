@@ -77,6 +77,36 @@ jobs:
 
     - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
 
+    - name: Set up ko wrapper for insecure registry
+      run: |
+        mkdir -p ${{ github.workspace }}/bin
+        cat <<'EOF' > ${{ github.workspace }}/bin/ko
+        #!/usr/bin/env bash
+        MY_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+        for dir in ${PATH//:/ }; do
+          if [ "$dir" != "$MY_DIR" ] && [ -x "$dir/ko" ]; then
+            REAL_KO="$dir/ko"
+            break
+          fi
+        done
+        if [ -z "$REAL_KO" ]; then
+          echo "Real ko not found" >&2
+          exit 1
+        fi
+        cmd="$1"
+        shift
+        case "$cmd" in
+          build|publish|resolve|apply)
+            exec "$REAL_KO" "$cmd" --insecure-registry "$@"
+            ;;
+          *)
+            exec "$REAL_KO" "$cmd" "$@"
+            ;;
+        esac
+        EOF
+        chmod +x ${{ github.workspace }}/bin/ko
+        echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
+
     - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
 
     - name: Setup Cluster

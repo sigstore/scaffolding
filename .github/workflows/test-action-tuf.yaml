@@ -82,10 +82,11 @@ jobs:
         echo Created image $demoimage
         popd
 
-    - name: Wait for gettoken to be ready
+    - name: Install a Knative service for fetch tokens off the cluster
       run: |
+        make ko-apply-gettoken
         sleep 2
-        kubectl wait --for=condition=Ready --timeout=30s ksvc gettoken
+        kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
 
     - name: Get the endpoints on the cluster
       run: |

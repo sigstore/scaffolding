@@ -38,7 +38,7 @@ jobs:
           - 1.26.x
 
     env:
-      RELEASE_VERSION: "v0.7.31"
+      RELEASE_VERSION: "v0.7.36"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: /home/runner/ko
 

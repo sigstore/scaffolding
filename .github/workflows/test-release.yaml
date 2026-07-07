@@ -38,7 +38,7 @@ jobs:
           - 1.26.x
 
     env:
-      RELEASE_VERSION: "v0.7.36"
+      RELEASE_VERSION: "v0.7.37"
       KO_DOCKER_REPO: registry.local:5000/knative
       KOCACHE: /home/runner/ko
 
@@ -77,9 +77,6 @@ jobs:
       timeout-minutes: 10
       run: |
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/setup-scaffolding-from-release.sh
-        # Temp hack to address trillian install bug in v0.7.36
-        sed -i 's/\[ -z \$has_trillian \] ||/\[ "$has_trillian" == "1" \] \&\&/g' /tmp/setup-scaffolding-from-release.sh
-        sed -i 's@REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml@REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml; if curl -s -i "${REKOR}" | grep -q "404" ; then REKOR="https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor-tiles.yaml"; fi@g' /tmp/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh --release-version ${RELEASE_VERSION}
 
@@ -123,7 +120,6 @@ jobs:
     - name: Run test jobs on the cluster
       run: |
         curl -L https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/testrelease.yaml > /tmp/testrelease.yaml
-        sed -i 's/\bdata:/stringData:/g' /tmp/testrelease.yaml
         kubectl apply -f /tmp/testrelease.yaml
         kubectl wait --for=condition=Complete --timeout=240s job/sign-job || { kubectl describe job/sign-job; kubectl logs -l job-name=sign-job --all-containers; exit 1; }
         kubectl wait --for=condition=Complete --timeout=240s job/verify-job || { kubectl describe job/verify-job; kubectl logs -l job-name=verify-job --all-containers; exit 1; }

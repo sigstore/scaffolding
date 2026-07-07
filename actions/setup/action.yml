@@ -112,7 +112,7 @@ runs:
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi
       # Temp hack to address trillian install bug in v0.7.36
-      sed -i 's/\[ -z \$has_trillian \]/\[ "$has_trillian" == "1" \]/g' /tmp/setup-scaffolding-from-release.sh
+      sed -i 's/\[ -z \$has_trillian \] ||/\[ "$has_trillian" == "1" \] \&\&/g' /tmp/setup-scaffolding-from-release.sh
       # Temp hack to address issuer mismatch issue.
       # Can be removed with the next release, after v0.6.5
       sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh

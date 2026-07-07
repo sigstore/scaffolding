@@ -109,7 +109,7 @@ runs:
         echo "Installing sigstore scaffolding @ ${tag}"
         curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
         sed -i '/kubectl apply -f "${REKOR}"/d' /tmp/setup-scaffolding-from-release.sh
-        sed -i 's/kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all/kubectl -n rekor-system get job 2>\&1 | grep "No resources found" || kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all/g' /tmp/setup-scaffolding-from-release.sh
+        sed -i 's/kubectl wait --timeout [0-9]*m -n \([^ ]*\) --for=condition=Complete jobs --all/kubectl -n \1 get job 2>\&1 | grep "No resources found" || &/g' /tmp/setup-scaffolding-from-release.sh
       else
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi

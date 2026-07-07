@@ -137,8 +137,8 @@ runs:
       sed -i 's/\bdata:/stringData:/g' /tmp/testrelease.yaml
       kubectl create -f /tmp/testrelease.yaml
 
-      kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-      kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+      kubectl wait --for=condition=Complete --timeout=180s job/sign-job || { kubectl describe job/sign-job; kubectl logs -l job-name=sign-job --all-containers; exit 1; }
+      kubectl wait --for=condition=Complete --timeout=180s job/verify-job || { kubectl describe job/verify-job; kubectl logs -l job-name=verify-job --all-containers; exit 1; }
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
       FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')

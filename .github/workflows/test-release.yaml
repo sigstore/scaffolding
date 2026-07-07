@@ -124,8 +124,8 @@ jobs:
         curl -L https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/testrelease.yaml > /tmp/testrelease.yaml
         sed -i 's/\bdata:/stringData:/g' /tmp/testrelease.yaml
         kubectl apply -f /tmp/testrelease.yaml
-        kubectl wait --for=condition=Complete --timeout=240s job/sign-job
-        kubectl wait --for=condition=Complete --timeout=240s job/verify-job
+        kubectl wait --for=condition=Complete --timeout=240s job/sign-job || { kubectl describe job/sign-job; kubectl logs -l job-name=sign-job --all-containers; exit 1; }
+        kubectl wait --for=condition=Complete --timeout=240s job/verify-job || { kubectl describe job/verify-job; kubectl logs -l job-name=verify-job --all-containers; exit 1; }
       env:
         RELEASE_VERSION: ${{ env.RELEASE_VERSION }}
 

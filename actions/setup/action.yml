@@ -111,6 +111,8 @@ runs:
       else
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi
+      # Temp hack to address trillian install bug in v0.7.36
+      sed -i 's/\[ -z $has_trillian \]/\[ "$has_trillian" == "1" \]/g' /tmp/setup-scaffolding-from-release.sh
       # Temp hack to address issuer mismatch issue.
       # Can be removed with the next release, after v0.6.5
       sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
@@ -131,7 +133,9 @@ runs:
       kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
       echo "Installing and running scaffolding tests to verify we are up and running"
-      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml > /tmp/testrelease.yaml
+      sed -i 's/\bdata:/stringData:/g' /tmp/testrelease.yaml
+      kubectl create -f /tmp/testrelease.yaml
 
       kubectl wait --for=condition=Complete --timeout=180s job/sign-job
       kubectl wait --for=condition=Complete --timeout=180s job/verify-job

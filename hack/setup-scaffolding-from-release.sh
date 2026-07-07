@@ -36,6 +36,7 @@ done
 echo "Installing release version: $RELEASE_VERSION"
 TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
 REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
+REKOR_TILES=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor-tiles.yaml
 FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
 CTLOG=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-ctlog.yaml
 TUF=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tuf.yaml
@@ -78,15 +79,19 @@ trap cleanup EXIT
 # Install Trillian if it is part of this release and wait for it to come up
 echo '::group:: Install Trillian'
 has_trillian=1
-if curl -s -i "https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml" | grep 'HTTP/2 404' ; then
+if curl -s -i "https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml" | grep -q 'HTTP/.* 404' ; then
   has_trillian=0
 fi
-[ -z $has_trillian ] || kubectl apply -f "${TRILLIAN}"
+if [ "$has_trillian" == "1" ]; then
+  kubectl apply -f "${TRILLIAN}"
+fi
 echo '::endgroup::'
 
 echo '::group:: Wait for Trillian ready'
-[ -z $has_trillian ] || kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
-[ -z $has_trillian ] || kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
+if [ "$has_trillian" == "1" ]; then
+  kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-server
+  kubectl wait --timeout 5m -n trillian-system --for=condition=Ready ksvc log-signer
+fi
 echo '::endgroup::'
 
 # Install Rekor and wait for it to come up
@@ -100,6 +105,9 @@ cleanup_rekor() {
     rm "${rekordir}/pub.pem" "${rekordir}/key.pem"
 }
 cleanup_cmd="cleanup_rekor"
+if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
+  REKOR="${REKOR_TILES}"
+fi
 kubectl apply -f "${REKOR}"
 curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
   -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \

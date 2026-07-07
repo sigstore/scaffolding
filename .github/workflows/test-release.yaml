@@ -70,13 +70,16 @@ jobs:
         version: "1.18.x"
         serving-features: >
           {
-            "kubernetes.podspec-fieldref": "enabled"
+            "kubernetes.podspec-fieldref": "enabled",
+            "kubernetes.podspec-persistent-volume-claim": "enabled",
+            "kubernetes.podspec-persistent-volume-write": "enabled"
           }
 
     - name: Install scaffolding
       timeout-minutes: 10
       run: |
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/setup-scaffolding-from-release.sh
+        sed -i '/kubectl apply -f "${REKOR}"/d' /tmp/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh --release-version ${RELEASE_VERSION}
 

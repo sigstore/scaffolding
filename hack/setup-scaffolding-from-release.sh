@@ -79,7 +79,7 @@ trap cleanup EXIT
 # Install Trillian if it is part of this release and wait for it to come up
 echo '::group:: Install Trillian'
 has_trillian=1
-if curl -s -i "https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml" | grep -q '404' ; then
+if curl -s -i "https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml" | grep -q 'HTTP/.* 404' ; then
   has_trillian=0
 fi
 if [ "$has_trillian" == "1" ]; then
@@ -105,7 +105,7 @@ cleanup_rekor() {
     rm "${rekordir}/pub.pem" "${rekordir}/key.pem"
 }
 cleanup_cmd="cleanup_rekor"
-if curl -s -i "${REKOR}" | grep -q '404' ; then
+if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
   REKOR="${REKOR_TILES}"
 fi
 kubectl apply -f "${REKOR}"

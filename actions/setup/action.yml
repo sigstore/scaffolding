@@ -108,6 +108,8 @@ runs:
       if [ "${INPUTS_VERSION}" != "main" ]; then
         echo "Installing sigstore scaffolding @ ${tag}"
         curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        sed -i 's/\[ -z \$has_trillian \] ||/\[ "$has_trillian" == "1" \] \&\&/g' /tmp/setup-scaffolding-from-release.sh
+        sed -i 's@REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml@REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml; if curl -s -i "${REKOR}" | grep -q "404" ; then REKOR="https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor-tiles.yaml"; fi@g' /tmp/setup-scaffolding-from-release.sh
       else
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi

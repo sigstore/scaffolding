@@ -115,7 +115,7 @@ curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
-kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
+kubectl -n rekor-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 

@@ -108,7 +108,6 @@ cleanup_cmd="cleanup_rekor"
 if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
   REKOR="${REKOR_TILES}"
 fi
-kubectl apply -f "${REKOR}"
 curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
   -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
   -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" | \

@@ -78,7 +78,7 @@ jobs:
       run: |
         curl -Lo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/setup-scaffolding-from-release.sh
         # Temp hack to address trillian install bug in v0.7.36
-        sed -i 's/\[ -z $has_trillian \]/\[ "$has_trillian" == "1" \]/g' /tmp/setup-scaffolding-from-release.sh
+        sed -i 's/\[ -z \$has_trillian \]/\[ "$has_trillian" == "1" \]/g' /tmp/setup-scaffolding-from-release.sh
         chmod u+x /tmp/setup-scaffolding-from-release.sh
         /tmp/setup-scaffolding-from-release.sh --release-version ${RELEASE_VERSION}
 

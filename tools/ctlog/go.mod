@@ -8,13 +8,13 @@ require (
 	github.com/google/certificate-transparency-go v1.3.3
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.7.3
-	github.com/sigstore/fulcio v1.8.7
+	github.com/sigstore/fulcio v1.8.8
 	github.com/sigstore/rekor v1.5.3
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.10.8
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
-	k8s.io/apimachinery v0.36.2
-	k8s.io/client-go v0.36.2
+	k8s.io/apimachinery v0.36.3
+	k8s.io/client-go v0.36.3
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 	sigs.k8s.io/release-utils v0.12.4
 )
@@ -63,14 +63,15 @@ require (
 	golang.org/x/term v0.44.0 // indirect
 	golang.org/x/text v0.38.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/tools v0.46.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.36.2 // indirect
+	k8s.io/api v0.36.3 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
 	k8s.io/utils v0.0.0-20260210185600-b8788abfbbc2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
-	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
+	sigs.k8s.io/structured-merge-diff/v6 v6.3.3 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )

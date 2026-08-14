@@ -108,10 +108,12 @@ cleanup_cmd="cleanup_rekor"
 if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
   REKOR="${REKOR_TILES}"
 fi
-#kubectl apply -f "${REKOR}"
-curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" | \
+rekor_private=$(base64 -w0 < "${rekordir}/key.pem")
+rekor_public=$(base64 -w0 < "${rekordir}/pub.pem")
+rekor_password=$(printf '%s' "${pass}" | base64 -w0)
+curl -Ls "${REKOR}" | sed -e "s|<private-placeholder>|${rekor_private}|" \
+  -e "s|<public-placeholder>|${rekor_public}|" \
+  -e "s|<password-placeholder>|${rekor_password}|" | \
   kubectl apply -f -
 echo '::endgroup::'
 
@@ -136,9 +138,12 @@ cleanup_fulcio() {
     rm "${fulciodir}/cert.pem" "${fulciodir}/key.pem"
 }
 cleanup_cmd="$cleanup_cmd ; cleanup_fulcio"
-sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" "${fulcio}"
+fulcio_private=$(base64 -w0 < "${fulciodir}/key.pem")
+fulcio_cert=$(base64 -w0 < "${fulciodir}/cert.pem")
+fulcio_password=$(printf '%s' "${pass}" | base64 -w0)
+sed -i -e "s|<private-placeholder>|${fulcio_private}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" \
+  -e "s|<password-placeholder>|${fulcio_password}|" "${fulcio}"
 kubectl apply -f "${fulcio}"
 rm "${fulcio}"
 
@@ -162,9 +167,11 @@ cleanup_ctlog() {
     rm "${ctdir}/pub.pem" "${ctdir}/key.pem"
 }
 cleanup_cmd="$cleanup_cmd ; cleanup_ctlog"
-curl -Ls "${CTLOG}" | sed -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${ctdir}/pub.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" | \
+ctlog_private=$(base64 -w0 < "${ctdir}/key.pem")
+ctlog_public=$(base64 -w0 < "${ctdir}/pub.pem")
+curl -Ls "${CTLOG}" | sed -e "s|<private-placeholder>|${ctlog_private}|" \
+  -e "s|<public-placeholder>|${ctlog_public}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" | \
   kubectl apply -f -
 echo '::endgroup::'
 

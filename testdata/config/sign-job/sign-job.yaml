@@ -35,6 +35,7 @@ spec:
         args: [
           "sign",
           "-y",
+          "--allow-http-registry",
           "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
         ]
         env:

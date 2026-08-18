@@ -176,7 +176,7 @@ curl -Ls "${CTLOG}" | sed -e "s|<private-placeholder>|${ctlog_private}|" \
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
-kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
+kubectl -n ctlog-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 

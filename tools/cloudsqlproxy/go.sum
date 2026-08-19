@@ -1,8 +1,8 @@
-chainguard.dev/exitdir v0.0.3 h1:aVZfQ74PGcT2lx3KmpolvNp1E5ZmkhPHqn1LaZmYQ4I=
-chainguard.dev/exitdir v0.0.3/go.mod h1:GF7lPyTGXm/ZgZBVDX7l8WPrmviq3qWPv61w0IXuz9M=
+chainguard.dev/exitdir v0.0.4 h1:uVcTWTtaYayP9T3WjDLMzXXtR4A/A6APxAIyAawJa/o=
+chainguard.dev/exitdir v0.0.4/go.mod h1:xdho12iqVa4qGSXPSDjViC3V4m+nNjABC+i/cmEyKqY=
 github.com/fsnotify/fsnotify v1.10.1 h1:b0/UzAf9yR5rhf3RPm9gf3ehBPpf0oZKIjtpKrx59Ho=
 github.com/fsnotify/fsnotify v1.10.1/go.mod h1:TLheqan6HD6GBK6PrDWyDPBaEV8LspOxvPSjC+bVfgo=
-golang.org/x/sys v0.40.0 h1:DBZZqJ2Rkml6QMQsZywtnjnnGvHza6BTfYFWY9kjEWQ=
-golang.org/x/sys v0.40.0/go.mod h1:OgkHotnGiDImocRcuBABYBEXf8A9a87e/uXjp9XT3ks=
+golang.org/x/sys v0.47.0 h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=
+golang.org/x/sys v0.47.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=
 knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e h1:koM+NopG2Yw738NlJhQF3ZwpyS+HHznuLm294VYlUKg=
 knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e/go.mod h1:dqC6IrvyBE7E+oZocs5PkVhq1G59pDTA7r8U17EAKMk=

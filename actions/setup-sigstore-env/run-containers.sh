@@ -35,9 +35,28 @@ done
 CLONE_DIR="${CLONE_DIR:-$(mktemp -d)}"
 CWD="$(pwd)"
 
+# retry runs a command up to 3 times with backoff, to ride out transient
+# proxy.golang.org fetch failures during `go mod download` in the service
+# Dockerfiles. Exported so it's usable from the `bash -c` commands xargs
+# spawns below.
+retry() {
+  local -i attempt=1 max_attempts=3 delay=10
+  until "$@"; do
+    if (( attempt >= max_attempts )); then
+      echo "command failed after ${max_attempts} attempts: $*" >&2
+      return 1
+    fi
+    echo "attempt ${attempt}/${max_attempts} failed, retrying in ${delay}s: $*" >&2
+    sleep "$delay"
+    (( attempt += 1 ))
+    (( delay *= 2 ))
+  done
+}
+export -f retry
+
 echo "setting up OIDC provider"
 pushd ./fakeoidc || return
-docker compose up --wait --build
+retry docker compose up --wait --build
 # Tokens will be created with this URL as the token issuer, so that Fulcio can make
 # requests to the fakeoidc container running in Fulcio's network,
 # which will be created later on.
@@ -87,7 +106,7 @@ echo "starting services"
 export FULCIO_METRICS_PORT=2113
 for owner_repo in "${OWNER_REPOS[@]}"; do
   repo=$(basename "$owner_repo")
-  echo "'cd $repo && docker compose up --wait'"
+  echo "'cd $repo && retry docker compose up --wait'"
 done | xargs -P "$procs" -L1 bash -c
 # The fakeoidc service is in a separate Docker network. Connect the fakeoidc container to the Fulcio
 # network to enable Fulcio to reach it for token verification.

@@ -45,9 +45,12 @@ cleanup_rekor() {
 }
 cleanup_cmd="cleanup_rekor"
 cp config/rekor-tiles/rekor-tiles/200-secret.yaml 200-secret.original.yaml
-sed -i -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" config/rekor-tiles/rekor-tiles/200-secret.yaml
+rekor_private=$(base64 -w0 < "${rekordir}/key.pem")
+rekor_public=$(base64 -w0 < "${rekordir}/pub.pem")
+rekor_password=$(printf '%s' "${pass}" | base64 -w0)
+sed -i -e "s|<private-placeholder>|${rekor_private}|" \
+  -e "s|<public-placeholder>|${rekor_public}|" \
+  -e "s|<password-placeholder>|${rekor_password}|" config/rekor-tiles/rekor-tiles/200-secret.yaml
 
 make ko-apply-rekor
 echo '::endgroup::'
@@ -79,9 +82,12 @@ cleanup_fulcio() {
 }
 cleanup_cmd="$cleanup_cmd ; cleanup_fulcio"
 cp config/fulcio/fulcio/200-secret.yaml 200-secret.original.yaml
-sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" config/fulcio/fulcio/200-secret.yaml
+fulcio_private=$(base64 -w0 < "${fulciodir}/key.pem")
+fulcio_cert=$(base64 -w0 < "${fulciodir}/cert.pem")
+fulcio_password=$(printf '%s' "${pass}" | base64 -w0)
+sed -i -e "s|<private-placeholder>|${fulcio_private}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" \
+  -e "s|<password-placeholder>|${fulcio_password}|" config/fulcio/fulcio/200-secret.yaml
 
 make ko-apply-fulcio
 echo '::endgroup::'
@@ -107,9 +113,11 @@ cleanup_ctlog() {
 }
 trap cleanup_ctlog EXIT
 cp config/ctlog/ctlog/200-secret.yaml 200-secret.original.yaml
-sed -i -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${ctdir}/pub.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" config/ctlog/ctlog/200-secret.yaml
+ctlog_private=$(base64 -w0 < "${ctdir}/key.pem")
+ctlog_public=$(base64 -w0 < "${ctdir}/pub.pem")
+sed -i -e "s|<private-placeholder>|${ctlog_private}|" \
+  -e "s|<public-placeholder>|${ctlog_public}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" config/ctlog/ctlog/200-secret.yaml
 make ko-apply-ctlog
 echo '::endgroup::'
 

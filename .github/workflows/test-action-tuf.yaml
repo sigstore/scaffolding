@@ -28,10 +28,10 @@ jobs:
       fail-fast: false # Keep running if one leg fails.
       matrix:
         k8s-version:
-          - v1.32.x
           - v1.33.x
           - v1.34.x
           - v1.35.x
+          - v1.36.x
         release-version:
           - "main" # Test explicitly with latest
         go-version:
@@ -43,7 +43,7 @@ jobs:
 
     steps:
     - name: Checkout the current action
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         persist-credentials: false
         path: ./src/github.com/sigstore/scaffolding
@@ -56,15 +56,15 @@ jobs:
 
     # Install cosign
     - name: Install cosign
-      uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+      uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
 
     - name: Set up Go
-      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
       with:
         go-version: ${{ matrix.go-version }}
         check-latest: true
 
-    - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+    - uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
 
     - name: Create sample image
       run: |
@@ -82,32 +82,70 @@ jobs:
         echo Created image $demoimage
         popd
 
+    - name: Install a Knative service for fetch tokens off the cluster
+      run: |
+        make ko-apply-gettoken
+        sleep 2
+        kubectl wait --for=condition=Ready --timeout=15s ksvc gettoken
+
+    - name: Get the endpoints on the cluster
+      run: |
+        REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
+        echo "REKOR_URL=$REKOR_URL" >> $GITHUB_ENV
+
+        FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')
+        echo "FULCIO_URL=$FULCIO_URL" >> $GITHUB_ENV
+
+        CTLOG_URL=$(kubectl -n ctlog-system get ksvc ctlog -ojsonpath='{.status.url}')
+        echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
+
+        ISSUER_URL=$(kubectl get ksvc gettoken -ojsonpath='{.status.url}')
+        echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
+        OIDC_TOKEN=$(curl -s $ISSUER_URL)
+        echo "OIDC_TOKEN=$OIDC_TOKEN" >> $GITHUB_ENV
+
+        TSA_URL=$(kubectl -n tsa-system get ksvc tsa -ojsonpath='{.status.url}')
+        echo "TSA_URL=$TSA_URL" >> $GITHUB_ENV
+
     - name: Initialize cosign with TUF root
       run: cosign initialize --mirror ${TUF_MIRROR} --root ./root.json
       env:
         TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
+    - name: Create a signing config
+      run: |
+        cosign signing-config create \
+          --fulcio=url=$FULCIO_URL,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor=url=$REKOR_URL,api-version=2,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor-config=ANY \
+          --tsa=url=$TSA_URL/api/v1/timestamp,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --tsa-config=ANY \
+          --out signing_config.json
+      env:
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        REKOR_URL: ${{ env.REKOR_URL }}
+        TSA_URL: ${{ env.TSA_URL }}
+
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
-        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
+        cosign verify \
         --allow-insecure-registry "${DEMOIMAGE}" \
+        --new-bundle-format \
+        --use-signed-timestamps \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
     - name: Checkout TSA for testing.
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         repository: sigstore/timestamp-authority
         path: ./src/github.com/sigstore/timestamp-authority
@@ -138,4 +176,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@f45211d3e8f9d2676c6b8cdd6a765435e06c819d # v1.6.13
+      uses: chainguard-dev/actions/kind-diag@f0be69916b439d0fcced2451b23d0f27cd46d545 # v1.6.26

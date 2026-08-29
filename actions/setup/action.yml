@@ -45,9 +45,9 @@ inputs:
     required: true
     default: 'cluster.local'
   k8s-version:
-    description: 'kubernetes version to install (v1.32.x, v1.33.x, v1.34.x, v1.35.x), default: v1.32.x'
+    description: 'kubernetes version to install (v1.33.x, v1.34.x, v1.35.x, v1.36.x), default: v1.33.x'
     required: true
-    default: 'v1.32.x'
+    default: 'v1.33.x'
 runs:
   using: "composite"
   steps:
@@ -108,6 +108,8 @@ runs:
       if [ "${INPUTS_VERSION}" != "main" ]; then
         echo "Installing sigstore scaffolding @ ${tag}"
         curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        sed -i '/kubectl apply -f "${REKOR}"/d' /tmp/setup-scaffolding-from-release.sh
+        sed -i 's/kubectl wait --timeout [0-9]*m -n \([^ ]*\) --for=condition=Complete jobs --all/kubectl -n \1 get job 2>\&1 | grep "No resources found" || &/g' /tmp/setup-scaffolding-from-release.sh
       else
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi
@@ -131,10 +133,11 @@ runs:
       kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
       echo "Installing and running scaffolding tests to verify we are up and running"
-      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml > /tmp/testrelease.yaml
+      kubectl create -f /tmp/testrelease.yaml
 
-      kubectl wait --for=condition=Complete --timeout=180s job/sign-job
-      kubectl wait --for=condition=Complete --timeout=180s job/verify-job
+      kubectl wait --for=condition=Complete --timeout=180s job/sign-job || { kubectl describe job/sign-job; kubectl logs -l job-name=sign-job --all-containers; exit 1; }
+      kubectl wait --for=condition=Complete --timeout=180s job/verify-job || { kubectl describe job/verify-job; kubectl logs -l job-name=verify-job --all-containers; exit 1; }
 
       REKOR_URL=$(kubectl -n rekor-system get ksvc rekor -ojsonpath='{.status.url}')
       FULCIO_URL=$(kubectl -n fulcio-system get ksvc fulcio -ojsonpath='{.status.url}')

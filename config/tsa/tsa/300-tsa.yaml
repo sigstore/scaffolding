@@ -19,7 +19,7 @@ spec:
       serviceAccountName: tsa
       containers:
       - name: tsa
-        image: ghcr.io/sigstore/timestamp-server:v2.0.6@sha256:bb2e57fe86ba114663ed7cf98291add3c4131115169abf2929ec870c09d2493f
+        image: ghcr.io/sigstore/timestamp-server:v2.1.3@sha256:21b32b43cf51e4f1bcb76518727ddaecd58b16a7cab57bbd7e7bedea5696933b
         ports:
         - containerPort: 3000
         args: [

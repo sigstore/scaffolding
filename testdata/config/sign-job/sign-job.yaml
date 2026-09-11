@@ -14,7 +14,7 @@ spec:
       # gets initialized and will be used by the main container.
       initContainers:
       - name: cosign-initialize
-        image: gcr.io/projectsigstore/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb # cosign v3.0.5
+        image: ghcr.io/sigstore/cosign/cosign@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 # cosign v3.1.3
         args: [
           "initialize",
           "--mirror", "http://tuf.tuf-system.svc",
@@ -31,10 +31,11 @@ spec:
           mountPath: "/var/run/sigstore"
       containers:
       - name: cosign
-        image: gcr.io/projectsigstore/cosign@sha256:be924970ba7438c22e18067dec5637946d6566eac711f5bedd1584e7137008fb # cosign v3.0.5
+        image: ghcr.io/sigstore/cosign/cosign@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 # cosign v3.1.3
         args: [
           "sign",
           "-y",
+          "--allow-http-registry",
           "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
         ]
         env:

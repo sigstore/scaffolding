@@ -33,7 +33,7 @@ do
 done
 
 # Defaults
-K8S_VERSION="v1.32.x"
+K8S_VERSION="v1.33.x"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"
@@ -67,12 +67,6 @@ done
 # KNATIVE versions are set from https://github.com/knative/community/blob/main/mechanics/RELEASE-SCHEDULE.md
 KIND_VERSION="v0.31.0"
 case ${K8S_VERSION} in
-  v1.32.x)
-    K8S_VERSION="1.32.11"
-    KNATIVE_VERSION="1.18.0"
-    KIND_IMAGE_SHA="sha256:5fc52d52a7b9574015299724bd68f183702956aa4a2116ae75a63cb574b35af8"
-    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
-    ;;
   v1.33.x)
     K8S_VERSION="1.33.7"
     KNATIVE_VERSION="1.18.0"
@@ -89,6 +83,12 @@ case ${K8S_VERSION} in
     K8S_VERSION="1.35.0"
     KNATIVE_VERSION="1.19.0"
     KIND_IMAGE_SHA="sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
+  v1.36.x)
+    K8S_VERSION="1.36.1"
+    KNATIVE_VERSION="1.21.0"
+    KIND_IMAGE_SHA="sha256:3489c7674813ba5d8b1a9977baea8a6e553784dab7b84759d1014dbd78f7ebd5"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;

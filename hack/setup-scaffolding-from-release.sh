@@ -108,7 +108,6 @@ cleanup_cmd="cleanup_rekor"
 if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
   REKOR="${REKOR_TILES}"
 fi
-kubectl apply -f "${REKOR}"
 curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
   -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
   -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" | \
@@ -116,7 +115,7 @@ curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
-kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
+kubectl -n rekor-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
@@ -169,14 +168,14 @@ curl -Ls "${CTLOG}" | sed -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" |
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
-kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
+kubectl -n ctlog-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 
 # If we're running release > 0.5.0 install TSA
 if [[ "${INSTALL_TSA}" == "true" ]]; then
 kubectl apply -f "${TSA}"
-kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
+kubectl -n tsa-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n tsa-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n tsa-system --for=condition=Ready ksvc tsa
 fi
 
@@ -197,7 +196,7 @@ echo '::endgroup::'
 
 # Make sure the tuf jobs complete
 echo '::group:: Wait for TUF ready'
-kubectl wait --timeout 4m -n tuf-system --for=condition=Complete jobs --all
+kubectl -n tuf-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 4m -n tuf-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n tuf-system --for=condition=Ready ksvc tuf
 echo '::endgroup::'
 

@@ -1,13 +1,13 @@
 module github.com/sigstore/scaffolding/tools/trillian
 
-go 1.26.0
+go 1.27.0
 
 require (
 	chainguard.dev/exitdir v0.0.4
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang/glog v1.2.5
 	github.com/google/trillian v1.7.3
-	google.golang.org/genproto v0.0.0-20260622175928-b703f567277d
+	google.golang.org/genproto v0.0.0-20260715232425-e75dac1f907d
 	google.golang.org/grpc v1.83.2
 	google.golang.org/protobuf v1.36.12
 	k8s.io/apimachinery v0.37.0
@@ -61,8 +61,9 @@ require (
 	golang.org/x/term v0.45.0 // indirect
 	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
+	golang.org/x/tools v0.49.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260727163830-6c54dddc4772 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720155508-bb71a54f79dc // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260807164820-c8921c73eeea // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
 	k8s.io/api v0.37.0 // indirect

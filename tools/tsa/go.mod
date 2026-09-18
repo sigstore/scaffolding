@@ -1,13 +1,13 @@
 module github.com/sigstore/scaffolding/tools/tsa
 
-go 1.26.0
+go 1.27.0
 
 replace github.com/sigstore/scaffolding/tools/secret => ../secret
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
-	github.com/sigstore/sigstore v1.10.9
+	github.com/sigstore/sigstore v1.10.10
 	github.com/sigstore/timestamp-authority/v2 v2.1.3
 	k8s.io/apimachinery v0.37.0
 	k8s.io/client-go v0.37.0
@@ -52,7 +52,7 @@ require (
 	github.com/emicklei/go-restful/v3 v3.13.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
-	github.com/go-jose/go-jose/v4 v4.1.4 // indirect
+	github.com/go-jose/go-jose/v4 v4.1.5 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/go-openapi/jsonpointer v1.0.0 // indirect
@@ -71,7 +71,7 @@ require (
 	github.com/go-openapi/swag/yamlutils v0.28.0 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
-	github.com/google/go-containerregistry v0.21.7 // indirect
+	github.com/google/go-containerregistry v0.22.1 // indirect
 	github.com/google/s2a-go v0.1.9 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.3.20 // indirect
 	github.com/googleapis/gax-go/v2 v2.24.0 // indirect
@@ -100,7 +100,7 @@ require (
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/ryanuber/go-glob v1.0.0 // indirect
-	github.com/secure-systems-lab/go-securesystemslib v0.11.0 // indirect
+	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/sigstore/protobuf-specs v0.5.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.10.9 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.10.9 // indirect

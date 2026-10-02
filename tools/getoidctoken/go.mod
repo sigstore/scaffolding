@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/getoidctoken
 
-go 1.26.0
+go 1.27.0
 
 require (
 	github.com/kelseyhightower/envconfig v1.4.0

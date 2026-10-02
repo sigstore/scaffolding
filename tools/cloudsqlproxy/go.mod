@@ -1,6 +1,6 @@
 module github.com/sigstore/scaffolding/tools/cloudsqlproxy
 
-go 1.26.0
+go 1.27.0
 
 require (
 	chainguard.dev/exitdir v0.0.4
@@ -9,5 +9,5 @@ require (
 
 require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
-	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
 )

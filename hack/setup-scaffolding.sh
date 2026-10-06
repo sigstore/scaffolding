@@ -111,7 +111,7 @@ openssl ec -in "${ctdir}/key.pem" -pubout -out "${ctdir}/pub.pem"
 cleanup_ctlog() {
     rm "${ctdir}/pub.pem" "${ctdir}/key.pem"
 }
-trap cleanup_ctlog EXIT
+cleanup_cmd="$cleanup_cmd ; cleanup_ctlog"
 cp config/ctlog/ctlog/200-secret.yaml 200-secret.original.yaml
 ctlog_private=$(base64 -w0 < "${ctdir}/key.pem")
 ctlog_public=$(base64 -w0 < "${ctdir}/pub.pem")

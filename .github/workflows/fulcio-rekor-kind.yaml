@@ -107,7 +107,9 @@ jobs:
         chmod +x ${{ github.workspace }}/bin/ko
         echo "${{ github.workspace }}/bin" >> $GITHUB_PATH
 
-    - uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+    - uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      with:
+        cosign-release: v3.1.3
 
     - name: Setup Cluster
       uses: chainguard-dev/actions/setup-kind@f45211d3e8f9d2676c6b8cdd6a765435e06c819d # v1.6.13
@@ -215,7 +217,7 @@ jobs:
 
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry --allow-http-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
@@ -223,7 +225,7 @@ jobs:
     - name: Verify with cosign from the action using k8s token
       run: |
         cosign verify \
-        --allow-insecure-registry "${DEMOIMAGE}" \
+        --allow-insecure-registry --allow-http-registry "${DEMOIMAGE}" \
         --new-bundle-format \
         --use-signed-timestamps \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \

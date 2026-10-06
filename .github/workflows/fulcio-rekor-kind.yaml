@@ -277,6 +277,14 @@ jobs:
         path: ./src/github.com/sigstore/timestamp-authority
         persist-credentials: false
 
+    # Switch to the Go version timestamp-cli needs; scaffolding above is
+    # built with the matrix Go version.
+    - name: Set up Go for timestamp-cli
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      with:
+        go-version-file: ./src/github.com/sigstore/timestamp-authority/go.mod
+        cache: false
+
     - name: Build timestamp-cli
       working-directory: ./src/github.com/sigstore/timestamp-authority
       run: |

@@ -132,6 +132,14 @@ jobs:
         docker exec -i registry.local tar -C /var/lib/registry -xf - < /tmp/mock-release/registry-data.tar
         docker restart registry.local
 
+    # Install cosign before the action: the action exports TUF_MIRROR pointing
+    # at the in-cluster TUF repo, which breaks cosign-installer's verification
+    # of the cosign release against the public good instance.
+    - name: Install cosign
+      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      with:
+        cosign-release: v3.1.3
+
     - name: Test running the action
       uses: ./src/github.com/sigstore/scaffolding/actions/setup
       with:
@@ -139,12 +147,6 @@ jobs:
         version: ${{ matrix.release-version }}
         working-directory: ./src/github.com/sigstore/scaffolding
         release-dir: /tmp/mock-release
-
-    # Install cosign
-    - name: Install cosign
-      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
-      with:
-        cosign-release: v3.1.3
 
     - name: Checkout TSA for testing.
       uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2

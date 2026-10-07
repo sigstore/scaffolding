@@ -40,7 +40,7 @@ ko-resolve:
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_signer github.com/google/trillian/cmd/trillian_log_signer
 	# Building omniwitness
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/gcp/omniwitness
+	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/omniwitness_gcp
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:

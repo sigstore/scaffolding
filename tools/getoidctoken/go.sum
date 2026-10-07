@@ -18,3 +18,4 @@ go.yaml.in/yaml/v3 v3.0.5 h1:N6y/pJk8buWs9NY5ERU2HSMfm+IuD/OtfdAnq6kESPw=
 go.yaml.in/yaml/v3 v3.0.5/go.mod h1:HVTZu1O7/Vkt2N+BFy8Zza+lnLsABggaTM2ZpNIGuKg=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 sigs.k8s.io/release-utils v0.12.5 h1:/Ybntn/M7sK+6XjaH88y3pfx3tpJod3WKiItxoS4igg=
+sigs.k8s.io/release-utils v0.12.5/go.mod h1:rL6dEVB93VNU8Bd3l8tnh98hR9yoqMMn/puxlCU5buw=

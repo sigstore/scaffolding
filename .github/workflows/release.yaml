@@ -63,3 +63,58 @@ jobs:
       env:
         GIT_TAG: ${{ steps.get_tag.outputs.TAG }}
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  bump-release-version:
+    name: Open PR to bump default release version
+    needs: release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write       # push the bump branch
+      pull-requests: write  # open the PR
+
+    steps:
+    - name: Check out main
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        ref: main
+        persist-credentials: true # needed to push the bump branch
+
+    - name: Bump RELEASE_VERSION in setup-scaffolding-from-release.sh
+      id: bump
+      run: |
+        set -euo pipefail
+        script=hack/setup-scaffolding-from-release.sh
+        current=$(sed -n 's/^RELEASE_VERSION="\(.*\)"$/\1/p' "${script}")
+        # Only move forward, e.g. not for a patch release cut from an older branch.
+        if [[ "$(printf '%s\n%s\n' "${current}" "${TAG}" | sort -V | tail -1)" != "${TAG}" ]]; then
+          echo "Default ${current} is already ahead of ${TAG}"
+          exit 0
+        fi
+        # Same stamping the release applies to the published copy of the script;
+        # it is a no-op for tags that aren't vX.Y.Z.
+        make stamp-release-version GIT_TAG="${TAG}"
+        if ! git diff --quiet -- "${script}"; then
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+        fi
+      env:
+        TAG: ${{ github.ref_name }}
+
+    - name: Open pull request
+      if: steps.bump.outputs.changed == 'true'
+      run: |
+        set -euo pipefail
+        branch="bump-release-version-${TAG}"
+        git config user.name "github-actions[bot]"
+        git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git switch -c "${branch}"
+        git commit -s -am "Bump default release version to ${TAG}"
+        git push --force origin "HEAD:refs/heads/${branch}"
+        if [[ -z "$(gh pr list --head "${branch}" --state open --json number --jq '.[].number')" ]]; then
+          gh pr create --base main --head "${branch}" \
+            --title "Bump default release version to ${TAG}" \
+            --body "Updates the default \`RELEASE_VERSION\` in \`hack/setup-scaffolding-from-release.sh\` to ${TAG}. Merge after the ${TAG} draft release is published, otherwise the default points at assets that don't exist yet."
+        fi
+      env:
+        TAG: ${{ github.ref_name }}
+        GH_TOKEN: ${{ github.token }}

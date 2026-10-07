@@ -18,7 +18,7 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-# Default
+# The RELEASE_VERSION on the line below will be updated in a post-release PR that automatically gets created as part of the release process
 RELEASE_VERSION="v0.7.37"
 RELEASE_DIR=""
 

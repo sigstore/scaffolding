@@ -4,9 +4,9 @@ go 1.26.0
 
 require (
 	github.com/google/go-cmp v0.7.0
-	k8s.io/api v0.37.0
-	k8s.io/apimachinery v0.37.0
-	k8s.io/client-go v0.37.0
+	k8s.io/api v0.37.1
+	k8s.io/apimachinery v0.37.1
+	k8s.io/client-go v0.37.1
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 )
 

@@ -27,5 +27,5 @@ import (
 	// Import things that we build using ko
 	_ "github.com/google/trillian/cmd/trillian_log_server"
 	_ "github.com/google/trillian/cmd/trillian_log_signer"
-	_ "github.com/transparency-dev/witness/cmd/gcp/omniwitness"
+	_ "github.com/transparency-dev/witness/cmd/omniwitness_gcp"
 )

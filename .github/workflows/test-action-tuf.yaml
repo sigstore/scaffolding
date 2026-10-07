@@ -17,8 +17,81 @@ concurrency:
 permissions: {}
 
 jobs:
+  build-release:
+    name: build mock release
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+
+    env:
+      GOPATH: ${{ github.workspace }}
+      GO111MODULE: on
+      GOFLAGS: -ldflags=-s -ldflags=-w
+      KO_DOCKER_REPO: registry.local:5000/knative
+      KOCACHE: /home/runner/ko
+
+    steps:
+    - name: Check out our repo
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        path: ./src/github.com/sigstore/scaffolding
+        persist-credentials: false
+
+    - uses: chainguard-dev/actions/setup-mirror@f45211d3e8f9d2676c6b8cdd6a765435e06c819d # v1.6.13
+
+    - name: Set up Go
+      uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+      with:
+        go-version: 1.26.x
+        check-latest: true
+
+    - uses: actions/cache@668228422ae6a00e4ad889ee87cd7109ec5666a7 # v5.0.4
+      with:
+        path: |
+          ~/go/pkg/mod
+          ~/.cache/go-build
+          ${{ env.KOCACHE }}
+        key: ${{ runner.os }}-go-1.26.x-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-go-1.26.x-
+
+    - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
+
+    - name: Start local registry for ko build
+      run: |
+        docker run -d -p "127.0.0.1:5000:5000" --name registry.local \
+          -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 registry:2
+        if ! grep -q "registry.local" /etc/hosts; then
+          echo "127.0.0.1 registry.local" | sudo tee -a /etc/hosts
+        fi
+
+    - name: Build release manifests and images
+      working-directory: ./src/github.com/sigstore/scaffolding
+      run: |
+        make release-images \
+          KO_DOCKER_REPO=registry.local:5000/knative \
+          KO_PLATFORM=linux/amd64 \
+          KO_EXTRA_FLAGS="--insecure-registry --sbom=none"
+
+    - name: Stage mock release artifacts
+      working-directory: ./src/github.com/sigstore/scaffolding
+      run: |
+        mkdir -p /tmp/mock-release
+        cp release-*.yaml testrelease.yaml /tmp/mock-release/
+        cp hack/setup-kind.sh hack/setup-scaffolding.sh hack/setup-scaffolding-from-release.sh /tmp/mock-release/
+        docker exec registry.local tar -C /var/lib/registry -cf - . > /tmp/mock-release/registry-data.tar
+
+    - name: Upload mock release
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: mock-release
+        path: /tmp/mock-release
+        retention-days: 1
+
   test-github-action:
     name: Test github action with TUF
+    needs: build-release
     runs-on: ubuntu-latest
 
     permissions:
@@ -34,8 +107,6 @@ jobs:
           - v1.35.x
         release-version:
           - "main" # Test explicitly with latest
-        go-version:
-          - 1.26.x
         leg:
           - test github action with TUF
     env:
@@ -47,22 +118,49 @@ jobs:
       with:
         persist-credentials: false
         path: ./src/github.com/sigstore/scaffolding
+
+    - name: Download mock release
+      uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+      with:
+        name: mock-release
+        path: /tmp/mock-release
+
+    - name: Pre-populate local registry with mock release images
+      run: |
+        docker run -d --restart=always -p "127.0.0.1:5000:5000" --name registry.local \
+          -e REGISTRY_HTTP_ADDR=0.0.0.0:5000 registry:2
+        docker exec -i registry.local tar -C /var/lib/registry -xf - < /tmp/mock-release/registry-data.tar
+        docker restart registry.local
+
+    # Install cosign before the action: the action exports TUF_MIRROR pointing
+    # at the in-cluster TUF repo, which breaks cosign-installer's verification
+    # of the cosign release against the public good instance.
+    - name: Install cosign
+      uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # v4.0.0
+      with:
+        cosign-release: v3.1.3
+
     - name: Test running the action
       uses: ./src/github.com/sigstore/scaffolding/actions/setup
       with:
         k8s-version: ${{ matrix.k8s-version }}
         version: ${{ matrix.release-version }}
         working-directory: ./src/github.com/sigstore/scaffolding
+        release-dir: /tmp/mock-release
 
-    # Install cosign
-    - name: Install cosign
-      uses: sigstore/cosign-installer@d7543c93d881b35a8faa02e8e3605f69b7a1ce62 # v3.10.0
+    - name: Checkout TSA for testing.
+      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      with:
+        repository: sigstore/timestamp-authority
+        path: ./src/github.com/sigstore/timestamp-authority
+        persist-credentials: false
 
+    # Use the Go version timestamp-cli needs; it is also used for ko below.
     - name: Set up Go
       uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
       with:
-        go-version: ${{ matrix.go-version }}
-        check-latest: true
+        go-version-file: ./src/github.com/sigstore/timestamp-authority/go.mod
+        cache-dependency-path: ./src/github.com/sigstore/timestamp-authority/go.sum
 
     - uses: ko-build/setup-ko@d006021bd0c28d1ce33a07e7943d48b079944c8d # v0.9
 
@@ -83,35 +181,42 @@ jobs:
         popd
 
     - name: Initialize cosign with TUF root
-      run: cosign initialize --mirror ${TUF_MIRROR} --root ./root.json
+      run: cosign initialize --mirror ${TUF_MIRROR} --root ./src/github.com/sigstore/scaffolding/root.json
       env:
         TUF_MIRROR: ${{ env.TUF_MIRROR }}
 
+    - name: Create a signing config
+      run: |
+        cosign signing-config create \
+          --fulcio=url=$FULCIO_URL,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor=url=$REKOR_URL,api-version=2,start-time=$(date -u --iso-8601=sec),operator=test \
+          --rekor-config=ANY \
+          --tsa=url=$TSA_URL/api/v1/timestamp,api-version=1,start-time=$(date -u --iso-8601=sec),operator=test \
+          --tsa-config=ANY \
+          --out signing_config.json
+      env:
+        FULCIO_URL: ${{ env.FULCIO_URL }}
+        REKOR_URL: ${{ env.REKOR_URL }}
+        TSA_URL: ${{ env.TSA_URL }}
+
     - name: Sign with cosign from the action using k8s token
       run: |
-        cosign sign --yes --rekor-url ${REKOR_URL} --fulcio-url ${FULCIO_URL} --allow-insecure-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
+        cosign sign --yes --signing-config=signing_config.json --new-bundle-format=true --allow-insecure-registry --allow-http-registry ${DEMOIMAGE} --identity-token ${OIDC_TOKEN}
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
-        FULCIO_URL: ${{ env.FULCIO_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
         OIDC_TOKEN: ${{ env.OIDC_TOKEN }}
 
     - name: Verify with cosign from the action using k8s token
       run: |
-        cosign verify --rekor-url "${REKOR_URL}" \
-        --allow-insecure-registry "${DEMOIMAGE}" \
+        cosign verify \
+        --allow-insecure-registry --allow-http-registry "${DEMOIMAGE}" \
+        --new-bundle-format \
+        --use-signed-timestamps \
         --certificate-identity "https://kubernetes.io/namespaces/default/serviceaccounts/default" \
         --certificate-oidc-issuer "https://kubernetes.default.svc.cluster.local"
       env:
-        REKOR_URL: ${{ env.REKOR_URL }}
         DEMOIMAGE: ${{ env.demoimage }}
 
-    - name: Checkout TSA for testing.
-      uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      with:
-        repository: sigstore/timestamp-authority
-        path: ./src/github.com/sigstore/timestamp-authority
-        persist-credentials: false
     - name: Build timestamp-cli
       working-directory: ./src/github.com/sigstore/timestamp-authority
       run: |

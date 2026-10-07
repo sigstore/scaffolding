@@ -48,23 +48,62 @@ inputs:
     description: 'kubernetes version to install (v1.32.x, v1.33.x, v1.34.x, v1.35.x), default: v1.32.x'
     required: true
     default: 'v1.32.x'
+  release-dir:
+    description: 'Optional local directory containing release artifacts'
+    required: false
+    default: ''
 runs:
   using: "composite"
   steps:
-  - shell: bash
+  - id: version
+    shell: bash
     run: |
-      set -ex
+      set -euo pipefail
 
       # Determine which version to install
       # - if version is "latest-release", look up latest release.
       # - otherwise, install the specified version.
-      case ${INPUTS_VERSION} in
+      # When release-dir is set, the artifacts come from that directory and
+      # the tag is only used for feature gating, so take the default version
+      # from the bundled setup script instead of querying the GitHub API.
+      case "${INPUTS_VERSION}" in
       latest-release | main)
-        tag=$(curl -s -u "username:${{ github.token }}" https://api.github.com/repos/sigstore/scaffolding/releases/latest | jq -r '.tag_name')
+        if [ -n "${INPUTS_RELEASE_DIR}" ]; then
+          tag=$(sed -n 's/^RELEASE_VERSION="\(.*\)"$/\1/p' "${INPUTS_RELEASE_DIR}/setup-scaffolding-from-release.sh")
+        else
+          tag=$(curl -fsS -u "username:${GITHUB_TOKEN}" https://api.github.com/repos/sigstore/scaffolding/releases/latest | jq -r '.tag_name')
+        fi
         ;;
       *)
         tag="${INPUTS_VERSION}"
+        ;;
       esac
+
+      if [[ ! "${tag}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+        echo "Invalid release version: ${tag}" >&2
+        exit 1
+      fi
+      echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      INPUTS_VERSION: ${{ inputs.version }}
+      INPUTS_RELEASE_DIR: ${{ inputs.release-dir }}
+
+  - shell: bash
+    run: |
+      set -ex
+
+      tag="${TAG}"
+
+      RELEASE_DIR=""
+      if [ -n "${INPUTS_RELEASE_DIR}" ]; then
+        if [ ! -d "${INPUTS_RELEASE_DIR}" ]; then
+          echo "Release directory does not exist: ${INPUTS_RELEASE_DIR}" >&2
+          exit 1
+        fi
+        RELEASE_DIR="$(cd "${INPUTS_RELEASE_DIR}" && pwd)"
+      fi
+      RELEASE_BASE_URL="https://github.com/sigstore/scaffolding/releases/download/${tag}"
 
       # At release v0.5.0 we added support for TSA. Check if we're running
       # greater than v0.5.0 and install it.
@@ -92,8 +131,10 @@ runs:
 
         echo "Installing kind and knative using release"
 
-        if [ "${INPUTS_VERSION}" != "main" ]; then
-          curl -fLo ./setup-kind.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-kind.sh
+        if [ -n "${RELEASE_DIR}" ]; then
+          cp "${RELEASE_DIR}/setup-kind.sh" ./setup-kind.sh
+        elif [ "${INPUTS_VERSION}" != "main" ]; then
+          curl -fLo ./setup-kind.sh "${RELEASE_BASE_URL}/setup-kind.sh"
         else
           cp ${{ github.action_path }}/../../hack/setup-kind.sh .
         fi
@@ -105,19 +146,20 @@ runs:
           --k8s-version ${INPUTS_K8S_VERSION} ${{ inputs.knative-version != '' && format('--knative-version {0}', inputs.knative-version) || '' }}
       fi
 
-      if [ "${INPUTS_VERSION}" != "main" ]; then
+      if [ -n "${RELEASE_DIR}" ]; then
+        cp "${RELEASE_DIR}/setup-scaffolding-from-release.sh" /tmp/setup-scaffolding-from-release.sh
+      elif [ "${INPUTS_VERSION}" != "main" ]; then
         echo "Installing sigstore scaffolding @ ${tag}"
-        curl -fLo /tmp/setup-scaffolding-from-release.sh https://github.com/sigstore/scaffolding/releases/download/${tag}/setup-scaffolding-from-release.sh
+        curl -fLo /tmp/setup-scaffolding-from-release.sh "${RELEASE_BASE_URL}/setup-scaffolding-from-release.sh"
       else
         cp ${{ github.action_path }}/../../hack/setup-scaffolding-from-release.sh /tmp/
       fi
-      # Temp hack to address issuer mismatch issue.
-      # Can be removed with the next release, after v0.6.5
-      sed -i "s@kubectl apply -f \"\${FULCIO}\"@curl -Ls \"\${FULCIO}\" | sed 's#\"IssuerURL\": \"https://kubernetes.default.svc\",#\"IssuerURL\": \"https://kubernetes.default.svc.cluster.local\",#' | kubectl apply -f -@" /tmp/setup-scaffolding-from-release.sh
       chmod u+x /tmp/setup-scaffolding-from-release.sh
       cat /tmp/setup-scaffolding-from-release.sh
-      if [ "${INPUTS_VERSION}" != "main" ]; then
-        /tmp/setup-scaffolding-from-release.sh --release-version ${tag}
+      if [ -n "${RELEASE_DIR}" ]; then
+        /tmp/setup-scaffolding-from-release.sh --release-version "${tag}" --release-dir "${RELEASE_DIR}"
+      elif [ "${INPUTS_VERSION}" != "main" ]; then
+        /tmp/setup-scaffolding-from-release.sh --release-version "${tag}"
       else
         /tmp/setup-scaffolding-from-release.sh
       fi
@@ -131,7 +173,11 @@ runs:
       kubectl -n tuf-system get secrets tuf-root -oyaml | sed 's/namespace: .*/namespace: default/' | kubectl create -f -
 
       echo "Installing and running scaffolding tests to verify we are up and running"
-      curl -fL https://github.com/sigstore/scaffolding/releases/download/${tag}/testrelease.yaml | kubectl create -f -
+      if [ -n "${RELEASE_DIR}" ]; then
+        kubectl create -f "${RELEASE_DIR}/testrelease.yaml"
+      else
+        curl -fL "${RELEASE_BASE_URL}/testrelease.yaml" | kubectl create -f -
+      fi
 
       kubectl wait --for=condition=Complete --timeout=180s job/sign-job
       kubectl wait --for=condition=Complete --timeout=180s job/verify-job
@@ -157,6 +203,7 @@ runs:
       echo "CTLOG_URL=$CTLOG_URL" >> $GITHUB_ENV
       echo "ISSUER_URL=$ISSUER_URL" >> $GITHUB_ENV
     env:
+      TAG: ${{ steps.version.outputs.tag }}
       INPUTS_VERSION: ${{ inputs.version }}
       INPUTS_SIGSTORE_ONLY: ${{ inputs.sigstore-only }}
       INPUTS_REGISTRY_NAME: ${{ inputs.registry-name }}
@@ -164,3 +211,4 @@ runs:
       INPUTS_CLUSTER_SUFFIX: ${{ inputs.cluster-suffix }}
       INPUTS_K8S_VERSION: ${{ inputs.k8s-version }}
       INPUTS_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+      INPUTS_RELEASE_DIR: ${{ inputs.release-dir }}

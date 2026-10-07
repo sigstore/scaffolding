@@ -18,8 +18,9 @@ set -o nounset
 set -o pipefail
 set -o xtrace
 
-# Default
-RELEASE_VERSION="v0.7.24"
+# The RELEASE_VERSION on the line below will be updated in a post-release PR that automatically gets created as part of the release process
+RELEASE_VERSION="v0.7.37"
+RELEASE_DIR=""
 
 while [[ $# -ne 0 ]]; do
   parameter="$1"
@@ -28,19 +29,56 @@ while [[ $# -ne 0 ]]; do
       shift
       RELEASE_VERSION="$1"
       ;;
+    --release-dir)
+      shift
+      RELEASE_DIR="$1"
+      ;;
     *) echo "unknown option ${parameter}"; exit 1 ;;
   esac
   shift
 done
 
-echo "Installing release version: $RELEASE_VERSION"
-TRILLIAN=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml
-REKOR=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor.yaml
-REKOR_TILES=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-rekor-tiles.yaml
-FULCIO=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-fulcio.yaml
-CTLOG=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-ctlog.yaml
-TUF=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tuf.yaml
-TSA=https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-tsa.yaml
+if [[ ! "${RELEASE_VERSION}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]]; then
+  echo "Invalid release version: ${RELEASE_VERSION}" >&2
+  exit 1
+fi
+
+if [[ -n "${RELEASE_DIR}" ]]; then
+  if [[ ! -d "${RELEASE_DIR}" ]]; then
+    echo "Release directory does not exist: ${RELEASE_DIR}" >&2
+    exit 1
+  fi
+  RELEASE_BASE="$(cd "${RELEASE_DIR}" && pwd)"
+else
+  RELEASE_BASE="https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}"
+fi
+
+fetch_manifest() {
+  local target="$1"
+  if [[ -n "${RELEASE_DIR}" ]]; then
+    cat "${target}"
+  else
+    curl -fLs "${target}"
+  fi
+}
+
+manifest_exists() {
+  local target="$1"
+  if [[ -n "${RELEASE_DIR}" ]]; then
+    [[ -f "${target}" ]]
+  else
+    [[ "$(curl -s -o /dev/null -w '%{http_code}' "${target}")" != "404" ]]
+  fi
+}
+
+echo "Installing release version: $RELEASE_VERSION from $RELEASE_BASE"
+TRILLIAN=${RELEASE_BASE}/release-trillian.yaml
+REKOR=${RELEASE_BASE}/release-rekor.yaml
+REKOR_TILES=${RELEASE_BASE}/release-rekor-tiles.yaml
+FULCIO=${RELEASE_BASE}/release-fulcio.yaml
+CTLOG=${RELEASE_BASE}/release-ctlog.yaml
+TUF=${RELEASE_BASE}/release-tuf.yaml
+TSA=${RELEASE_BASE}/release-tsa.yaml
 
 # Since things that we install vary based on the release version, parse out
 # MAJOR, MINOR, and PATCH
@@ -79,7 +117,7 @@ trap cleanup EXIT
 # Install Trillian if it is part of this release and wait for it to come up
 echo '::group:: Install Trillian'
 has_trillian=1
-if curl -s -i "https://github.com/sigstore/scaffolding/releases/download/${RELEASE_VERSION}/release-trillian.yaml" | grep -q 'HTTP/.* 404' ; then
+if ! manifest_exists "${TRILLIAN}" ; then
   has_trillian=0
 fi
 if [ "$has_trillian" == "1" ]; then
@@ -105,25 +143,27 @@ cleanup_rekor() {
     rm "${rekordir}/pub.pem" "${rekordir}/key.pem"
 }
 cleanup_cmd="cleanup_rekor"
-if curl -s -i "${REKOR}" | grep -q 'HTTP/.* 404' ; then
+if ! manifest_exists "${REKOR}" ; then
   REKOR="${REKOR_TILES}"
 fi
-kubectl apply -f "${REKOR}"
-curl -Ls "${REKOR}" | sed -e "s/<private-placeholder>/$(cat "${rekordir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${rekordir}/pub.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" | \
+rekor_private=$(base64 -w0 < "${rekordir}/key.pem")
+rekor_public=$(base64 -w0 < "${rekordir}/pub.pem")
+rekor_password=$(printf '%s' "${pass}" | base64 -w0)
+fetch_manifest "${REKOR}" | sed -e "s|<private-placeholder>|${rekor_private}|" \
+  -e "s|<public-placeholder>|${rekor_public}|" \
+  -e "s|<password-placeholder>|${rekor_password}|" | \
   kubectl apply -f -
 echo '::endgroup::'
 
 echo '::group:: Wait for Rekor ready'
-kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
+kubectl -n rekor-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n rekor-system --for=condition=Complete jobs --all
 kubectl wait --timeout 5m -n rekor-system --for=condition=Ready ksvc rekor
 echo '::endgroup::'
 
 # Install Fulcio and wait for it to come up
 echo '::group:: Install Fulcio'
 fulcio=$(mktemp --tmpdir fulcioXXX)
-curl -Ls -o "${fulcio}" "${FULCIO}"
+fetch_manifest "${FULCIO}" > "${fulcio}"
 if [[ "${NEED_TO_UPDATE_FULCIO_CONFIG}" == "true" ]]; then
   echo "Fixing Fulcio config for < 1.23.X Kubernetes"
   sed -i -e 's@https://kubernetes.default.svc.cluster.local@https://kubernetes.default.svc@' "${fulcio}"
@@ -136,9 +176,12 @@ cleanup_fulcio() {
     rm "${fulciodir}/cert.pem" "${fulciodir}/key.pem"
 }
 cleanup_cmd="$cleanup_cmd ; cleanup_fulcio"
-sed -i -e "s/<private-placeholder>/$(cat "${fulciodir}/key.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" \
-  -e "s/<password-placeholder>/$(echo -n "$pass" | base64 -w0)/" "${fulcio}"
+fulcio_private=$(base64 -w0 < "${fulciodir}/key.pem")
+fulcio_cert=$(base64 -w0 < "${fulciodir}/cert.pem")
+fulcio_password=$(printf '%s' "${pass}" | base64 -w0)
+sed -i -e "s|<private-placeholder>|${fulcio_private}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" \
+  -e "s|<password-placeholder>|${fulcio_password}|" "${fulcio}"
 kubectl apply -f "${fulcio}"
 rm "${fulcio}"
 
@@ -162,14 +205,16 @@ cleanup_ctlog() {
     rm "${ctdir}/pub.pem" "${ctdir}/key.pem"
 }
 cleanup_cmd="$cleanup_cmd ; cleanup_ctlog"
-curl -Ls "${CTLOG}" | sed -e "s/<private-placeholder>/$(cat "${ctdir}/key.pem" | base64 -w0)/" \
-  -e "s/<public-placeholder>/$(cat "${ctdir}/pub.pem" | base64 -w0)/" \
-  -e "s/<cert-placeholder>/$(cat "${fulciodir}/cert.pem" | base64 -w0)/" | \
+ctlog_private=$(base64 -w0 < "${ctdir}/key.pem")
+ctlog_public=$(base64 -w0 < "${ctdir}/pub.pem")
+fetch_manifest "${CTLOG}" | sed -e "s|<private-placeholder>|${ctlog_private}|" \
+  -e "s|<public-placeholder>|${ctlog_public}|" \
+  -e "s|<cert-placeholder>|${fulcio_cert}|" | \
   kubectl apply -f -
 echo '::endgroup::'
 
 echo '::group:: Wait for CTLog ready'
-kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
+kubectl -n ctlog-system get job 2>&1 | grep 'No resources found' || kubectl wait --timeout 5m -n ctlog-system --for=condition=Complete jobs --all
 kubectl wait --timeout 2m -n ctlog-system --for=condition=Ready ksvc ctlog
 echo '::endgroup::'
 

@@ -20,6 +20,13 @@ tidy:
 # These are the subdirs under config that we'll turn into separate artifacts.
 artifacts := ctlog fulcio rekor-tiles tsa tuf
 
+# The subset of the above that still contains a ko:// reference to a bootstrap
+# job we own (createcertchain, createsecret, tuf server). Every actual server
+# component -- fulcio, rekor-tiles, tesseract, timestamp-server -- is a pinned
+# upstream image, so ko publishes nothing for those dirs and never writes an
+# --image-refs file for them; they are not ours to sign either.
+ko_artifacts := tsa tuf
+
 .PHONY: ko-resolve
 ko-resolve:
 	# "Doing ko resolve for config"
@@ -55,7 +62,7 @@ sign-test-images:
 
 .PHONY: sign-release-images
 sign-release-images: sign-test-images
-	set -e; for artifact in $(artifacts) cloudsqlproxy trillian_log_server trillian_log_signer gcp_omniwitness; do \
+	set -e; for artifact in $(ko_artifacts) cloudsqlproxy trillian_log_server trillian_log_signer gcp_omniwitness; do \
 		echo "Signing $$artifact"; \
 		GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$$artifact ./scripts/sign-release-images.sh; \
 	done

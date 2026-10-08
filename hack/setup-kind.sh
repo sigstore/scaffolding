@@ -33,7 +33,7 @@ do
 done
 
 # Defaults
-K8S_VERSION="v1.32.x"
+K8S_VERSION="v1.33.x"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"
@@ -67,12 +67,6 @@ done
 # KNATIVE versions are set from https://github.com/knative/community/blob/main/mechanics/RELEASE-SCHEDULE.md
 KIND_VERSION="v0.31.0"
 case ${K8S_VERSION} in
-  v1.32.x)
-    K8S_VERSION="1.32.11"
-    KNATIVE_VERSION="1.18.0"
-    KIND_IMAGE_SHA="sha256:5fc52d52a7b9574015299724bd68f183702956aa4a2116ae75a63cb574b35af8"
-    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
-    ;;
   v1.33.x)
     K8S_VERSION="1.33.7"
     KNATIVE_VERSION="1.18.0"

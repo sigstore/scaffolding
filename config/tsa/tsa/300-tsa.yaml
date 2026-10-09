@@ -23,6 +23,8 @@ spec:
         ports:
         - containerPort: 3000
         args: [
+          "timestamp-server",
+          "serve",
           "--timestamp-signer=file",
           "--file-signer-key-path=/var/run/tsa-secrets/signing-secret",
           "--file-signer-passwd=$(SECRET_SIGNING_PWD)",

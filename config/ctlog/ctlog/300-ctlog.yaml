@@ -25,7 +25,6 @@ spec:
             "--storage_dir=/ctfe",
             "--origin=ctlog.ctlog-system.svc",
             "--ext_key_usages=CodeSigning",
-            "--v=1",
             "--private_key=/ctfe-keys/private",
             "--roots_pem_file=/ctfe-keys/fulcio",
           ]

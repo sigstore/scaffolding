@@ -19,13 +19,12 @@ spec:
       serviceAccountName: ctlog
       containers:
         - name: ctfe
-          image: ghcr.io/transparency-dev/tesseract/posix:v0.1.1@sha256:8269c32a1b1deb159ba75016421314cb5e68304c2813d444aca3efdf0e9d5027
+          image: ghcr.io/transparency-dev/tesseract/posix:v0.1.2@sha256:b044edd2388857dfc590381ff526214dfea93c6eeb61f632e58633cac2330935
           args: [
             "--http_endpoint=0.0.0.0:6962",
             "--storage_dir=/ctfe",
             "--origin=ctlog.ctlog-system.svc",
             "--ext_key_usages=CodeSigning",
-            "--v=1",
             "--private_key=/ctfe-keys/private",
             "--roots_pem_file=/ctfe-keys/fulcio",
           ]

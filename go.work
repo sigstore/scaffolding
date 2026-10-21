@@ -2,7 +2,6 @@ go 1.27.0
 
 use (
 	./hack
-	./tools/cloudsqlproxy
 	./tools/create-tink-keyset
 	./tools/ctlog
 	./tools/fulcio

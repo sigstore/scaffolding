@@ -36,9 +36,6 @@ ko-resolve:
 		--platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) \
 		--image-refs imagerefs-$$artifact > release-$$artifact.yaml; \
 	done
-	# "Building cloudsqlproxy wrapper"
-	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
-	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(GIT_TAG),latest --image-refs imagerefs-cloudsqlproxy ./tools/cloudsqlproxy/cmd/cloudsqlproxy
 	# "Building trillian_log_server"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_server github.com/google/trillian/cmd/trillian_log_server
@@ -62,7 +59,7 @@ sign-test-images:
 
 .PHONY: sign-release-images
 sign-release-images: sign-test-images
-	set -e; for artifact in $(ko_artifacts) cloudsqlproxy trillian_log_server trillian_log_signer gcp_omniwitness; do \
+	set -e; for artifact in $(ko_artifacts) trillian_log_server trillian_log_signer gcp_omniwitness; do \
 		echo "Signing $$artifact"; \
 		GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$$artifact ./scripts/sign-release-images.sh; \
 	done
@@ -133,11 +130,7 @@ ko-apply-gettoken:
 	ko apply -f ./testdata/config/gettoken
 
 .PHONY: build
-build: build-tuf-server build-cloudsqlproxy build-ctlog-createctconfig build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
-
-.PHONY: build-cloudsqlproxy
-build-cloudsqlproxy:
-	go build -trimpath ./tools/cloudsqlproxy/cmd/cloudsqlproxy
+build: build-tuf-server build-ctlog-createctconfig build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
 
 .PHONY: build-ctlog-createctconfig
 build-ctlog-createctconfig:

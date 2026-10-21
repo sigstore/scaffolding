@@ -1,7 +1,5 @@
 ---
 defaultBaseImage: gcr.io/distroless/static-debian13:nonroot
-baseImageOverrides:
-  github.com/sigstore/scaffolding/tools/cloudsqlproxy/cmd/cloudsqlproxy: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.26.2-alpine
 
 builds:
   - id: ctlog-createctconfig
@@ -97,21 +95,6 @@ builds:
   - id: trillian-updatetree
     dir: ./tools/trillian/
     main: ./cmd/trillian/updatetree
-    env:
-      - CGO_ENABLED=0
-    flags:
-      - -trimpath
-      - -tags
-      - nostackdriver
-    ldflags:
-      - -s
-      - -w
-      - -extldflags "-static"
-      - "{{ .Env.LDFLAGS }}"
-
-  - id: cloudsqlproxy
-    dir: ./tools/cloudsqlproxy/
-    main: ./cmd/cloudsqlproxy
     env:
       - CGO_ENABLED=0
     flags:

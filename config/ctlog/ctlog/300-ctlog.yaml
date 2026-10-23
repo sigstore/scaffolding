@@ -19,7 +19,7 @@ spec:
       serviceAccountName: ctlog
       containers:
         - name: ctfe
-          image: ghcr.io/transparency-dev/tesseract/posix:v0.1.2@sha256:b044edd2388857dfc590381ff526214dfea93c6eeb61f632e58633cac2330935
+          image: ghcr.io/transparency-dev/tesseract/posix:v0.2.0@sha256:80059f05b7a02ce7d5d9730b66bc7e56035fc0e77f41fd76dd067af91bcdebce
           args: [
             "--http_endpoint=0.0.0.0:6962",
             "--storage_dir=/ctfe",

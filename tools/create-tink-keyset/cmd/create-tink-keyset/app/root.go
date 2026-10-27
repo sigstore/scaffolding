@@ -20,8 +20,10 @@ import (
 	"crypto"
 	"crypto/ecdh"
 	"crypto/ed25519"
+	"crypto/mldsa"
 	"crypto/x509"
 	"encoding/base64"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
@@ -30,11 +32,11 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tink-crypto/tink-go-gcpkms/v2/integration/gcpkms"
+	"github.com/tink-crypto/tink-go/v2/key"
 	"github.com/tink-crypto/tink-go/v2/keyset"
-	"github.com/tink-crypto/tink-go/v2/proto/tink_go_proto"
-	"github.com/tink-crypto/tink-go/v2/signature"
 	tinkecdsa "github.com/tink-crypto/tink-go/v2/signature/ecdsa"
 	tinked25519 "github.com/tink-crypto/tink-go/v2/signature/ed25519"
+	tinkmldsa "github.com/tink-crypto/tink-go/v2/signature/mldsa"
 )
 
 /*
@@ -93,12 +95,14 @@ var rootCmd = &cobra.Command{
 		must(err)
 
 		// Create keyset handle, which initializes the signing key based on the provided template
-		keyTemplate, ok := algToKeyTemplate[viper.GetString("key-template")]
-		if !ok {
-			slog.Error("unsupported key template provided")
-			os.Exit(1)
-		}
-		newHandle, err := keyset.NewHandle(keyTemplate)
+		params, err := getKeyParameters(viper.GetString("key-template"))
+		must(err)
+		manager := keyset.NewManager()
+		keyID, err := manager.AddNewKeyFromParameters(params)
+		must(err)
+		err = manager.SetPrimary(keyID)
+		must(err)
+		newHandle, err := manager.Handle()
 		must(err)
 
 		// Encrypt signing key and generate keyset
@@ -126,6 +130,9 @@ var rootCmd = &cobra.Command{
 			curve := algToCurve[viper.GetString("key-template")]
 			pubKey, err = curve.NewPublicKey(publicKey.PublicPoint())
 			must(err)
+		case *tinkmldsa.PublicKey:
+			pubKey, err = mldsa.NewPublicKey(mldsa.MLDSA44(), publicKey.KeyBytes())
+			must(err)
 		}
 		pkixPubKey, err := x509.MarshalPKIXPublicKey(pubKey)
 		must(err)
@@ -149,11 +156,22 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-var algToKeyTemplate = map[string]*tink_go_proto.KeyTemplate{
-	"ED25519":           signature.ED25519KeyTemplate(),
-	"ECDSA_P256":        signature.ECDSAP256KeyTemplate(),
-	"ECDSA_P384_SHA384": signature.ECDSAP384SHA384KeyTemplate(),
-	"ECDSA_P521":        signature.ECDSAP521KeyTemplate(),
+func getKeyParameters(template string) (key.Parameters, error) {
+	switch template {
+	case "ED25519":
+		params, err := tinked25519.NewParameters(tinked25519.VariantTink)
+		return &params, err
+	case "ECDSA_P256":
+		return tinkecdsa.NewParameters(tinkecdsa.NistP256, tinkecdsa.SHA256, tinkecdsa.DER, tinkecdsa.VariantTink)
+	case "ECDSA_P384_SHA384":
+		return tinkecdsa.NewParameters(tinkecdsa.NistP384, tinkecdsa.SHA384, tinkecdsa.DER, tinkecdsa.VariantTink)
+	case "ECDSA_P521":
+		return tinkecdsa.NewParameters(tinkecdsa.NistP521, tinkecdsa.SHA512, tinkecdsa.DER, tinkecdsa.VariantTink)
+	case "ML_DSA_44":
+		return tinkmldsa.NewParameters(tinkmldsa.MLDSA44, tinkmldsa.VariantTink)
+	default:
+		return nil, fmt.Errorf("unsupported key template provided: %s", template)
+	}
 }
 
 var algToCurve = map[string]ecdh.Curve{
@@ -170,7 +188,7 @@ func Execute() {
 }
 
 func init() {
-	rootCmd.Flags().String("key-template", "", "tink key template for the signing algorithm. Valid values are ED25519, ECDSA_P256, ECDSA_P384_SHA384, and ECDSA_P521")
+	rootCmd.Flags().String("key-template", "", "tink key template for the signing algorithm. Valid values are ED25519, ECDSA_P256, ECDSA_P384_SHA384, ECDSA_P521, and ML_DSA_44")
 	rootCmd.Flags().String("origin", "", "origin of the log. Used to generate the checkpoint key ID")
 	rootCmd.Flags().String("key-encryption-key-uri", "", "Resource URI for the KMS key that encrypts the keyset. Only GCP is supported, and the URI must match gcp-kms://projects/*/locations/*/keyRings/*/cryptoKeys/*")
 	rootCmd.Flags().String("out", "", "output path for the encrypted keyset")

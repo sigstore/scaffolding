@@ -18,7 +18,7 @@ go run ./cmd/create-tink-keyset [flags]
 ### Flags
 
 *   `--key-template` **(required)**: The Tink key template for the signing algorithm.
-    *   Valid values: `ED25519`, `ECDSA_P256`, `ECDSA_P384_SHA384`, `ECDSA_P521`.
+    *   Valid values: `ED25519`, `ECDSA_P256`, `ECDSA_P384_SHA384`, `ECDSA_P521`, `ML_DSA_44`.
 *   `--origin` **(required)**: The origin of the log. Used to generate the checkpoint key ID.
 *   `--key-encryption-key-uri` **(required)**: The resource URI for the KMS key that will encrypt the keyset.
     *   Only GCP is supported.

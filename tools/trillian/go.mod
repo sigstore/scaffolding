@@ -1,9 +1,9 @@
 module github.com/sigstore/scaffolding/tools/trillian
 
-go 1.26.0
+go 1.27.0
 
 require (
-	chainguard.dev/exitdir v0.0.4
+	chainguard.dev/exitdir v0.0.5
 	github.com/go-sql-driver/mysql v1.10.1
 	github.com/golang/glog v1.2.5
 	github.com/google/trillian v1.8.0
@@ -25,7 +25,7 @@ require (
 	github.com/fsnotify/fsnotify v1.10.1 // indirect
 	github.com/fxamacker/cbor/v2 v2.9.1 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
-	github.com/go-openapi/jsonpointer v1.0.1 // indirect
+	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/go-openapi/jsonreference v1.0.2 // indirect
 	github.com/go-openapi/swag v0.29.2 // indirect
 	github.com/go-openapi/swag/cmdutils v0.29.2 // indirect
@@ -40,7 +40,6 @@ require (
 	github.com/go-openapi/swag/typeutils v0.29.2 // indirect
 	github.com/go-openapi/swag/yamlutils v0.29.2 // indirect
 	github.com/go-openapi/testify/enable/yaml/v2 v2.8.0 // indirect
-	github.com/go-openapi/testify/v2 v2.8.0 // indirect
 	github.com/google/gnostic-models v0.7.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect

@@ -8,7 +8,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.11.1
-	github.com/sigstore/timestamp-authority/v2 v2.1.4
+	github.com/sigstore/timestamp-authority/v2 v2.2.0
 	k8s.io/apimachinery v0.37.1
 	k8s.io/client-go v0.37.1
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
@@ -20,7 +20,7 @@ require (
 	cloud.google.com/go/auth v0.24.1-0.20261001053825-dbc26066f70a // indirect
 	cloud.google.com/go/auth/oauth2adapt v0.3.0 // indirect
 	cloud.google.com/go/compute/metadata v0.10.0 // indirect
-	cloud.google.com/go/iam v1.13.0 // indirect
+	cloud.google.com/go/iam v1.14.0 // indirect
 	cloud.google.com/go/kms v1.33.0 // indirect
 	cloud.google.com/go/longrunning v1.2.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.1 // indirect
@@ -56,7 +56,7 @@ require (
 	github.com/go-jose/go-jose/v4 v4.1.6 // indirect
 	github.com/go-logr/logr v1.4.4 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
-	github.com/go-openapi/jsonpointer v1.0.1 // indirect
+	github.com/go-openapi/jsonpointer v1.0.2 // indirect
 	github.com/go-openapi/jsonreference v1.0.2 // indirect
 	github.com/go-openapi/swag v0.29.2 // indirect
 	github.com/go-openapi/swag/cmdutils v0.29.2 // indirect
@@ -106,9 +106,9 @@ require (
 	github.com/secure-systems-lab/go-securesystemslib v0.11.1 // indirect
 	github.com/sigstore/protobuf-specs v0.5.2 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/aws v1.11.1 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.11.0 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/azure v1.11.1 // indirect
 	github.com/sigstore/sigstore/pkg/signature/kms/gcp v1.11.1 // indirect
-	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.11.0 // indirect
+	github.com/sigstore/sigstore/pkg/signature/kms/hashivault v1.11.1 // indirect
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/tink-crypto/tink-go-awskms/v3 v3.0.0 // indirect

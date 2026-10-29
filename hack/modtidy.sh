@@ -18,7 +18,9 @@ set -o errexit
 test -f go.work || (echo "Must be run from top level directory" ; exit 1)
 
 for mod in $(go list -f '{{.Dir}}/' -m) ; do
-  pushd "$mod"
+  pushd "$mod" > /dev/null
   go mod tidy
-  popd
+  popd > /dev/null
 done
+
+go work sync

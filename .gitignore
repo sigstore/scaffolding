@@ -10,6 +10,7 @@ kind.yaml
 /createctconfig
 /createdb
 /createsecret
+/ct_server
 /rekor-createsecret
 /createtree
 /getoidctoken

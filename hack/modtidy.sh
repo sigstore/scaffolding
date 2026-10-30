@@ -23,4 +23,10 @@ for mod in $(go list -f '{{.Dir}}/' -m) ; do
   popd > /dev/null
 done
 
+if [ -d "hack/ct_server" ]; then
+  pushd "hack/ct_server" > /dev/null
+  GOWORK=off go mod tidy
+  popd > /dev/null
+fi
+
 go work sync

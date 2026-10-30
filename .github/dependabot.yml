@@ -17,6 +17,7 @@ updates:
     - "/"
     - "/tools/*"
     - "/hack/"
+    - "/hack/ct_server"
   schedule:
     interval: weekly
   open-pull-requests-limit: 10

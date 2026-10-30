@@ -11,6 +11,8 @@ TRILLIAN_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/go
 
 OMNIWITNESS_VERSION=$(shell cd hack && go list -m -f '{{ .Version }}' github.com/transparency-dev/witness)
 
+CT_SERVER_VERSION=$(shell cd hack/ct_server && GOWORK=off go list -m -f '{{ .Version }}' github.com/google/certificate-transparency-go)
+
 lint:
 	go list -f '{{.Dir}}/...' -m | xargs golangci-lint run
 
@@ -45,6 +47,9 @@ ko-resolve:
 	# Building omniwitness
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/omniwitness_gcp
+	# "Building ct_server"
+	(cd hack/ct_server && LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) GOWORK=off \
+	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(CT_SERVER_VERSION),$(GIT_TAG),latest --image-refs $(CURDIR)/imagerefs-ct_server github.com/google/certificate-transparency-go/trillian/ctfe/ct_server)
 
 .PHONY: ko-resolve-testdata
 ko-resolve-testdata:
@@ -59,7 +64,7 @@ sign-test-images:
 
 .PHONY: sign-release-images
 sign-release-images: sign-test-images
-	set -e; for artifact in $(ko_artifacts) trillian_log_server trillian_log_signer gcp_omniwitness; do \
+	set -e; for artifact in $(ko_artifacts) trillian_log_server trillian_log_signer gcp_omniwitness ct_server; do \
 		echo "Signing $$artifact"; \
 		GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$$artifact ./scripts/sign-release-images.sh; \
 	done
@@ -130,7 +135,14 @@ ko-apply-gettoken:
 	ko apply -f ./testdata/config/gettoken
 
 .PHONY: build
-build: build-tuf-server build-ctlog-createctconfig build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
+build: build-tuf-server build-ctlog-createctconfig build-ct_server build-fulcio-createcerts build-getoidctoken build-rekor-createsecret build-trillian-createdb build-trillian-createtree build-trillian-updatetree build-tsa-createcertchain build-tuf-createsecret
+
+.PHONY: build-ct_server
+build-ct_server:
+	(cd hack/ct_server && GOWORK=off go build -trimpath -o $(CURDIR)/ct_server github.com/google/certificate-transparency-go/trillian/ctfe/ct_server)
+
+.PHONY: build-ctlog-ct_server
+build-ctlog-ct_server: build-ct_server
 
 .PHONY: build-ctlog-createctconfig
 build-ctlog-createctconfig:

@@ -52,7 +52,7 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-mirror@53668650c25af6e8864f1d1ddaa69ed4db4cdf09 # v1.6.42
+    - uses: chainguard-dev/actions/setup-mirror@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
     # https://github.com/mvdan/github-actions-golang#how-do-i-set-up-caching-between-builds
 
     - name: Set up Go
@@ -111,7 +111,7 @@ jobs:
         cosign-release: v3.1.3
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@53668650c25af6e8864f1d1ddaa69ed4db4cdf09 # v1.6.42
+      uses: chainguard-dev/actions/setup-kind@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -120,7 +120,7 @@ jobs:
         service-account-issuer: https://kubernetes.default.svc.cluster.local
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@53668650c25af6e8864f1d1ddaa69ed4db4cdf09 # v1.6.42
+      uses: chainguard-dev/actions/setup-knative@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
       with:
         version: "1.18.x"
         serving-features: >
@@ -311,6 +311,6 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@53668650c25af6e8864f1d1ddaa69ed4db4cdf09 # v1.6.42
+      uses: chainguard-dev/actions/kind-diag@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
       with:
         artifact-name: logs.${{ matrix.k8s-version }}

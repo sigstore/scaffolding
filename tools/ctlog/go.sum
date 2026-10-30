@@ -13,8 +13,8 @@ github.com/fxamacker/cbor/v2 v2.9.1 h1:2rWm8B193Ll4VdjsJY28jxs70IdDsHRWgQYAI80+r
 github.com/fxamacker/cbor/v2 v2.9.1/go.mod h1:vM4b+DJCtHn+zz7h3FFp/hDAI9WNWCsZj23V5ytsSxQ=
 github.com/go-logr/logr v1.4.4 h1:tG4xh9yMsRCAiodLVTxyrkzSZ9+o0L1Kg/+cPVcbP/8=
 github.com/go-logr/logr v1.4.4/go.mod h1:9T104GzyrTigFIr8wt5mBrctHMim0Nb2HLGrmQ40KvY=
-github.com/go-openapi/jsonpointer v1.0.1 h1:2KxywRmNwJkT/FMBa3iRNHEaAxSJvjqoufQZy3au1Mg=
-github.com/go-openapi/jsonpointer v1.0.1/go.mod h1:wI7ZYsFmbIi9nBXOZqgDaS/bqOchRGZjqxFli7FBYxY=
+github.com/go-openapi/jsonpointer v1.0.2 h1:NbW7xT2b+l7x+JefiPGDsZWsrLk1ogrz4AHK1TTzMt8=
+github.com/go-openapi/jsonpointer v1.0.2/go.mod h1:N0rI4MbNKD7xAFTiHtB+5Nhrg2j/wwYg7m7Fmb4/jk8=
 github.com/go-openapi/jsonreference v1.0.2 h1:oS4et8FOf3p3UQxEo4Xt0esijmBUM+F259Xl72OSZsc=
 github.com/go-openapi/jsonreference v1.0.2/go.mod h1:TbUNSOo+fcorZjFaNoiSDSoaNnnZtqJtLGR1PuvE/Cs=
 github.com/go-openapi/swag v0.29.2 h1:9n8frkcsuQRA0INU31VbxNxt1zBaHxrHYGEf5BUjFi4=
@@ -47,8 +47,8 @@ github.com/go-openapi/testify/enable/yaml/v2 v2.8.0 h1:dvOQNZ2ovOdogn902NYq7i6jU
 github.com/go-openapi/testify/enable/yaml/v2 v2.8.0/go.mod h1:3VwZZUT6nWcAjhIr2RypXxlsxd3mPPtXh3T8z65aRlQ=
 github.com/go-openapi/testify/v2 v2.8.0 h1:19QDx5b57p8KjO2E4sgs/woL4Akp+FGLRlVm2xn0Rho=
 github.com/go-openapi/testify/v2 v2.8.0/go.mod h1:4gUN8jC+RqOE2qjW/vDmfyTvl5BCht4qL7oca0odrak=
-github.com/google/certificate-transparency-go v1.3.3 h1:hq/rSxztSkXN2tx/3jQqF6Xc0O565UQPdHrOWvZwybo=
-github.com/google/certificate-transparency-go v1.3.3/go.mod h1:iR17ZgSaXRzSa5qvjFl8TnVD5h8ky2JMVio+dzoKMgA=
+github.com/google/certificate-transparency-go v1.4.0 h1:78uNaR2knzCoKKXXDSAGVkz9XPkDg5xXJRP9tP6+rr0=
+github.com/google/certificate-transparency-go v1.4.0/go.mod h1:iR17ZgSaXRzSa5qvjFl8TnVD5h8ky2JMVio+dzoKMgA=
 github.com/google/gnostic-models v0.7.0 h1:qwTtogB15McXDaNqTZdzPJRHvaVJlAl+HVQnLmJEJxo=
 github.com/google/gnostic-models v0.7.0/go.mod h1:whL5G0m6dmc5cPxKc5bdKdEN3UjI7OUGxBlw57miDrQ=
 github.com/google/go-cmp v0.7.0 h1:wk8382ETsv4JYUZwIsn6YpYiWiBsYLSJiTsyBybVuN8=
@@ -77,10 +77,10 @@ github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2/go.mod h1:iKH
 github.com/russross/blackfriday/v2 v2.1.0/go.mod h1:+Rmxgy9KzJVeS9/2gXHxylqXiyQDYRxCVz55jmeOWTM=
 github.com/secure-systems-lab/go-securesystemslib v0.11.1 h1:ayahDPjfSIqKegyt5YVGEvQ7SAi72GHXTy+b2YjUd5w=
 github.com/secure-systems-lab/go-securesystemslib v0.11.1/go.mod h1:UyOjhoZLi76ir63u1ptubEevVe6dlNPmNxwgVvKqFFY=
-github.com/sigstore/fulcio v1.9.0 h1:UP77h/Kt6cPZQeFu1Glf04Z3mjCD7TPjBeAhCReDCfA=
-github.com/sigstore/fulcio v1.9.0/go.mod h1:L9SfN4nK/rUQOSo9gaBQZrVWmOTUXNU/nn8teVArdAs=
-github.com/sigstore/rekor v1.5.4 h1:A9zITTrkRwO+8lfq7L/gBR7rDHHcBQJRI+a0JQo4xDM=
-github.com/sigstore/rekor v1.5.4/go.mod h1:0bcUHhZPlG+RVW1dI/7sdBp0MiVWVzk9h0tgOH/o0Yc=
+github.com/sigstore/fulcio v1.9.1 h1:8YJ+TY23ZyKo4ZPerVXvo8RsXs1WxwVmzniewzeeNIU=
+github.com/sigstore/fulcio v1.9.1/go.mod h1:F54nh3c9v8RWOJ1RzObTCms7KfUP5CRQu7cKNt6wbr4=
+github.com/sigstore/rekor v1.5.5 h1:nZKTBT0uRlKaFW4PafFIE7F5H26PInFF2qOlWouKYYA=
+github.com/sigstore/rekor v1.5.5/go.mod h1:A0e/gTyJ5qCQn6/Zz2T0+TE+W3akuaLF5O0HJ4ogjgA=
 github.com/sigstore/sigstore v1.11.1 h1:kPqGeoOk3IGCJH76ssgX5PKMm8mbHNnM9fhKLDc6M8E=
 github.com/sigstore/sigstore v1.11.1/go.mod h1:0jewOSMygmxdOaBIOhD1teBSIleg7RExQ1baacNrv4A=
 github.com/spf13/cobra v1.10.2 h1:DMTTonx5m65Ic0GOoRY2c16WCbHxOOw6xxezuLaBpcU=

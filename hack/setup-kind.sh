@@ -33,7 +33,7 @@ do
 done
 
 # Defaults
-K8S_VERSION="v1.33.x"
+K8S_VERSION="v1.34.x"
 REGISTRY_NAME="registry.local"
 REGISTRY_PORT="5000"
 CLUSTER_SUFFIX="cluster.local"
@@ -65,24 +65,30 @@ done
 
 # The version map correlated with this version of KinD
 # KNATIVE versions are set from https://github.com/knative/community/blob/main/mechanics/RELEASE-SCHEDULE.md
-KIND_VERSION="v0.31.0"
+KIND_VERSION="v0.33.0"
 case ${K8S_VERSION} in
-  v1.33.x)
-    K8S_VERSION="1.33.7"
-    KNATIVE_VERSION="1.18.0"
-    KIND_IMAGE_SHA="sha256:d26ef333bdb2cbe9862a0f7c3803ecc7b4303d8cea8e814b481b09949d353040"
-    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
-    ;;
   v1.34.x)
-    K8S_VERSION="1.34.3"
-    KNATIVE_VERSION="1.19.0"
-    KIND_IMAGE_SHA="sha256:08497ee19eace7b4b5348db5c6a1591d7752b164530a36f855cb0f2bdcbadd48"
+    K8S_VERSION="1.34.11"
+    KNATIVE_VERSION="1.22.0"
+    KIND_IMAGE_SHA="sha256:44e222ee2132dab25ff87301682f89eb82c7880ea3a1bf543bfe9708fd08d67d"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   v1.35.x)
-    K8S_VERSION="1.35.0"
-    KNATIVE_VERSION="1.19.0"
-    KIND_IMAGE_SHA="sha256:452d707d4862f52530247495d180205e029056831160e22870e37e3f6c1ac31f"
+    K8S_VERSION="1.35.8"
+    KNATIVE_VERSION="1.22.0"
+    KIND_IMAGE_SHA="sha256:07b2536e30b803ed61d1677a79df6115f798ce64c80f9e22f6ed45afd09323c0"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
+  v1.36.x)
+    K8S_VERSION="1.36.4"
+    KNATIVE_VERSION="1.23.0"
+    KIND_IMAGE_SHA="sha256:099e049362a1526b2db71494e1947aae99bd16290d7c895f2b7ea312e3cbfaed"
+    KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
+    ;;
+  v1.37.x)
+    K8S_VERSION="1.37.0"
+    KNATIVE_VERSION="1.23.0"
+    KIND_IMAGE_SHA="sha256:a1ed56cfb0e7b93589bdf97c8cd566405a265939e3620fc4f5de89adff580ae5"
     KIND_IMAGE=kindest/node:${K8S_VERSION}@${KIND_IMAGE_SHA}
     ;;
   *) echo "Unsupported version: ${K8S_VERSION}"; exit 1 ;;

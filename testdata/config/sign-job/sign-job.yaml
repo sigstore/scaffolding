@@ -29,6 +29,15 @@ spec:
           readOnly: true
         - name: homedir
           mountPath: "/var/run/sigstore"
+      - name: cosign-copy
+        image: ghcr.io/sigstore/cosign/cosign@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 # cosign v3.1.3
+        args: [
+          "copy",
+          "-f",
+          "--allow-http-registry",
+          "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
+          "registry.local:5000/knative/getoidctoken:latest",
+        ]
       containers:
       - name: cosign
         image: ghcr.io/sigstore/cosign/cosign@sha256:9e5c2f2edc34351160407ca3416c61855bdf9403c3c5936e0f0be7fc261611b8 # cosign v3.1.3
@@ -36,7 +45,7 @@ spec:
           "sign",
           "-y",
           "--allow-http-registry",
-          "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
+          "registry.local:5000/knative/getoidctoken:latest",
         ]
         env:
         - name: HOME

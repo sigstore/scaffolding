@@ -37,7 +37,7 @@ spec:
           "--allow-http-registry",
           "--certificate-identity=https://kubernetes.io/namespaces/default/serviceaccounts/default",
           "--certificate-oidc-issuer=https://kubernetes.default.svc.cluster.local",
-          "ko://github.com/sigstore/scaffolding/tools/getoidctoken/cmd/getoidctoken",
+          "registry.local:5000/knative/getoidctoken:latest",
         ]
         env:
         - name: HOME

@@ -38,7 +38,7 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-mirror@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
+    - uses: chainguard-dev/actions/setup-mirror@794a2c44abbbd7b3a186db97b359270e4105448f # v1.8.0
 
     - name: Set up Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -113,7 +113,7 @@ jobs:
       KOCACHE: /home/runner/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
+    - uses: chainguard-dev/actions/setup-mirror@794a2c44abbbd7b3a186db97b359270e4105448f # v1.8.0
 
     - name: Download mock release
       uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -142,7 +142,7 @@ jobs:
     - uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
+      uses: chainguard-dev/actions/setup-kind@794a2c44abbbd7b3a186db97b359270e4105448f # v1.8.0
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -157,7 +157,7 @@ jobs:
         docker restart "${REG_CONTAINER}"
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
+      uses: chainguard-dev/actions/setup-knative@794a2c44abbbd7b3a186db97b359270e4105448f # v1.8.0
       with:
         version: "1.18.x"
         serving-features: >
@@ -285,4 +285,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@8f31e9482b447ff2c69eca944a09b4b31a4a85d0 # v1.7.2
+      uses: chainguard-dev/actions/kind-diag@794a2c44abbbd7b3a186db97b359270e4105448f # v1.8.0

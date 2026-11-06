@@ -11,10 +11,10 @@ require (
 	github.com/sigstore/fulcio v1.9.1
 	github.com/sigstore/rekor v1.5.5
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
-	github.com/sigstore/sigstore v1.11.1
+	github.com/sigstore/sigstore v1.11.2
 	google.golang.org/protobuf v1.36.12
-	k8s.io/apimachinery v0.37.1
-	k8s.io/client-go v0.37.1
+	k8s.io/apimachinery v0.37.2
+	k8s.io/client-go v0.37.2
 	knative.dev/pkg v0.0.0-20230612155445-74c4be5e935e
 	sigs.k8s.io/release-utils v0.12.5
 )
@@ -57,7 +57,6 @@ require (
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
 	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/net v0.61.0 // indirect
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
@@ -66,7 +65,7 @@ require (
 	golang.org/x/time v0.16.0 // indirect
 	gopkg.in/evanphx/json-patch.v4 v4.13.0 // indirect
 	gopkg.in/inf.v0 v0.9.1 // indirect
-	k8s.io/api v0.37.1 // indirect
+	k8s.io/api v0.37.2 // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20260721132016-d427ff9ee9ad // indirect
 	k8s.io/utils v0.0.0-20260626114624-be93311217bd // indirect

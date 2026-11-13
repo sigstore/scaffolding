@@ -19,7 +19,7 @@ spec:
       serviceAccountName: rekor
       containers:
       - name: rekor-tiles-posix
-        image: ghcr.io/sigstore/rekor-tiles/posix:v2.4.1@sha256:42129c1803c1b90061a673230ad12e1efb78b6eb86ccc226c2b79bd94d3a281d
+        image: ghcr.io/sigstore/rekor-tiles/posix:v2.4.2@sha256:37f06fe2d495b57372ff1221be4fa25beaf6479a11f1c5006532c45752e5b89d
         ports:
         - containerPort: 3000
         args: [

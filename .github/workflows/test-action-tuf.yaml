@@ -38,7 +38,7 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-mirror@a25ce483d875a46f4c837e85e32e0fda602693f5 # v1.8.1
+    - uses: chainguard-dev/actions/setup-mirror@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
 
     - name: Set up Go
       uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
@@ -243,4 +243,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@a25ce483d875a46f4c837e85e32e0fda602693f5 # v1.8.1
+      uses: chainguard-dev/actions/kind-diag@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2

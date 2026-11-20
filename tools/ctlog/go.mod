@@ -8,8 +8,8 @@ require (
 	github.com/google/certificate-transparency-go v1.4.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.8.0
-	github.com/sigstore/fulcio v1.10.0
-	github.com/sigstore/rekor v1.5.6
+	github.com/sigstore/fulcio v1.10.1
+	github.com/sigstore/rekor v1.6.1
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.11.3
 	google.golang.org/protobuf v1.36.12

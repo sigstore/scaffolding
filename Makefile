@@ -41,9 +41,15 @@ ko-resolve:
 	# "Building trillian_log_server"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_server github.com/google/trillian/cmd/trillian_log_server
+	# "Building trillian_log_server (batched_queue)"
+	GOFLAGS="$(strip $(GOFLAGS) -tags=batched_queue)" LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION)-batched-queue,$(GIT_TAG)-batched-queue,latest-batched-queue --image-refs imagerefs-trillian_log_server-batched-queue github.com/google/trillian/cmd/trillian_log_server
 	# "Building trillian_log_signer"
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION),$(GIT_TAG),latest --image-refs imagerefs-trillian_log_signer github.com/google/trillian/cmd/trillian_log_signer
+	# "Building trillian_log_signer (batched_queue)"
+	GOFLAGS="$(strip $(GOFLAGS) -tags=batched_queue)" LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
+	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(TRILLIAN_VERSION)-batched-queue,$(GIT_TAG)-batched-queue,latest-batched-queue --image-refs imagerefs-trillian_log_signer-batched-queue github.com/google/trillian/cmd/trillian_log_signer
 	# Building omniwitness
 	LDFLAGS="$(LDFLAGS)" KO_DOCKER_REPO=$(KO_DOCKER_REPO) \
 	ko build --base-import-paths --platform=$(KO_PLATFORM) $(KO_EXTRA_FLAGS) --tags $(OMNIWITNESS_VERSION),$(GIT_TAG),latest --image-refs imagerefs-gcp_omniwitness github.com/transparency-dev/witness/cmd/omniwitness_gcp
@@ -64,7 +70,7 @@ sign-test-images:
 
 .PHONY: sign-release-images
 sign-release-images: sign-test-images
-	set -e; for artifact in $(ko_artifacts) trillian_log_server trillian_log_signer gcp_omniwitness ct_server; do \
+	set -e; for artifact in $(ko_artifacts) trillian_log_server trillian_log_server-batched-queue trillian_log_signer trillian_log_signer-batched-queue gcp_omniwitness ct_server; do \
 		echo "Signing $$artifact"; \
 		GIT_HASH=$(GIT_HASH) GIT_VERSION=$(GIT_TAG) ARTIFACT=imagerefs-$$artifact ./scripts/sign-release-images.sh; \
 	done

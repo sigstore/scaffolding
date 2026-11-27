@@ -8,8 +8,8 @@ require (
 	github.com/google/certificate-transparency-go v1.4.0
 	github.com/google/go-cmp v0.7.0
 	github.com/google/trillian v1.8.0
-	github.com/sigstore/fulcio v1.10.1
-	github.com/sigstore/rekor v1.6.1
+	github.com/sigstore/fulcio v1.10.2
+	github.com/sigstore/rekor v1.6.5
 	github.com/sigstore/scaffolding/tools/secret v0.0.0
 	github.com/sigstore/sigstore v1.11.4
 	google.golang.org/protobuf v1.36.12
@@ -59,7 +59,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
 	golang.org/x/crypto v0.59.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/oauth2 v0.37.0 // indirect
+	golang.org/x/oauth2 v0.38.0 // indirect
 	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/term v0.48.0 // indirect
 	golang.org/x/text v0.44.0 // indirect

@@ -38,10 +38,10 @@ jobs:
         path: ./src/github.com/sigstore/scaffolding
         persist-credentials: false
 
-    - uses: chainguard-dev/actions/setup-mirror@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
+    - uses: chainguard-dev/actions/setup-mirror@2993c8809dbe6a42dd25a9029084911611d971d2 # v1.8.3
 
     - name: Set up Go
-      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
       with:
         go-version: 1.27.x
         check-latest: true
@@ -113,7 +113,7 @@ jobs:
       KOCACHE: /home/runner/ko
 
     steps:
-    - uses: chainguard-dev/actions/setup-mirror@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
+    - uses: chainguard-dev/actions/setup-mirror@2993c8809dbe6a42dd25a9029084911611d971d2 # v1.8.3
 
     - name: Download mock release
       uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
@@ -134,7 +134,7 @@ jobs:
 
     # Use the Go version timestamp-cli needs; it is also used for ko below.
     - name: Set up Go
-      uses: actions/setup-go@b7ad1dad31e06c5925ef5d2fc7ad053ef454303e # v7.0.0
+      uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
       with:
         go-version-file: ./src/github.com/sigstore/timestamp-authority/go.mod
         cache-dependency-path: ./src/github.com/sigstore/timestamp-authority/go.sum
@@ -142,7 +142,7 @@ jobs:
     - uses: ko-build/setup-ko@61b4d1d396f5b2e7d6bb6fefdce3dc38d1a13445 # v0.10
 
     - name: Setup Cluster
-      uses: chainguard-dev/actions/setup-kind@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
+      uses: chainguard-dev/actions/setup-kind@2993c8809dbe6a42dd25a9029084911611d971d2 # v1.8.3
       id: kind
       with:
         k8s-version: ${{ matrix.k8s-version }}
@@ -157,7 +157,7 @@ jobs:
         docker restart "${REG_CONTAINER}"
 
     - name: Setup Knative
-      uses: chainguard-dev/actions/setup-knative@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
+      uses: chainguard-dev/actions/setup-knative@2993c8809dbe6a42dd25a9029084911611d971d2 # v1.8.3
       with:
         version: "1.18.x"
         serving-features: >
@@ -285,4 +285,4 @@ jobs:
 
     - name: Collect diagnostics
       if: ${{ failure() }}
-      uses: chainguard-dev/actions/kind-diag@d496b2ab65497cac13d77ccd5038b8aae7e8c43b # v1.8.2
+      uses: chainguard-dev/actions/kind-diag@2993c8809dbe6a42dd25a9029084911611d971d2 # v1.8.3
